@@ -1,0 +1,152 @@
+{
+  "name": "vscode-java-debugger",
+  "displayName": "vscode-java-debugger",
+  "description": "",
+  "version": "0.0.1",
+  "publisher": "vscjava",
+  "engines": {
+    "vscode": "^1.14.0"
+  },
+  "categories": [
+    "Debuggers"
+  ],
+  "activationEvents": [
+    "onLanguage:java"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "javaExtensions": [],
+    "commands": [],
+    "debuggers": [{
+      "type": "java",
+      "label": "Java",
+      "startSessionCommand": "java.debug.startSession",
+      "enableBreakpointsFor": {
+        "languageIds": [
+          "java"
+        ]
+      },
+      "configurationAttributes": {
+        "launch": {
+          "required": [
+            "mainClass"
+          ],
+          "properties": {
+            "projectName": {
+              "type": "string",
+              "description": "Name of the project that contains the main class (optional, only required when the main class resides in multiple projects).",
+              "default": ""
+            },
+            "mainClass": {
+              "type": "string",
+              "description": "The main class of the program (fully qualified name, e.g. com.xyz.MainClass).",
+              "default": ""
+            },
+            "args": {
+              "type": "string",
+              "description": "The command line arguments passed to the program.",
+              "default": ""
+            },
+            "vmArgs": {
+              "type": "string",
+              "description": "The java options and system properties passed to the JVM launcher (e.g. -Xms<size> -Xmx<size> -D<name>=<value>).",
+              "default": ""
+            },
+            "classPaths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The classpaths passed to the JVM launcher (if not specified, debugger will resolve them automatically from the project configuration).",
+              "default": []
+            },
+            "sourcePaths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The source directories of the program.",
+              "default": []
+            }
+          }
+        },
+        "attach": {
+          "required": [
+            "hostName",
+            "port"
+          ],
+          "properties": {
+            "hostName": {
+              "type": "string",
+              "default": "localhost",
+              "description": "The host name or ip address of remote debuggee."
+            },
+            "port": {
+              "type": "number",
+              "description": "The debug port of remote debuggee."
+            },
+            "timeout": {
+              "type": "number",
+              "default": 30000,
+              "description": "Timeout value before reconnecting, in milliseconds (default to 30000ms)."
+            },
+            "sourcePaths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "description": "The source directories of the program."
+            },
+            "projectName": {
+              "type": "string",
+              "description": "Name of the project that contains the main class (optional, only required when the main class resides in multiple projects).",
+              "default": ""
+            }
+          }
+        }
+      },
+      "initialConfigurations": [{
+          "type": "java",
+          "name": "Debug (Launch)",
+          "request": "launch",
+          "mainClass": "",
+          "args": "",
+          "sourcePaths": [
+            "${workspaceRoot}"
+          ]
+        },
+        {
+          "type": "java",
+          "name": "Debug (Attach)",
+          "request": "attach",
+          "hostName": "localhost",
+          "port": 0,
+          "timeout": 30000,
+          "sourcePaths": [
+            "${workspaceRoot}"
+          ]
+        }
+      ]
+    }]
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test"
+  },
+  "extensionDependencies": [
+    "redhat.java"
+  ],
+  "devDependencies": {
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^6.0.40",
+    "gulp": "^3.9.1",
+    "gulp-tslint": "^8.1.2",
+    "mocha": "^2.3.3",
+    "tslint": "^5.7.0",
+    "typescript": "^2.0.3",
+    "vscode": "^1.1.5"
+  }
+}
