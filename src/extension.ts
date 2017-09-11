@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import * as commands from "./commands";
 
 export function activate(context: vscode.ExtensionContext) {
-    vscode.commands.registerCommand(commands.JAVA_DEBUG_STARTSESSION, async (config) => {
+    vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
         if (config.request === "launch") {
             if (!config.mainClass) {
                 vscode.window.showErrorMessage("Please specify the main class in launch.json.");
@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
         }
-        const debugServerPort = await getDebugSessionPort();
+        const debugServerPort = await startDebugSession();
         if (debugServerPort) {
             config.debugServer = debugServerPort;
             vscode.commands.executeCommand(commands.VSCODE_STARTDEBUG, config);
@@ -33,14 +33,14 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
 }
 
-function getDebugSessionPort() {
-    return executeJavaLanguageServerCommand(commands.GET_DEBUG_PORT);
+function startDebugSession() {
+    return executeJavaLanguageServerCommand(commands.JAVA_START_DEBUGSESSION);
 }
 
 function resolveClasspath(mainClass, projectName) {
-    return executeJavaLanguageServerCommand(commands.RESOLVE_CLASSPATH, mainClass, projectName);
+    return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
 function executeJavaLanguageServerCommand(...rest) {
-    return vscode.commands.executeCommand(commands.EXECUTE_WORKSPACE_COMMAND, ...rest);
+    return vscode.commands.executeCommand(commands.JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }

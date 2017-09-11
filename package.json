@@ -1,9 +1,9 @@
 {
-  "name": "vscode-java-debugger",
-  "displayName": "vscode-java-debugger",
+  "name": "vscode-java-debug",
+  "displayName": "Java Debug Extension for Visual Studio Code",
   "description": "",
-  "version": "0.0.1",
-  "publisher": "vscjava",
+  "version": "0.1.0",
+  "publisher": "Microsoft",
   "engines": {
     "vscode": "^1.14.0"
   },
@@ -20,7 +20,7 @@
     "debuggers": [{
       "type": "java",
       "label": "Java",
-      "startSessionCommand": "java.debug.startSession",
+      "startSessionCommand": "vscode.java.startDebugSession",
       "enableBreakpointsFor": {
         "languageIds": [
           "java"
