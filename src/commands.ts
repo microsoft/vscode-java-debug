@@ -1,10 +1,9 @@
+export const VSCODE_STARTDEBUG = "vscode.startDebug";
 
-export const  JAVA_DEBUG_STARTSESSION = "java.debug.startSession";
+export const  JAVA_START_DEBUGSESSION = "vscode.java.startDebugSession";
 
-export const VSCODE_STARTDEBUG = "vsocde.startDebug";
+export const JAVA_RESOLVE_CLASSPATH = "vscode.java.resolveClasspath";
 
-export const GET_DEBUG_PORT = "vscode.java.getDebugPort";
+export const JAVA_BUILD_WORKSPACE = "vscode.java.buildWorkspace";
 
-export const RESOLVE_CLASSPATH = "vscode.java.resolveClasspath";
-
-export const  EXECUTE_WORKSPACE_COMMAND = "java.execute.workspaceCommand";
+export const  JAVA_EXECUTE_WORKSPACE_COMMAND = "java.execute.workspaceCommand";
