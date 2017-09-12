@@ -11,11 +11,14 @@
     "Debuggers"
   ],
   "activationEvents": [
-    "onLanguage:java"
+    "onLanguage:java",
+    "onCommand:vscode.java.startDebugSession"
   ],
   "main": "./out/src/extension",
   "contributes": {
-    "javaExtensions": ["./server/com.microsoft.java.debug.plugin-0.1.0-SNAPSHOT.jar"],
+    "javaExtensions": [
+      "./server/com.microsoft.java.debug.plugin-0.1.0-SNAPSHOT.jar"
+    ],
     "commands": [],
     "debuggers": [
       {
