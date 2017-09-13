@@ -9,10 +9,7 @@
     "java",
     "debug",
     "debugging",
-    "debugger",
-    "debuggers",
-    "eclipse",
-    "jdt"
+    "debugger"
   ],
   "engines": {
     "vscode": "^1.14.0"
