@@ -23,6 +23,18 @@ gulp.task('build_server', () => {
 		.pipe(gulp.dest('.'));
 });
 
+function isWin() {
+	return /^win/.test(process.platform);
+}
+
+function isMac() {
+	return /^darwin/.test(process.platform);
+}
+
+function isLinux() {
+	return /^linux/.test(process.platform);
+}
+
 function mvnw() {
-	return "mvn";
+	return isWin()?"mvnw.cmd":"./mvnw";
 }

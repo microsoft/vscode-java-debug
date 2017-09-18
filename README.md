@@ -15,7 +15,7 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Threads
 - Debug console
 
-## Use
+## Usage
 
 - Launch VS Code
 - Open a Java project (Maven/Gradle/Eclipse)

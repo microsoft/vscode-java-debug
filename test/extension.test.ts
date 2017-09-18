@@ -14,9 +14,14 @@ import * as myExtension from "../src/extension";
 // Defines a Mocha test suite to group tests of similar kind together
 suite("Extension Tests", () => {
 
-    // Defines a Mocha unit test
-    test("Something 1", () => {
-        assert.equal(-1, [1, 2, 3].indexOf(5));
-        assert.equal(-1, [1, 2, 3].indexOf(0));
+    test("Extension should be present", () => {
+        assert.ok(vscode.extensions.getExtension("Microsoft.vscode-java-debug"));
+    });
+
+    test("should activate", function() {
+        this.timeout(1 * 60 * 1000);
+        return vscode.extensions.getExtension("Microsoft.vscode-java-debug").activate().then((api) => {
+            assert.ok(true);
+        });
     });
 });
