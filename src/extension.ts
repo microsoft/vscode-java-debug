@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         } else {
             const ans = await vscode.window.showErrorMessage(
-                "Request type \"" + config.request + "\" is not accepted. Can only be \"launch\" or \"attach\".", "Open launch.json");
+                "Request type \"" + config.request + "\" is not supported. Only \"launch\" and \"attach\" are supported.", "Open launch.json");
             if (ans === "Open launch.json") {
                 vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
             }
