@@ -4,7 +4,14 @@ import * as commands from "./commands";
 
 export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
-        if (config.request === "launch") {
+        if (Object.keys(config).length === 0) { // No launch.json in current workspace.
+            const ans = await vscode.window.showInformationMessage(
+                "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
+            if (ans === "Yes") {
+                vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
+            }
+            return;
+        } else if (config.request === "launch") {
             if (!config.mainClass) {
                 vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
                 return;
@@ -20,6 +27,13 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
                 return;
             }
+        } else {
+            const ans = await vscode.window.showErrorMessage(
+                "Request type \"" + config.request + "\" is not supported. Only \"launch\" and \"attach\" are supported.", "Open launch.json");
+            if (ans === "Open launch.json") {
+                vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
+            }
+            return;
         }
         const debugServerPort = await startDebugSession();
         if (debugServerPort) {
