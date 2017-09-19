@@ -78,6 +78,11 @@
                 },
                 "description": "The source directories of the program.",
                 "default": []
+              },
+              "encoding": {
+                "type": "string",
+                "description": "The file.encoding setting passed to the JVM launcher (if not specified, default value 'UTF-8' will be used, possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html).",
+                "default": "UTF-8"
               }
             }
           },
