@@ -4,7 +4,14 @@ import * as commands from "./commands";
 
 export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
-        if (config.request === "launch") {
+        if (!config.request) {
+            const ans = await vscode.window.showInformationMessage(
+                "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
+            if (ans === "Yes") {
+                vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
+            }
+            return;
+        } else if (config.request === "launch") {
             if (!config.mainClass) {
                 vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
                 return;
@@ -21,8 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
         } else {
-            const ans = await vscode.window.showInformationMessage("launch.json was not found, please create it first.", "Yes", "No");
-            if (ans === "Yes") {
+            const ans = await vscode.window.showErrorMessage(
+                "Request type \"" + config.request + "\" is not accepted. Can only be \"launch\" or \"attach\".", "Open launch.json");
+            if (ans === "Open launch.json") {
                 vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
             }
             return;
