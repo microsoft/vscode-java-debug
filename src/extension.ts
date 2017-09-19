@@ -4,7 +4,7 @@ import * as commands from "./commands";
 
 export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
-        if (!config.request) {
+        if (Object.keys(config).length === 0) { // No launch.json in current workspace.
             const ans = await vscode.window.showInformationMessage(
                 "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
             if (ans === "Yes") {
