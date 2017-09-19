@@ -20,6 +20,12 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
                 return;
             }
+        } else {
+            const ans = await vscode.window.showInformationMessage("launch.json was not found, please create it first.", "Yes", "No");
+            if (ans === "Yes") {
+                vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
+            }
+            return;
         }
         const debugServerPort = await startDebugSession();
         if (debugServerPort) {
