@@ -144,6 +144,37 @@
               "${workspaceRoot}"
             ]
           }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Java: Launch Program",
+            "description": "A new configuration for launching a java program.",
+            "body": {
+              "type": "java",
+              "name": "Debug (Launch)",
+              "request": "launch",
+              "mainClass": "",
+              "args": "",
+              "sourcePaths": [
+                "${workspaceRoot}"
+              ]
+            }
+          },
+          {
+            "label": "Java: Attach to Remote Program",
+            "description": "A new configuration for attaching to a running java program.",
+            "body": {
+              "type": "java",
+              "name": "Debug (Attach)",
+              "request": "attach",
+              "hostName": "localhost",
+              "port": 0,
+              "timeout": 30000,
+              "sourcePaths": [
+                "${workspaceRoot}"
+              ]
+            }
+          }
         ]
       }
     ]
