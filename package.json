@@ -148,7 +148,7 @@
         "configurationSnippets": [
           {
             "label": "Java: Launch Program",
-            "description": "A new configuration for launching a java program.",
+            "description": "Add a new configuration for launching a java program.",
             "body": {
               "type": "java",
               "name": "Debug (Launch)",
@@ -162,7 +162,7 @@
           },
           {
             "label": "Java: Attach to Remote Program",
-            "description": "A new configuration for attaching to a running java program.",
+            "description": "Add a new configuration for attaching to a running java program.",
             "body": {
               "type": "java",
               "name": "Debug (Attach)",
