@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
 export const VSCODE_STARTDEBUG = "vscode.startDebug";
 
 export const VSCODE_ADD_DEBUGCONFIGURATION = "debug.addConfiguration";
