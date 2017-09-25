@@ -121,11 +121,7 @@ function convertLogLevel(commonLogLevel: string) {
     // convert common log level to java log level
     switch (commonLogLevel.toLowerCase())  {
         case "verbose" :
-            return "FINEST";
-        case "debug" :
-            return "FINEST";
-        case "trace" :
-            return "FINEST";
+            return "FINE";
         case "warn" :
             return "WARNING";
         case "error" :
@@ -133,6 +129,6 @@ function convertLogLevel(commonLogLevel: string) {
         case "info" :
             return "INFO";
         default:
-            return commonLogLevel.toUpperCase();
+            return "FINE";
     }
 }
