@@ -3,8 +3,8 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
-import * as commands from "./commands";
 import TelemetryReporter from "vscode-extension-telemetry";
+import * as commands from "./commands";
 
 const status: any = {};
 
@@ -81,9 +81,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (packageInfo.aiKey) {
             const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
             vscode.debug.onDidTerminateDebugSession(() => {
-                fetchUsageData().then(ret => {
+                fetchUsageData().then((ret) => {
                     if (Array.isArray(ret) && ret.length) {
-                        ret.forEach(entry => {
+                        ret.forEach((entry) => {
                             reporter.sendTelemetryEvent("usageData", entry, {});
                         });
                     }
