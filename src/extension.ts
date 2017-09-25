@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             try {
                 try {
-                    const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel") || "info");
+                    const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
                     console.log("setting log level to ", level);
                 } catch (err) {
                     // log a warning message and contiue, since logger failure should not block debug session
