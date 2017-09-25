@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "vscjava",
   "preview": true,
+  "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
   "icon": "logo.png",
   "keywords": [
     "java",
@@ -13,7 +14,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.14.0"
+    "vscode": "^1.15.0"
   },
   "categories": [
     "Debuggers"
@@ -199,5 +200,8 @@
     "tslint": "^5.7.0",
     "typescript": "^2.0.3",
     "vscode": "^1.1.5"
+  },
+  "dependencies": {
+    "vscode-extension-telemetry": "0.0.8"
   }
 }

@@ -4,6 +4,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import * as commands from "./commands";
+import TelemetryReporter from "vscode-extension-telemetry";
 
 const status: any = {};
 
@@ -61,6 +62,28 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
     });
+
+    // Telemetry.
+    const extensionPackage = require(context.asAbsolutePath("./package.json"));
+    if (extensionPackage) {
+        const packageInfo = {
+            name: extensionPackage.name,
+            version: extensionPackage.version,
+            aiKey: extensionPackage.aiKey,
+        };
+        if (packageInfo.aiKey) {
+            const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
+            vscode.debug.onDidTerminateDebugSession(() => {
+                fetchUsageData().then(ret => {
+                    if (Array.isArray(ret) && ret.length) {
+                        ret.forEach(entry => {
+                            reporter.sendTelemetryEvent("usageData", entry, {});
+                        });
+                    }
+                });
+            });
+        }
+    }
 }
 
 // this method is called when your extension is deactivated
@@ -73,6 +96,10 @@ function startDebugSession() {
 
 function resolveClasspath(mainClass, projectName) {
     return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
+}
+
+function fetchUsageData() {
+    return executeJavaLanguageServerCommand(commands.JAVA_FETCH_USAGE_DATA);
 }
 
 function executeJavaLanguageServerCommand(...rest) {
