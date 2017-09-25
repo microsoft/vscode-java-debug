@@ -179,7 +179,23 @@
           }
         ]
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Java Debugger Configuration",
+      "properties": {
+        "java.debug.logLevel": {
+          "type": "string",
+          "default": "info",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "verbose"
+          ]
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",

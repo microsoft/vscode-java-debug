@@ -15,6 +15,13 @@ export function activate(context: vscode.ExtensionContext) {
             status.debugging = "startDebugSession";
 
             try {
+                try {
+                    const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel") || "info");
+                    console.log("setting log level to ", level);
+                } catch (err) {
+                    // log a warning message and contiue, since logger failure should not block debug session
+                    console.log("Cannot set log level to java debuggeer.")
+                }
                 if (Object.keys(config).length === 0) { // No launch.json in current workspace.
                     const ans = await vscode.window.showInformationMessage(
                         "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
@@ -104,4 +111,28 @@ function fetchUsageData() {
 
 function executeJavaLanguageServerCommand(...rest) {
     return vscode.commands.executeCommand(commands.JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
+}
+
+function configLogLevel(level) {
+    return executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
+}
+
+function convertLogLevel(commonLogLevel: string) {
+    // convert common log level to java log level
+    switch (commonLogLevel.toLowerCase())  {
+        case "verbose" :
+            return "FINEST";
+        case "debug" :
+            return "FINEST";
+        case "trace" :
+            return "FINEST";
+        case "warn" :
+            return "WARNING";
+        case "error" :
+            return "SEVERE";
+        case "info" :
+            return "INFO";
+        default:
+            return commonLogLevel.toUpperCase();
+    }
 }
