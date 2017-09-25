@@ -6,8 +6,6 @@ import * as vscode from "vscode";
 import * as commands from "./commands";
 import TelemetryReporter from "vscode-extension-telemetry";
 
-const TELEMETRY_QUERY_INTERVEL_MS = 60000;
-
 const status: any = {};
 
 export function activate(context: vscode.ExtensionContext) {
@@ -65,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Telemetry. TODO: refactor
+    // Telemetry.
     const extensionPackage = require(context.asAbsolutePath("./package.json"));
     if (extensionPackage) {
         const packageInfo = {
@@ -75,7 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
         };
         if (packageInfo.aiKey) {
             const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
-            setInterval(function() {
+            vscode.debug.onDidTerminateDebugSession(() => {
                 fetchUsageData().then(ret => {
                     if (Array.isArray(ret) && ret.length) {
                         ret.forEach(entry => {
@@ -83,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
                         });
                     }
                 });
-            }, TELEMETRY_QUERY_INTERVEL_MS);
+            });
         }
     }
 }
