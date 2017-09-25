@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 import * as commands from "./commands";
 import TelemetryReporter from "vscode-extension-telemetry";
 
-const TELEMETRY_QUERY_INTERVEL_MS = 5000;
+const TELEMETRY_QUERY_INTERVEL_MS = 60000;
 
 const status: any = {};
 
@@ -79,7 +79,6 @@ export function activate(context: vscode.ExtensionContext) {
                 fetchUsageData().then(ret => {
                     if (Array.isArray(ret) && ret.length) {
                         ret.forEach(entry => {
-                            console.log(entry);
                             reporter.sendTelemetryEvent("usageData", entry, {});
                         });
                     }
