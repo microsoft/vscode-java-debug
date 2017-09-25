@@ -3,7 +3,7 @@
   "displayName": "Java Debug Extension for Visual Studio Code",
   "description": "A lightweight Java debugger for Visual Studio Code",
   "version": "0.1.0",
-  "publisher": "Microsoft",
+  "publisher": "vscjava",
   "icon": "logo.png",
   "keywords": [
     "java",
