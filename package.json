@@ -26,7 +26,7 @@
   "main": "./out/src/extension",
   "contributes": {
     "javaExtensions": [
-      "./server/com.microsoft.java.debug.plugin-0.1.0-SNAPSHOT.jar"
+      "./server/com.microsoft.java.debug.plugin-0.1.0.jar"
     ],
     "commands": [],
     "debuggers": [
