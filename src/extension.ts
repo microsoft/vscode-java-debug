@@ -3,8 +3,8 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
-import * as commands from "./commands";
 import TelemetryReporter from "vscode-extension-telemetry";
+import * as commands from "./commands";
 
 const status: any = {};
 
@@ -15,6 +15,13 @@ export function activate(context: vscode.ExtensionContext) {
             status.debugging = "startDebugSession";
 
             try {
+                try {
+                    const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
+                    console.log("setting log level to ", level);
+                } catch (err) {
+                    // log a warning message and contiue, since logger failure should not block debug session
+                    console.log("Cannot set log level to java debuggeer.")
+                }
                 if (Object.keys(config).length === 0) { // No launch.json in current workspace.
                     const ans = await vscode.window.showInformationMessage(
                         "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
@@ -74,9 +81,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (packageInfo.aiKey) {
             const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
             vscode.debug.onDidTerminateDebugSession(() => {
-                fetchUsageData().then(ret => {
+                fetchUsageData().then((ret) => {
                     if (Array.isArray(ret) && ret.length) {
-                        ret.forEach(entry => {
+                        ret.forEach((entry) => {
                             reporter.sendTelemetryEvent("usageData", entry, {});
                         });
                     }
@@ -104,4 +111,24 @@ function fetchUsageData() {
 
 function executeJavaLanguageServerCommand(...rest) {
     return vscode.commands.executeCommand(commands.JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
+}
+
+function configLogLevel(level) {
+    return executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
+}
+
+function convertLogLevel(commonLogLevel: string) {
+    // convert common log level to java log level
+    switch (commonLogLevel.toLowerCase())  {
+        case "verbose" :
+            return "FINE";
+        case "warn" :
+            return "WARNING";
+        case "error" :
+            return "SEVERE";
+        case "info" :
+            return "INFO";
+        default:
+            return "FINE";
+    }
 }
