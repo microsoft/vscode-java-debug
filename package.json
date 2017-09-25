@@ -186,7 +186,7 @@
       "properties": {
         "java.debug.logLevel": {
           "type": "string",
-          "default": "warning",
+          "default": "warn",
           "enum": [
             "error",
             "warn",
