@@ -84,7 +84,16 @@ export function activate(context: vscode.ExtensionContext) {
                 fetchUsageData().then((ret) => {
                     if (Array.isArray(ret) && ret.length) {
                         ret.forEach((entry) => {
-                            reporter.sendTelemetryEvent("usageData", entry, {});
+                            const props = {};
+                            const measures = {};
+                            for (let name in entry) {
+                                if (typeof entry[name] === "number") {
+                                    measures[name] = entry[name];
+                                } else {
+                                    props[name] = String(entry[name]);
+                                }
+                            }
+                            reporter.sendTelemetryEvent("usageData", props, measures);
                         });
                     }
                 });
