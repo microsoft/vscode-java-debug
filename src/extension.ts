@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import * as path from "path";
-import * as Uuid from "uuid";
 import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
@@ -81,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
         };
         if (packageInfo.aiKey) {
             const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
-            reporter.sendTelemetryEvent("activateExtension", {correlationId: Uuid().replace(/-/g, "")});
+            reporter.sendTelemetryEvent("activateExtension", { });
 
             vscode.debug.onDidTerminateDebugSession(() => {
                 fetchUsageData().then((ret) => {
