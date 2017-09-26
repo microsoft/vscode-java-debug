@@ -80,6 +80,8 @@ export function activate(context: vscode.ExtensionContext) {
         };
         if (packageInfo.aiKey) {
             const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
+            reporter.sendTelemetryEvent("activateExtension", { });
+
             vscode.debug.onDidTerminateDebugSession(() => {
                 fetchUsageData().then((ret) => {
                     if (Array.isArray(ret) && ret.length) {
