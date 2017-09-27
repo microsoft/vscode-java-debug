@@ -34,11 +34,17 @@ export function activate(context: vscode.ExtensionContext) {
                         vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
                         return;
                     } else if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
-                        config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
-                    }
-                    if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
-                        vscode.window.showErrorMessage("Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
-                        return;
+                        try {
+                            config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
+                            if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
+                                vscode.window.showErrorMessage("Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
+                                return;
+                            }
+                        } catch (error) {
+                            const errorMessage = (error && error.message) || error;
+                            vscode.window.showErrorMessage(errorMessage);
+                            return;
+                        }
                     }
                 } else if (config.request === "attach") {
                     if (!config.hostName || !config.port) {
