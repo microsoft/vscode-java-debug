@@ -47,7 +47,7 @@
             "properties": {
               "projectName": {
                 "type": "string",
-                "description": "Name of the project that contains the main class (optional, only required when the main class resides in multiple projects).",
+                "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program.",
                 "default": ""
               },
               "mainClass": {
@@ -62,7 +62,7 @@
               },
               "vmArgs": {
                 "type": "string",
-                "description": "The java options and system properties passed to the JVM launcher (e.g. -Xms<size> -Xmx<size> -D<name>=<value>).",
+                "description": "The extra options and system properties for the JVM (e.g. -Xms<size> -Xmx<size> -D<name>=<value>).",
                 "default": ""
               },
               "classPaths": {
@@ -70,7 +70,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The classpaths passed to the JVM launcher (if not specified, debugger will resolve them automatically from the project configuration).",
+                "description": "The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.",
                 "default": []
               },
               "sourcePaths": {
@@ -78,12 +78,12 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The source directories of the program.",
+                "description": "The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.",
                 "default": []
               },
               "encoding": {
                 "type": "string",
-                "description": "The file.encoding setting passed to the JVM launcher (if not specified, default value 'UTF-8' will be used, possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html).",
+                "description": "The file.encoding setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
                 "default": "UTF-8"
               }
             }
@@ -114,11 +114,11 @@
                   "type": "string"
                 },
                 "default": [],
-                "description": "The source directories of the program."
+                "description": "The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories."
               },
               "projectName": {
                 "type": "string",
-                "description": "Name of the project that contains the main class (optional, only required when the main class resides in multiple projects).",
+                "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects.",
                 "default": ""
               }
             }
