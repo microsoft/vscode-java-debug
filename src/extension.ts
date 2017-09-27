@@ -9,6 +9,9 @@ import * as commands from "./commands";
 const status: any = {};
 
 export function activate(context: vscode.ExtensionContext) {
+    // The reporter will be initialized by the later telemetry handler.
+    let reporter: TelemetryReporter = null;
+
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
 
         if (!status.debugging) {
@@ -82,7 +85,6 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Telemetry.
-    let reporter: TelemetryReporter = null;
     const extensionPackage = require(context.asAbsolutePath("./package.json"));
     if (extensionPackage) {
         const packageInfo = {
