@@ -9,6 +9,9 @@ import * as commands from "./commands";
 const status: any = {};
 
 export function activate(context: vscode.ExtensionContext) {
+    // The reporter will be initialized by the later telemetry handler.
+    let reporter: TelemetryReporter = null;
+
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
 
         if (!status.debugging) {
@@ -19,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
                     const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
                     console.log("setting log level to ", level);
                 } catch (err) {
-                    // log a warning message and contiue, since logger failure should not block debug session
+                    // log a warning message and continue, since logger failure should not block debug session
                     console.log("Cannot set log level to java debuggeer.")
                 }
                 if (Object.keys(config).length === 0) { // No launch.json in current workspace.
@@ -63,7 +66,18 @@ export function activate(context: vscode.ExtensionContext) {
                     console.log("Cannot find a port for debugging session");
                 }
             } catch (ex) {
-
+                const errorMessage = (ex && ex.message) || ex;
+                vscode.window.showErrorMessage(errorMessage);
+                if (reporter) {
+                    const exception = (ex && ex.data && ex.data.cause)
+                        || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
+                    const properties = {};
+                    properties.detailMessage = exception.detailMessage;
+                    if (Array.isArray(exception.stackTrace)) {
+                        properties.stackTrace = JSON.stringify(exception.stackTrace);
+                    }
+                    reporter.sendTelemetryEvent("exception", properties);
+                }
             } finally {
                 delete status.debugging;
             }
@@ -79,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
             aiKey: extensionPackage.aiKey,
         };
         if (packageInfo.aiKey) {
-            const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
+            reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
             reporter.sendTelemetryEvent("activateExtension", {});
             const measureKeys = ["duration"];
             vscode.debug.onDidTerminateDebugSession(() => {
