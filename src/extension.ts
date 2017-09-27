@@ -65,6 +65,16 @@ export function activate(context: vscode.ExtensionContext) {
             } catch (ex) {
                 const errorMessage = (ex && ex.message) || ex;
                 vscode.window.showErrorMessage(errorMessage);
+                if (reporter) {
+                    const exception = (ex && ex.data && ex.data.cause)
+                        || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
+                    const properties = {};
+                    properties.detailMessage = exception.detailMessage;
+                    if (Array.isArray(exception.stackTrace)) {
+                        properties.stackTrace = JSON.stringify(exception.stackTrace);
+                    }
+                    reporter.sendTelemetryEvent("exception", properties);
+                }
             } finally {
                 delete status.debugging;
             }
@@ -72,6 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Telemetry.
+    let reporter: TelemetryReporter = null;
     const extensionPackage = require(context.asAbsolutePath("./package.json"));
     if (extensionPackage) {
         const packageInfo = {
@@ -80,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
             aiKey: extensionPackage.aiKey,
         };
         if (packageInfo.aiKey) {
-            const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
+            reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
             reporter.sendTelemetryEvent("activateExtension", {});
             const measureKeys = ["duration"];
             vscode.debug.onDidTerminateDebugSession(() => {
