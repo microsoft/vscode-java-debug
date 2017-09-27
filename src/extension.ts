@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
                     const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
                     console.log("setting log level to ", level);
                 } catch (err) {
-                    // log a warning message and contiue, since logger failure should not block debug session
+                    // log a warning message and continue, since logger failure should not block debug session
                     console.log("Cannot set log level to java debuggeer.")
                 }
                 if (Object.keys(config).length === 0) { // No launch.json in current workspace.
@@ -34,17 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
                         vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
                         return;
                     } else if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
-                        try {
-                            config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
-                            if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
-                                vscode.window.showErrorMessage("Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
-                                return;
-                            }
-                        } catch (error) {
-                            const errorMessage = (error && error.message) || error;
-                            vscode.window.showErrorMessage(errorMessage);
-                            return;
-                        }
+                        config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
+                    }
+                    if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
+                        vscode.window.showErrorMessage("Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
+                        return;
                     }
                 } else if (config.request === "attach") {
                     if (!config.hostName || !config.port) {
@@ -69,7 +63,8 @@ export function activate(context: vscode.ExtensionContext) {
                     console.log("Cannot find a port for debugging session");
                 }
             } catch (ex) {
-
+                const errorMessage = (ex && ex.message) || ex;
+                vscode.window.showErrorMessage(errorMessage);
             } finally {
                 delete status.debugging;
             }
