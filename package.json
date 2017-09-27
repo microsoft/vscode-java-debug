@@ -130,21 +130,14 @@
             "name": "Debug (Launch)",
             "request": "launch",
             "mainClass": "",
-            "args": "",
-            "sourcePaths": [
-              "${workspaceRoot}"
-            ]
+            "args": ""
           },
           {
             "type": "java",
             "name": "Debug (Attach)",
             "request": "attach",
             "hostName": "localhost",
-            "port": 0,
-            "timeout": 30000,
-            "sourcePaths": [
-              "${workspaceRoot}"
-            ]
+            "port": 0
           }
         ],
         "configurationSnippets": [
@@ -156,10 +149,7 @@
               "name": "Debug (Launch)",
               "request": "launch",
               "mainClass": "",
-              "args": "",
-              "sourcePaths": [
-                "${workspaceRoot}"
-              ]
+              "args": ""
             }
           },
           {
@@ -170,11 +160,7 @@
               "name": "Debug (Attach)",
               "request": "attach",
               "hostName": "localhost",
-              "port": 0,
-              "timeout": 30000,
-              "sourcePaths": [
-                "${workspaceRoot}"
-              ]
+              "port": 0
             }
           }
         ]
