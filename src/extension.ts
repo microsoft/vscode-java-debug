@@ -80,13 +80,22 @@ export function activate(context: vscode.ExtensionContext) {
         };
         if (packageInfo.aiKey) {
             const reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
-            reporter.sendTelemetryEvent("activateExtension", { });
-
+            reporter.sendTelemetryEvent("activateExtension", {});
+            const measureKeys = ["duration"];
             vscode.debug.onDidTerminateDebugSession(() => {
                 fetchUsageData().then((ret) => {
                     if (Array.isArray(ret) && ret.length) {
                         ret.forEach((entry) => {
-                            reporter.sendTelemetryEvent("usageData", entry, {});
+                            const commonProperties: any = {};
+                            const measureProperties: any = {};
+                            for (const key of Object.keys(entry)) {
+                                if (measureKeys.indexOf(key) >= 0) {
+                                    measureProperties[key] = entry[key];
+                                } else {
+                                    commonProperties[key] = String(entry[key]);
+                                }
+                            }
+                            reporter.sendTelemetryEvent(entry.scope === "exception" ? "exception" : "usageData", commonProperties, measureProperties);
                         });
                     }
                 });
@@ -112,6 +121,7 @@ function fetchUsageData() {
 }
 
 function executeJavaLanguageServerCommand(...rest) {
+    // TODO: need to handle error and trace telemetry
     return vscode.commands.executeCommand(commands.JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }
 
