@@ -72,15 +72,15 @@ export function activate(context: vscode.ExtensionContext) {
                     const exception = (ex && ex.data && ex.data.cause)
                         || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
                     const properties = {
-                        detailMessage: "",
+                        message: "",
                         stackTrace: "",
                     };
                     if (exception && typeof exception === "object") {
-                        properties.detailMessage = exception.detailMessage;
+                        properties.message = exception.detailMessage;
                         properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
                             || String(exception.stackTrace);
                     } else {
-                        properties.detailMessage = String(exception);
+                        properties.message= String(exception);
                     }
                     reporter.sendTelemetryEvent("exception", properties);
                 }
