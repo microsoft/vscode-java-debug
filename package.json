@@ -188,6 +188,26 @@
             "info",
             "verbose"
           ]
+        },
+        "java.debug.showHex": {
+          "type": "boolean",
+          "default": false
+        },
+        "java.debug.showStaticVariables": {
+          "type": "boolean",
+          "default": false
+        },
+        "java.debug.showQualifiedNames": {
+          "type": "boolean",
+          "default": false
+        },
+        "java.debug.maxStringLength": {
+          "type": "number",
+          "default": 0
+        },
+        "java.debug.maxStringLengthConsole": {
+          "type": "number",
+          "default": 0
         }
       }
     }
