@@ -18,12 +18,12 @@ import * as myExtension from "../src/extension";
 suite("Extension Tests", () => {
 
     test("Extension should be present", () => {
-        assert.ok(vscode.extensions.getExtension("Microsoft.vscode-java-debug"));
+        assert.ok(vscode.extensions.getExtension("vscjava.vscode-java-debug"));
     });
 
     test("should activate", function() {
         this.timeout(1 * 60 * 1000);
-        return vscode.extensions.getExtension("Microsoft.vscode-java-debug").activate().then((api) => {
+        return vscode.extensions.getExtension("vscjava.vscode-java-debug").activate().then((api) => {
             assert.ok(true);
         });
     });
