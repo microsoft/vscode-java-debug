@@ -11,14 +11,14 @@ const status: any = {};
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
     let reporter: TelemetryReporter = null;
-    let configurationDirty: boolean = true;
+    let isConfigurationDirty: boolean = true;
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
         if (!status.debugging) {
             status.debugging = "startDebugSession";
 
             try {
-                if (configurationDirty) {
-                    configurationDirty = false;
+                if (isConfigurationDirty) {
+                    isConfigurationDirty = false;
                     await updateConfiguration();
                 }
 
@@ -119,7 +119,14 @@ export function activate(context: vscode.ExtensionContext) {
             });
         }
     }
-    vscode.workspace.onDidChangeConfiguration((event) => configurationDirty = true);
+    vscode.workspace.onDidChangeConfiguration((event) => {
+        if (vscode.debug.activeDebugSession) {
+            isConfigurationDirty = false;
+            updateConfiguration();
+        } else {
+            isConfigurationDirty = true;
+        }
+    });
 }
 
 // this method is called when your extension is deactivated
