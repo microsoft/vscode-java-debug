@@ -189,23 +189,23 @@
             "verbose"
           ]
         },
-        "java.debug.showHex": {
+        "java.debug.settings.showHex": {
           "type": "boolean",
           "default": false
         },
-        "java.debug.showStaticVariables": {
+        "java.debug.settings.showStaticVariables": {
           "type": "boolean",
           "default": false
         },
-        "java.debug.showQualifiedNames": {
+        "java.debug.settings.showQualifiedNames": {
           "type": "boolean",
           "default": false
         },
-        "java.debug.maxStringLength": {
+        "java.debug.settings.maxStringLength": {
           "type": "number",
           "default": 0
         },
-        "java.debug.maxStringLengthConsole": {
+        "java.debug.settings.maxStringLengthConsole": {
           "type": "number",
           "default": 0
         }
