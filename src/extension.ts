@@ -19,19 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 if (configurationDirty) {
                     configurationDirty = false;
-                    try {
-                        const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
-                        console.log("setting log level to ", level);
-                    } catch (err) {
-                        // log a warning message and continue, since logger failure should not block debug session
-                        console.log("Cannot set log level to java debuggeer.")
-                    }
-                    try {
-                        await updateUserSettings();
-                    } catch (err) {
-                        // log a warning message and continue, since update settings failure should not block debug session
-                        console.log("Cannot update settings.")
-                    }
+                    await updateConfiguration();
                 }
 
                 if (Object.keys(config).length === 0) { // No launch.json in current workspace.
@@ -204,4 +192,20 @@ function collectUserSettings(): string[] {
         settings.push("max_string_length_console=" + vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLengthInConsole"));
     }
     return settings;
+}
+
+async function updateConfiguration() {
+    try {
+        const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
+        console.log("setting log level to ", level);
+    } catch (err) {
+        // log a warning message and continue, since logger failure should not block debug session
+        console.log("Cannot set log level to java debuggeer.", err)
+    }
+    try {
+        await updateUserSettings();
+    } catch (err) {
+        // log a warning message and continue, since update settings failure should not block debug session
+        console.log("Cannot update settings.", err)
+    }
 }
