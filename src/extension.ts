@@ -173,15 +173,15 @@ function convertLogLevel(commonLogLevel: string): string {
 function collectUserSettings(): string[] {
     const settings: string[] =  [];
     if (vscode.workspace.getConfiguration().get("java.debug.settings.showHex")) {
-        settings.push("--show_hex");
+        settings.push("show_hex=true");
     }
 
     if (vscode.workspace.getConfiguration().get("java.debug.settings.showStaticVariables")) {
-        settings.push("--show_static_variables");
+        settings.push("show_static_variables=true");
     }
 
     if (vscode.workspace.getConfiguration().get("java.debug.settings.showQualifiedNames")) {
-        settings.push("--show_qualified_names");
+        settings.push("show_qualified_names=true");
     }
 
     if (vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLength")) {
