@@ -195,7 +195,7 @@
         },
         "java.debug.settings.showStaticVariables": {
           "type": "boolean",
-          "default": false
+          "default": true
         },
         "java.debug.settings.showQualifiedNames": {
           "type": "boolean",
