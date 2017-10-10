@@ -80,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
                         properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
                             || String(exception.stackTrace);
                     } else {
-                        properties.message= String(exception);
+                        properties.message = String(exception);
                     }
                     reporter.sendTelemetryEvent("exception", properties);
                 }

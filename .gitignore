@@ -2,3 +2,5 @@ out
 bin
 server
 node_modules
+.vscode-test
+vscode-java-debug-*.vsix
