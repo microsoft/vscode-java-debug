@@ -30,7 +30,7 @@
   ],
   "activationEvents": [
     "onLanguage:java",
-    "onCommand:vscode.java.startDebugSession"
+    "onDebug"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -42,7 +42,6 @@
       {
         "type": "java",
         "label": "Java",
-        "startSessionCommand": "vscode.java.startDebugSession",
         "enableBreakpointsFor": {
           "languageIds": [
             "java"
@@ -133,22 +132,6 @@
             }
           }
         },
-        "initialConfigurations": [
-          {
-            "type": "java",
-            "name": "Debug (Launch)",
-            "request": "launch",
-            "mainClass": "",
-            "args": ""
-          },
-          {
-            "type": "java",
-            "name": "Debug (Attach)",
-            "request": "attach",
-            "hostName": "localhost",
-            "port": 0
-          }
-        ],
         "configurationSnippets": [
           {
             "label": "Java: Launch Program",
