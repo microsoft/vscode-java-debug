@@ -5,7 +5,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
-import { executeJavaLanguageServerCommand, JavaConfigurationProvider } from "./configurationProvider";
+import { executeJavaLanguageServerCommand, JavaDebugConfigurationProvider } from "./configurationProvider";
 
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
@@ -44,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaConfigurationProvider(reporter)));
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider(reporter)));
 }
 
 // this method is called when your extension is deactivated

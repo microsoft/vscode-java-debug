@@ -5,9 +5,7 @@ import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 
-export class JavaConfigurationProvider implements vscode.DebugConfigurationProvider {
-    private _resolving: boolean = false;
-
+export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     constructor(private _reporter: TelemetryReporter) {
     }
 
@@ -32,10 +30,10 @@ export class JavaConfigurationProvider implements vscode.DebugConfigurationProvi
     // Try to add all missing attributes to the debug configuration being launched.
     public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
-        return this.guessAndValidateDebugConfiguration(folder, config);
+        return this.heuristicallyResolveDebugConfiguration(folder, config);
     }
 
-    private async guessAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
+    private async heuristicallyResolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
         try {
             try {
                 const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
@@ -45,6 +43,7 @@ export class JavaConfigurationProvider implements vscode.DebugConfigurationProvi
                 console.log("Cannot set log level to java debuggeer.")
             }
             if (Object.keys(config).length === 0) { // No launch.json in current workspace.
+                this.log("usageError", "No launch.json.");
                 const ans = await vscode.window.showInformationMessage(
                     "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
                 if (ans === "Yes") {
@@ -54,17 +53,20 @@ export class JavaConfigurationProvider implements vscode.DebugConfigurationProvi
             } else if (config.request === "launch") {
                 if (!config.mainClass) {
                     vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
+                    this.log("usageError", "Please specify the mainClass in the launch.json.");
                     return undefined;
                 } else if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
                     config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
                 }
                 if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
                     vscode.window.showErrorMessage("Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
+                    this.log("usageError", "Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
                     return undefined;
                 }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
                     vscode.window.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
+                    this.log("usageError", "Please specify the host name and the port of the remote debuggee in the launch.json.");
                     return undefined;
                 }
             } else {
@@ -74,6 +76,7 @@ export class JavaConfigurationProvider implements vscode.DebugConfigurationProvi
                 if (ans === "Open launch.json") {
                     await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
                 }
+                this.log("usageError", "Illegal request type in launch.json");
                 return undefined;
             }
             const debugServerPort = await startDebugSession();
@@ -81,6 +84,7 @@ export class JavaConfigurationProvider implements vscode.DebugConfigurationProvi
                 config.debugServer = debugServerPort;
                 return config;
             } else {
+                this.log("exception", "Failed to start debug server.");
                 // Information for diagnostic:
                 console.log("Cannot find a port for debugging session");
                 return undefined;
@@ -105,6 +109,12 @@ export class JavaConfigurationProvider implements vscode.DebugConfigurationProvi
                 this._reporter.sendTelemetryEvent("exception", properties);
             }
             return undefined;
+        }
+    }
+
+    private log(type: string, message: string) {
+        if (this._reporter) {
+            this._reporter.sendTelemetryEvent(type, { message });
         }
     }
 }
