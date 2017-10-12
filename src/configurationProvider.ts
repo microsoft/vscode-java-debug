@@ -43,7 +43,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 console.log("Cannot set log level to java debuggeer.")
             }
             if (Object.keys(config).length === 0) { // No launch.json in current workspace.
-                this.log("usageError", "No launch.json.");
                 // VSCode will create a launch.json automatically if no launch.json yet.
                 return config;
             } else if (config.request === "launch") {
