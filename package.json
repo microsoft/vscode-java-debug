@@ -1,6 +1,6 @@
 {
   "name": "vscode-java-debug",
-  "displayName": "Java Debug Extension for Visual Studio Code",
+  "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
   "version": "0.1.0",
   "publisher": "vscjava",
