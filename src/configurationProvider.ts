@@ -44,12 +44,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
             if (Object.keys(config).length === 0) { // No launch.json in current workspace.
                 this.log("usageError", "No launch.json.");
-                const ans = await vscode.window.showInformationMessage(
-                    "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
-                if (ans === "Yes") {
-                    vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
-                }
-                return undefined;
+                // VSCode will create a launch.json automatically if no launch.json yet.
+                return config;
             } else if (config.request === "launch") {
                 if (!config.mainClass) {
                     vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
@@ -91,7 +87,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
         } catch (ex) {
             const errorMessage = (ex && ex.message) || ex;
-            vscode.window.showErrorMessage(errorMessage);
+            vscode.window.showErrorMessage(String(errorMessage));
             if (this._reporter) {
                 const exception = (ex && ex.data && ex.data.cause)
                     || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
