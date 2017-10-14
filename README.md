@@ -1,9 +1,9 @@
-# Java Debug Extension for Visual Studio Code
+# Debugger for Java
 
 [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)
 
 ## Overview
-A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug). It works with [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) to allow users debugging Java code using Visual Studio Code (VS Code). Here's a list of features:
+A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users debugging Java code using Visual Studio Code (VS Code). Here's a list of features:
 
 - Launch/Attach
 - Breakpoints
