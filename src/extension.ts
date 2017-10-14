@@ -11,20 +11,17 @@ const status: any = {};
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
     let reporter: TelemetryReporter = null;
-
+    let isConfigurationDirty: boolean = true;
     vscode.commands.registerCommand(commands.JAVA_START_DEBUGSESSION, async (config) => {
-
         if (!status.debugging) {
             status.debugging = "startDebugSession";
 
             try {
-                try {
-                    const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
-                    console.log("setting log level to ", level);
-                } catch (err) {
-                    // log a warning message and continue, since logger failure should not block debug session
-                    console.log("Cannot set log level to java debuggeer.")
+                if (isConfigurationDirty) {
+                    isConfigurationDirty = false;
+                    await updateConfiguration();
                 }
+
                 if (Object.keys(config).length === 0) { // No launch.json in current workspace.
                     const ans = await vscode.window.showInformationMessage(
                         "\"launch.json\" is needed to start the debugger. Do you want to create it now?", "Yes", "No");
@@ -122,6 +119,14 @@ export function activate(context: vscode.ExtensionContext) {
             });
         }
     }
+    vscode.workspace.onDidChangeConfiguration((event) => {
+        if (vscode.debug.activeDebugSession) {
+            isConfigurationDirty = false;
+            updateConfiguration();
+        } else {
+            isConfigurationDirty = true;
+        }
+    });
 }
 
 // this method is called when your extension is deactivated
@@ -149,7 +154,14 @@ function configLogLevel(level) {
     return executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
 }
 
-function convertLogLevel(commonLogLevel: string) {
+async function updateUserSettings() {
+    const settings: string[] = collectUserSettings();
+    if (settings && settings.length) {
+        console.log("settings:", await executeJavaLanguageServerCommand(commands.JAVA_UPDATE_USER_SETTINGS, ...settings));
+    }
+}
+
+function convertLogLevel(commonLogLevel: string): string {
     // convert common log level to java log level
     switch (commonLogLevel.toLowerCase())  {
         case "verbose" :
@@ -162,5 +174,45 @@ function convertLogLevel(commonLogLevel: string) {
             return "INFO";
         default:
             return "FINE";
+    }
+}
+
+function collectUserSettings(): string[] {
+    const settings: string[] =  [];
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.showHex")) {
+        settings.push("show_hex=true");
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.showStaticVariables")) {
+        settings.push("show_static_variables=true");
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.showQualifiedNames")) {
+        settings.push("show_qualified_names=true");
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLength")) {
+        settings.push("max_string_length=" + vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLength"));
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLengthInConsole")) {
+        settings.push("max_string_length_console=" + vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLengthInConsole"));
+    }
+    return settings;
+}
+
+async function updateConfiguration() {
+    try {
+        const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
+        console.log("setting log level to ", level);
+    } catch (err) {
+        // log a warning message and continue, since logger failure should not block debug session
+        console.log("Cannot set log level to java debuggeer.", err)
+    }
+    try {
+        await updateUserSettings();
+    } catch (err) {
+        // log a warning message and continue, since update settings failure should not block debug session
+        console.log("Cannot update settings.", err)
     }
 }
