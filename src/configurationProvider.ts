@@ -22,8 +22,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             type: "java",
             name: "Debug (Attach)",
             request: "attach",
-            hostName: "localhost",
-            port: 0,
+            remoteHost: "localhost",
+            remotePort: 0,
         }];
     }
 
@@ -59,7 +59,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     return undefined;
                 }
             } else if (config.request === "attach") {
-                if (!config.hostName || !config.port) {
+                if (!config.remoteHost || !config.remotePort) {
                     vscode.window.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
                     this.log("usageError", "Please specify the host name and the port of the remote debuggee in the launch.json.");
                     return undefined;
