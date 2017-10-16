@@ -98,16 +98,16 @@
           },
           "attach": {
             "required": [
-              "hostName",
-              "port"
+              "remoteHost",
+              "remotePort"
             ],
             "properties": {
-              "hostName": {
+              "remoteHost": {
                 "type": "string",
                 "default": "localhost",
                 "description": "The host name or ip address of remote debuggee."
               },
-              "port": {
+              "remotePort": {
                 "type": "number",
                 "description": "The debug port of remote debuggee."
               },
@@ -151,8 +151,8 @@
               "type": "java",
               "name": "Debug (Attach)",
               "request": "attach",
-              "hostName": "localhost",
-              "port": 0
+              "remoteHost": "localhost",
+              "remotePort": 0
             }
           }
         ]

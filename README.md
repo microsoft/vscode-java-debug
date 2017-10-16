@@ -31,7 +31,7 @@ ext install vscode-java-debug
 - Open a Java file to activate the extensions
 - Add debug configurations and edit launch.json
     - To launch: specify `mainClass`
-    - To attach: specify `hostName` and `port`
+    - To attach: specify `remoteHost` and `remotePort`
 - Press F5
 
 Please also check the documentation of [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) if you have trouble setting up your project.
@@ -50,8 +50,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 
 ### Attach
 
-- `hostName` (required) - The host name or IP address of remote debuggee.
-- `port` (required) - The debug port of remote debuggee.
+- `remoteHost` (required) - The host name or IP address of remote debuggee.
+- `remotePort` (required) - The debug port of remote debuggee.
 - `timeout` - Timeout value before reconnecting, in milliseconds (default to 30000ms).
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program.
