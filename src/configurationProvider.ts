@@ -114,33 +114,28 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 }
 
-export function executeJavaLanguageServerCommand(...rest) {
-    // TODO: need to handle error and trace telemetry
-    return vscode.commands.executeCommand(commands.JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
-}
-
 function startDebugSession() {
-    return executeJavaLanguageServerCommand(commands.JAVA_START_DEBUGSESSION);
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_START_DEBUGSESSION);
 }
 
 function resolveClasspath(mainClass, projectName) {
-    return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
 function configLogLevel(level) {
-    return executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
 }
 
 function convertLogLevel(commonLogLevel: string) {
     // convert common log level to java log level
-    switch (commonLogLevel.toLowerCase())  {
-        case "verbose" :
+    switch (commonLogLevel.toLowerCase()) {
+        case "verbose":
             return "FINE";
-        case "warn" :
+        case "warn":
             return "WARNING";
-        case "error" :
+        case "error":
             return "SEVERE";
-        case "info" :
+        case "info":
             return "INFO";
         default:
             return "FINE";
