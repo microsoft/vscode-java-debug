@@ -12,25 +12,34 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     // Returns an initial debug configurations based on contextual information.
     public provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration[]> {
-        return [{
-            type: "java",
-            name: "Debug (Launch)",
-            request: "launch",
-            mainClass: "",
-            args: "",
-        }, {
-            type: "java",
-            name: "Debug (Attach)",
-            request: "attach",
-            hostName: "localhost",
-            port: 0,
-        }];
+        return this.provideDebugConfigurationsAync(folder);
     }
 
     // Try to add all missing attributes to the debug configuration being launched.
     public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
         return this.heuristicallyResolveDebugConfiguration(folder, config);
+    }
+
+    private async provideDebugConfigurationsAync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
+        const res = <any[]>(await resolveMainClass());
+        const launchConfigs = res.map((item) => {
+            return {
+                type: "java",
+                name: "Debug (Launch)" + "-" + item.mainClass + "-" + item.projectName,
+                request: "launch",
+                mainClass: item.mainClass,
+                projectName: item.projectName,
+                args: "",
+            };
+        });
+        return [...launchConfigs, {
+            type: "java",
+            name: "Debug (Attach)",
+            request: "attach",
+            hostName: "localhost",
+            port: 0,
+        }];
     }
 
     private async heuristicallyResolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
@@ -47,10 +56,26 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 return config;
             } else if (config.request === "launch") {
                 if (!config.mainClass) {
-                    vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
-                    this.log("usageError", "Please specify the mainClass in the launch.json.");
-                    return undefined;
-                } else if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
+                    const res = <any[]>(await resolveMainClass());
+                    if (res.length === 0) {
+                        vscode.window.showErrorMessage("No main class exists in the workspace. Please use attach instead.");
+                        return;
+                    }
+                    const prefix = "MainClass|Project: ";
+                    const pickItems = res.map((item) => prefix + item.mainClass + "|" + item.projectName);
+                    const selection = await vscode.window.showInformationMessage("Please choose main class and project.").then(
+                        () => vscode.window.showQuickPick(pickItems));
+                    if (typeof(selection) !== "undefined") {
+                        const formatted = selection.substr(prefix.length).split("|");
+                        config.mainClass = formatted[0];
+                        config.projectName = formatted[1] === "undefined" ? undefined : formatted[1];
+                    } else {
+                        vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
+                        this.log("usageError", "Please specify the mainClass in the launch.json.");
+                        return undefined;
+                    }
+                }
+                if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
                     config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
                 }
                 if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
@@ -120,6 +145,10 @@ function startDebugSession() {
 
 function resolveClasspath(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
+}
+
+function resolveMainClass() {
+    return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
 function configLogLevel(level) {
