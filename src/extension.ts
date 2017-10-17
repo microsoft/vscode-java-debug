@@ -5,7 +5,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
-import { executeJavaLanguageServerCommand, JavaDebugConfigurationProvider } from "./configurationProvider";
+import { JavaDebugConfigurationProvider } from "./configurationProvider";
 
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
@@ -52,5 +52,5 @@ export function deactivate() {
 }
 
 function fetchUsageData() {
-    return executeJavaLanguageServerCommand(commands.JAVA_FETCH_USAGE_DATA);
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_FETCH_USAGE_DATA);
 }
