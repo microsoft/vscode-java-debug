@@ -12,13 +12,30 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     // Returns an initial debug configurations based on contextual information.
     public provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration[]> {
-        return [{
-            type: "java",
-            name: "Debug (Launch)",
-            request: "launch",
-            mainClass: "",
-            args: "",
-        }, {
+        return this.provideDebugConfigurationsAsync(folder);
+    }
+
+    // Try to add all missing attributes to the debug configuration being launched.
+    public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
+        vscode.ProviderResult<vscode.DebugConfiguration> {
+        return this.heuristicallyResolveDebugConfiguration(folder, config);
+    }
+
+    private async provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
+        const res = <any[]>(await resolveMainClass());
+        let cache;
+        cache = {};
+        const launchConfigs = res.map((item) => {
+            return {
+                type: "java",
+                name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
+                request: "launch",
+                mainClass: item.mainClass,
+                projectName: item.projectName,
+                args: "",
+            };
+        });
+        return [...launchConfigs, {
             type: "java",
             name: "Debug (Attach)",
             request: "attach",
@@ -27,10 +44,19 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }];
     }
 
-    // Try to add all missing attributes to the debug configuration being launched.
-    public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
-        vscode.ProviderResult<vscode.DebugConfiguration> {
-        return this.heuristicallyResolveDebugConfiguration(folder, config);
+    private constructLaunchConfigName(mainClass: string, projectName: string, cache: {}) {
+        const prefix = "Debug (Launch)-";
+        let name = prefix + mainClass.substr(mainClass.lastIndexOf(".") + 1);
+        if (projectName !== undefined) {
+            name += `<${projectName}>`;
+        }
+        if (cache[name] === undefined) {
+            cache[name] = 0;
+            return name;
+        } else {
+            cache[name] += 1;
+            return `${name}(${cache[name]})`;
+        }
     }
 
     private async heuristicallyResolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
@@ -47,10 +73,38 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 return config;
             } else if (config.request === "launch") {
                 if (!config.mainClass) {
-                    vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
-                    this.log("usageError", "Please specify the mainClass in the launch.json.");
-                    return undefined;
-                } else if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
+                    const res = <any[]>(await resolveMainClass());
+                    if (res.length === 0) {
+                        vscode.window.showErrorMessage(
+                            "No main class is resolved in the workspace. Please specify the mainClass (e.g. com.xyz.MainClass) in the launch.json.");
+                        return;
+                    }
+                    const pickItems = res.map((item) => {
+                        let name = item.mainClass;
+                        let details = `main class: ${item.mainClass}`;
+                        if (item.projectName !== undefined) {
+                            name += `<${item.projectName}>`;
+                            details += ` | project name: ${item.projectName}`;
+                        }
+                        return {
+                            description: details,
+                            label: name,
+                            item,
+                        };
+                    }).sort ((a, b): number => {
+                        return a.label > b.label ? 1 : -1;
+                    });
+                    const selection = await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" });
+                    if (selection) {
+                        config.mainClass = selection.item.mainClass;
+                        config.projectName = selection.item.projectName;
+                    } else {
+                        vscode.window.showErrorMessage("Please specify the mainClass (e.g. com.xyz.MainClass) in the launch.json.");
+                        this.log("usageError", "Please specify the mainClass (e.g. com.xyz.MainClass) in the launch.json.");
+                        return undefined;
+                    }
+                }
+                if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
                     config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
                 }
                 if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
@@ -120,6 +174,10 @@ function startDebugSession() {
 
 function resolveClasspath(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
+}
+
+function resolveMainClass() {
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
 function configLogLevel(level) {
