@@ -177,7 +177,7 @@ function resolveClasspath(mainClass, projectName) {
 }
 
 function resolveMainClass() {
-    return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
 function configLogLevel(level) {
