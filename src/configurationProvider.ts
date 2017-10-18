@@ -48,14 +48,14 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         const prefix = "Debug (Launch)-";
         let name = prefix + mainClass.substr(mainClass.lastIndexOf(".") + 1);
         if (projectName !== undefined) {
-            name += "<" + projectName + ">";
+            name += `<${projectName}>`;
         }
         if (cache[name] === undefined) {
             cache[name] = 0;
             return name;
         } else {
             cache[name] += 1;
-            return name + cache[name];
+            return `${name}(${cache[name]})`;
         }
     }
 
@@ -81,10 +81,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     }
                     const pickItems = res.map((item) => {
                         let name = item.mainClass;
-                        let details = "main class: " + item.mainClass;
+                        let details = `main class: ${item.mainClass}`;
                         if (item.projectName !== undefined) {
-                            name += "<" + item.projectName + ">";
-                            details += " | project name: " + item.projectName;
+                            name += `<${item.projectName}>`;
+                            details += ` | project name: ${item.projectName}`;
                         }
                         return {
                             description: details,
