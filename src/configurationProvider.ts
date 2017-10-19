@@ -12,7 +12,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     // Returns an initial debug configurations based on contextual information.
     public provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration[]> {
-        return this.provideDebugConfigurationsAsync(folder);
+        return <Thenable<vscode.DebugConfiguration[]>>this.provideDebugConfigurationsAsync(folder);
     }
 
     // Try to add all missing attributes to the debug configuration being launched.
@@ -21,27 +21,36 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return this.heuristicallyResolveDebugConfiguration(folder, config);
     }
 
-    private async provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
-        const res = <any[]>(await resolveMainClass());
-        let cache;
-        cache = {};
-        const launchConfigs = res.map((item) => {
-            return {
-                type: "java",
-                name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
-                request: "launch",
-                mainClass: item.mainClass,
-                projectName: item.projectName,
-                args: "",
-            };
+    private provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
+        return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
+            return new Promise((resolve, reject) => {
+                p.report({message: "Auto generating configuration..."});
+                resolveMainClass().then((res: any[]) => {
+                    let cache;
+                    cache = {};
+                    const launchConfigs = res.map((item) => {
+                        return {
+                            type: "java",
+                            name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
+                            request: "launch",
+                            mainClass: item.mainClass,
+                            projectName: item.projectName,
+                            args: "",
+                        };
+                    });
+                    resolve([...launchConfigs, {
+                        type: "java",
+                        name: "Debug (Attach)",
+                        request: "attach",
+                        hostName: "localhost",
+                        port: 0,
+                    }]);
+                }, (ex) => {
+                    p.report({message: `failed to generate configuration. ${ex}`});
+                    reject(ex);
+                });
+            });
         });
-        return [...launchConfigs, {
-            type: "java",
-            name: "Debug (Attach)",
-            request: "attach",
-            hostName: "localhost",
-            port: 0,
-        }];
     }
 
     private constructLaunchConfigName(mainClass: string, projectName: string, cache: {}) {
