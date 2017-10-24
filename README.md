@@ -45,6 +45,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `args` - The command line arguments passed to the program.
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `classPaths` - The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
+- `classPathsToAdd` - Additional classpaths to add before launching the JVM.
+- `classPathsToRemove` - Classpaths to remove before when launching the JVM.
 - `encoding` - The `file.encoding` setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.
 - `vmArgs` - The extra options and system properties for the JVM (e.g. -Xms\<size\> -Xmx\<size\> -D\<name\>=\<value\>).
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program.

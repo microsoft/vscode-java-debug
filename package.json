@@ -81,6 +81,22 @@
                 "description": "The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.",
                 "default": []
               },
+              "classPathsToAdd": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Additional classpaths to add before launching the JVM.",
+                "default": []
+              },
+              "classPathsToRemove": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Classpaths to remove before when launching the JVM.",
+                "default": []
+              },
               "sourcePaths": {
                 "type": "array",
                 "items": {

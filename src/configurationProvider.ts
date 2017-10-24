@@ -121,6 +121,14 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     this.log("usageError", "Cannot resolve the classpaths automatically, please specify the value in the launch.json.");
                     return undefined;
                 }
+                if (config.classPathsToRemove) {
+                    config.classPathsToRemove = config.classPathsToRemove.map(cp => substituteVariablesInClasspath(folder, cp));
+                    config.classPaths = config.classPaths.filter(cp => config.classPathsToRemove.indexOf(cp) < 0);
+                }
+                if (config.classPathsToAdd) {
+                    config.classPathsToAdd = config.classPathsToAdd.map(cp => substituteVariablesInClasspath(folder, cp));
+                    config.classPaths = config.classPaths.concat(config.classPathsToAdd);
+                }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
                     vscode.window.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
@@ -191,6 +199,10 @@ function resolveMainClass() {
 
 function configLogLevel(level) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
+}
+
+function substituteVariablesInClasspath(folder: vscode.WorkspaceFolder, classpath: string) {
+    return classpath.replace('${workspaceFolder}', folder.uri.fsPath);
 }
 
 function convertLogLevel(commonLogLevel: string) {
