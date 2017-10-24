@@ -192,11 +192,10 @@
     "gulp-tslint": "^8.1.2",
     "mocha": "^2.3.3",
     "tslint": "^5.7.0",
-	"vscode": "^1.1.6",
+	  "vscode": "^1.1.6",
     "typescript": "^2.0.3"    
   },
-  "dependencies": {   
-    "vscode": "^1.1.6",
+  "dependencies": {       
     "vscode-extension-telemetry": "0.0.8"
   }
 }
