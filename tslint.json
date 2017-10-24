@@ -10,7 +10,7 @@
         "max-classes-per-file": [
             false
         ],
-		"no-implicit-dependencies": [true, "dev"],
+        "no-implicit-dependencies": [true, "dev"],
         "no-empty": false,
         "object-literal-sort-keys": false,
         "curly": true,
