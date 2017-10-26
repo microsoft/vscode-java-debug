@@ -33,6 +33,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             type: "java",
                             name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
                             request: "launch",
+                            // tslint:disable-next-line
                             cwd: "${workspaceFolder}",
                             mainClass: item.mainClass,
                             projectName: item.projectName,
