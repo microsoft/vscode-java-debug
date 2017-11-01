@@ -93,6 +93,16 @@
                 "type": "string",
                 "description": "The file.encoding setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
                 "default": "UTF-8"
+              },
+              "cwd": {
+                "type": "string",
+                "description": "The working directory of the program.",
+                "default": "${workspaceFolder}"
+              },
+              "env": {
+                "type": "object",
+                "description": "The extra environment variables for the program.",
+                "default": {}
               }
             }
           },
@@ -140,6 +150,7 @@
               "type": "java",
               "name": "Debug (Launch)",
               "request": "launch",
+              "cwd": "^\"\\${workspaceFolder}\"",
               "mainClass": "",
               "args": ""
             }
