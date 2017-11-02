@@ -87,7 +87,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     const res = <any[]>(await resolveMainClass());
                     if (res.length === 0) {
                         vscode.window.showErrorMessage(
-                            "No main class is resolved in the workspace. Please specify the mainClass (e.g. [<mymodule>/]com.xyz.MainClass) in the launch.json.");
+                            "No main class is resolved in the workspace. Please specify the mainClass " +
+                            "(e.g. [<mymodule>/]com.xyz.MainClass) in the launch.json.");
                         return;
                     }
                     const pickItems = res.map((item) => {
@@ -121,8 +122,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.classPaths = result[1];
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
-                    vscode.window.showErrorMessage("Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.");
-                    this.log("usageError", "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.");
+                    const hintMessage = "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.";
+                    vscode.window.showErrorMessage(hintMessage);
+                    this.log("usageError", hintMessage);
                     return undefined;
                 }
             } else if (config.request === "attach") {
@@ -180,7 +182,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private isEmptyArray(configItems: any) : boolean {
+    private isEmptyArray(configItems: any): boolean {
         return !Array.isArray(configItems) || !configItems.length;
     }
 }
