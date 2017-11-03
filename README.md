@@ -17,9 +17,9 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Debug console
 
 ## Requirements
-- JDK (version 1.8.0 and later)
-- VS Code (version 1.17.0 and later)
-- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) (version 0.12.0 and later)
+- JDK (version 1.8.0 or later)
+- VS Code (version 1.17.0 or later)
+- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) (version 0.12.0 or later)
 
 ## Install
 
@@ -75,4 +75,4 @@ You can find the full list of issues at [Issue Tracker](https://github.com/Micro
 This extension is licensed under [MIT License](https://github.com/Microsoft/vscode-arduino/blob/master/LICENSE.txt).
 
 ## Data/Telemetry
-Java Debug Extension for Visual Studio Code collects usage data and sends it to Microsoft to help improve our products and services. Read our [privacy statement](http://go.microsoft.com/fwlink/?LinkId=521839) to learn more. 
+Debugger for Java collects usage data and sends it to Microsoft to help improve our products and services. Read our [privacy statement](http://go.microsoft.com/fwlink/?LinkId=521839) to learn more. 
