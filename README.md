@@ -16,6 +16,11 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Threads
 - Debug console
 
+## Requirements
+- JDK (version 1.8.0 and later)
+- VS Code (version 1.17.0 and later)
+- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) (version 0.12.0 and later)
+
 ## Install
 
 Open VS Code and press `F1` or `Ctrl + Shift + P` to open command palette, select **Install Extension** and type `vscode-java-debug`.
