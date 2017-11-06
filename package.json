@@ -60,7 +60,7 @@
               },
               "mainClass": {
                 "type": "string",
-                "description": "The main class of the program (fully qualified name, e.g. com.xyz.MainClass).",
+                "description": "The main class of the program (fully qualified name, e.g. [mymodule/]com.xyz.MainClass).",
                 "default": ""
               },
               "args": {
@@ -72,6 +72,14 @@
                 "type": "string",
                 "description": "The extra options and system properties for the JVM (e.g. -Xms<size> -Xmx<size> -D<name>=<value>).",
                 "default": ""
+              },
+              "modulePaths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.",
+                "default": []
               },
               "classPaths": {
                 "type": "array",
