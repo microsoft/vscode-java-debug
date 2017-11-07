@@ -79,10 +79,23 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 // log a warning message and continue, since logger failure should not block debug session
                 console.log("Cannot set log level to java debuggeer.")
             }
-            if (Object.keys(config).length === 0) { // No launch.json in current workspace.
-                // VSCode will create a launch.json automatically if no launch.json yet.
+
+            // trigger build workspace
+            try {
+                const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE);
+                console.log(buildResult);
+            } catch (err) {
+                vscode.window.showErrorMessage("Build failed, please fix build error first.");
                 return config;
-            } else if (config.request === "launch") {
+            }
+
+            if (Object.keys(config).length === 0) { // No launch.json in current workspace.
+                // Generate config in memory for files without project.
+                config.type = "java";
+                config.name = "Java Debug";
+                config.request = "launch";
+            }
+            if (config.request === "launch") {
                 if (!config.mainClass) {
                     const res = <any[]>(await resolveMainClass());
                     if (res.length === 0) {
