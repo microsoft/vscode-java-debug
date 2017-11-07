@@ -47,6 +47,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             mainClass: item.mainClass,
                             projectName: item.projectName,
                             args: "",
+                            stopOnEntry: true,
                         };
                     });
                     resolve([...launchConfigs, {
