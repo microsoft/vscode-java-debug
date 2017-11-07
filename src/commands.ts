@@ -21,6 +21,8 @@ export const JAVA_FETCH_USAGE_DATA = "vscode.java.fetchUsageData";
 
 export const JAVA_CONFIG_LOG_LEVEL = "vscode.java.configLogLevel";
 
+export const JAVA_UPDATE_DEBUG_SETTINGS = "vscode.java.updateDebugSettings";
+
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
     return vscode.commands.executeCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);

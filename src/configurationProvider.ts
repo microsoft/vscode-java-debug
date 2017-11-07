@@ -6,7 +6,16 @@ import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+    private isUserSettingsDirty: boolean = true;
     constructor(private _reporter: TelemetryReporter) {
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (vscode.debug.activeDebugSession) {
+                this.isUserSettingsDirty = false;
+                return updateUserSettings();
+            } else {
+                this.isUserSettingsDirty = true;
+            }
+        });
     }
 
     // Returns an initial debug configurations based on contextual information.
@@ -72,12 +81,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async heuristicallyResolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
         try {
-            try {
-                const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
-                console.log("setting log level to ", level);
-            } catch (err) {
-                // log a warning message and continue, since logger failure should not block debug session
-                console.log("Cannot set log level to java debuggeer.")
+            if (this.isUserSettingsDirty) {
+                this.isUserSettingsDirty = false;
+                await updateUserSettings();
             }
 
             // trigger build workspace
@@ -214,6 +220,57 @@ function resolveMainClass() {
 
 function configLogLevel(level) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
+}
+
+interface IDebugSettings {
+    show_hex?: boolean;
+    show_static_variables?: boolean;
+    show_qualified_names?: boolean;
+    max_string_length?: number;
+}
+
+async function updateDebugSettings() {
+    const settings: IDebugSettings = collectDebugSettings();
+    if (settings && Object.keys(settings).length) {
+        console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(settings)));
+    }
+}
+
+async function updateUserSettings() {
+    try {
+        const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
+        console.log("setting log level to ", level);
+    } catch (err) {
+        // log a warning message and continue, since logger failure should not block debug session
+        console.log("Cannot set log level to java debuggeer.", err)
+    }
+    try {
+        await updateDebugSettings();
+    } catch (err) {
+        // log a warning message and continue, since update settings failure should not block debug session
+        console.log("Cannot update debug settings.", err)
+    }
+}
+
+function collectDebugSettings(): IDebugSettings {
+    const settings: IDebugSettings = {};
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.showHex")) {
+        settings.show_hex = true;
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.showStaticVariables")) {
+        settings.show_static_variables = true;
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.showQualifiedNames")) {
+        settings.show_qualified_names = true;
+    }
+
+    if (vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLength")) {
+        settings.max_string_length = vscode.workspace.getConfiguration().get<number>("java.debug.settings.maxStringLength");
+    }
+
+    return settings;
 }
 
 function convertLogLevel(commonLogLevel: string) {
