@@ -224,10 +224,10 @@ function configLogLevel(level) {
 }
 
 interface IDebugSettings {
-    show_hex?: boolean;
-    show_static_variables?: boolean;
-    show_qualified_names?: boolean;
-    max_string_length?: number;
+    showHex?: boolean;
+    showStaticVariables?: boolean;
+    showQualifiedNames?: boolean;
+    maxStringLength?: number;
 }
 
 async function updateDebugSettings() {
@@ -256,19 +256,19 @@ async function updateUserSettings() {
 function collectDebugSettings(): IDebugSettings {
     const settings: IDebugSettings = {};
     if (vscode.workspace.getConfiguration().get("java.debug.settings.showHex")) {
-        settings.show_hex = true;
+        settings.showHex = true;
     }
 
     if (vscode.workspace.getConfiguration().get("java.debug.settings.showStaticVariables")) {
-        settings.show_static_variables = true;
+        settings.showStaticVariables = true;
     }
 
     if (vscode.workspace.getConfiguration().get("java.debug.settings.showQualifiedNames")) {
-        settings.show_qualified_names = true;
+        settings.showQualifiedNames = true;
     }
 
     if (vscode.workspace.getConfiguration().get("java.debug.settings.maxStringLength")) {
-        settings.max_string_length = vscode.workspace.getConfiguration().get<number>("java.debug.settings.maxStringLength");
+        settings.maxStringLength = vscode.workspace.getConfiguration().get<number>("java.debug.settings.maxStringLength");
     }
 
     return settings;
