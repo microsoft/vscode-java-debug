@@ -5,9 +5,6 @@ import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 
-import fs = require("fs");
-import path = require("path");
-
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     constructor(private _reporter: TelemetryReporter) {
     }
@@ -94,12 +91,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             if (Object.keys(config).length === 0) { // No launch.json in current workspace.
-                // check whether it is a project
-                if (folder !== undefined && this.isProject(folder.uri.fsPath)) {
-                    // for project, return directly.
+                // check whether it is opened as a folder
+                if (folder !== undefined) {
+                    // for opened with folder, return directly.
                     return config;
                 }
-                // Generate config in memory for files without project.
+                // Generate config in memory for single file
                 config.type = "java";
                 config.name = "Java Debug";
                 config.request = "launch";
@@ -207,18 +204,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private isEmptyArray(configItems: any): boolean {
         return !Array.isArray(configItems) || !configItems.length;
-    }
-
-    private isProject(folder: string): boolean {
-        const files = fs.readdirSync(folder);
-        return files.find((f) => {
-            const fullPath = path.resolve(folder, f);
-            const stats = fs.statSync(fullPath);
-            if (stats.isDirectory()) {
-                return this.isProject(fullPath);
-            }
-            return f === ".project"
-        }) !== undefined;
     }
 }
 
