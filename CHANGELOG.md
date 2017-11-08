@@ -12,12 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support "stopOnEntry" in launch.json. See [Issue#26](https://github.com/Microsoft/vscode-java-debug/issues/26)
 
 ### Changed
-- Build workspace first before starting debugger. See [Issue#32](https://github.com/Microsoft/vscode-java-debug/issues/32)
+- Build workspace before starting debugger. See [Issue#32](https://github.com/Microsoft/vscode-java-debug/issues/32)
 - Show progress when initializing the launch.json. See [PR#106](https://github.com/Microsoft/vscode-java-debug/pull/106)
 - Get debug settings from VSCode user preferences. See [PR#135](https://github.com/Microsoft/vscode-java-debug/pull/135),[PR#94](https://github.com/Microsoft/java-debug/pull/94)
 
 ### Fixed
-- Fix perf issue on get locations of breakpoint. See [Issue#49](https://github.com/Microsoft/java-debug/issues/49)
+- Fix perf issue on getting locations of breakpoint. See [Issue#49](https://github.com/Microsoft/java-debug/issues/49)
 - Show warning message when the debugger and the debuggee run in the different versions of JVMs. See [Issue#30](https://github.com/Microsoft/vscode-java-debug/issues/30)
 
 ## 0.2.0 - 2017-10-20
