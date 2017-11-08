@@ -213,7 +213,6 @@
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",
     "gulp": "^3.9.1",
-    "gulp-copy": "^1.0.1",
     "gulp-tslint": "^8.1.2",
     "mocha": "^2.3.3",
     "tslint": "^5.7.0",
