@@ -107,6 +107,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.request = "launch";
             }
 
+            // Workaround bug https://github.com/Microsoft/vscode-java-debug/issues/145
+            config.stopOnEntry = false;
+
             if (config.request === "launch") {
                 if (!config.mainClass) {
                     const res = <any[]>(await resolveMainClass());

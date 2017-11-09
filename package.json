@@ -111,11 +111,6 @@
                 "type": "object",
                 "description": "The extra environment variables for the program.",
                 "default": {}
-              },
-              "stopOnEntry": {
-                "type": "boolean",
-                "description": "Automatically stop after launch.",
-                "default": true
               }
             }
           },
