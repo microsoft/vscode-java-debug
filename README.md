@@ -71,7 +71,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.logLevel`: minimum level of debugger logs that are sent to VS Code, defaults to `warn`.
 - `java.debug.settings.showHex`: show numbers in hex format in "Variables" viewlet, defaults to `false`.
 - `java.debug.settings.showStaticVariables`: show static variables in "Variables" viewlet, defaults to `true`.
-- `java.debug.settings.showQualifiedNames`: show the fully qualified class name in "Variables" viewlet, defaults to `false`.
+- `java.debug.settings.showQualifiedNames`: show the fully qualified class names in "Variables" viewlet, defaults to `false`.
 - `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 
 ## Feedback and Questions
