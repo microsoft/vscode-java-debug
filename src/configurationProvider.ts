@@ -6,7 +6,16 @@ import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+    private isUserSettingsDirty: boolean = true;
     constructor(private _reporter: TelemetryReporter) {
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (vscode.debug.activeDebugSession) {
+                this.isUserSettingsDirty = false;
+                return updateDebugSettings();
+            } else {
+                this.isUserSettingsDirty = true;
+            }
+        });
     }
 
     // Returns an initial debug configurations based on contextual information.
@@ -72,12 +81,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async heuristicallyResolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
         try {
-            try {
-                const level = await configLogLevel(vscode.workspace.getConfiguration().get("java.debug.logLevel"));
-                console.log("setting log level to ", level);
-            } catch (err) {
-                // log a warning message and continue, since logger failure should not block debug session
-                console.log("Cannot set log level to java debuggeer.")
+            if (this.isUserSettingsDirty) {
+                this.isUserSettingsDirty = false;
+                await updateDebugSettings();
             }
 
             // trigger build workspace
@@ -218,8 +224,21 @@ function resolveMainClass() {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
-function configLogLevel(level) {
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_CONFIG_LOG_LEVEL, convertLogLevel(level));
+async function updateDebugSettings() {
+    const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug");
+    if (!debugSettingsRoot) {
+        return;
+    }
+    const logLevel = convertLogLevel(debugSettingsRoot.logLevel || "");
+    if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
+        try {
+            console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
+                { ...debugSettingsRoot.settings, logLevel })));
+        } catch (err) {
+            // log a warning message and continue, since update settings failure should not block debug session
+            console.log("Cannot update debug settings.", err)
+        }
+    }
 }
 
 function convertLogLevel(commonLogLevel: string) {

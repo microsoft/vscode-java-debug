@@ -190,12 +190,33 @@
         "java.debug.logLevel": {
           "type": "string",
           "default": "warn",
+          "description": "minimum level of debugger logs that are sent to VS Code",
           "enum": [
             "error",
             "warn",
             "info",
             "verbose"
           ]
+        },
+        "java.debug.settings.showHex": {
+          "type": "boolean",
+          "description" : "show numbers in hex format in \"Variables\" viewlet.",
+          "default": false
+        },
+        "java.debug.settings.showStaticVariables": {
+          "type": "boolean",
+          "description": "show static variables in \"Variables\" viewlet",
+          "default": true
+        },
+        "java.debug.settings.showQualifiedNames": {
+          "type": "boolean",
+          "description": "show fully qualified class names in \"Variables\" viewlet",
+          "default": false
+        },
+        "java.debug.settings.maxStringLength": {
+          "type": "number",
+          "description": "the maximum length of string displayed in \"Variables\" or \"Debug Console\" viewlet, the string longer than this length will be trimmed, defaults to 0 which means no trim is performed.",
+          "default": 0
         }
       }
     }
