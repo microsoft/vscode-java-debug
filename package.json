@@ -200,22 +200,22 @@
         },
         "java.debug.settings.showHex": {
           "type": "boolean",
-          "description" : "show the number in hex format in variable view",
+          "description" : "show numbers in hex format in \"Variables\" viewlet.",
           "default": false
         },
         "java.debug.settings.showStaticVariables": {
           "type": "boolean",
-          "description": "show the static variables in variable view",
+          "description": "show static variables in \"Variables\" viewlet",
           "default": true
         },
         "java.debug.settings.showQualifiedNames": {
           "type": "boolean",
-          "description": "show the fully qualified class name in variable view",
+          "description": "show fully qualified class names in \"Variables\" viewlet",
           "default": false
         },
         "java.debug.settings.maxStringLength": {
           "type": "number",
-          "description": "the maximum length of string displayed in variable view/console, the string longer than this length will be trimmed, defaults to 0 which means no trim is performed.",
+          "description": "the maximum length of string displayed in \"Variables\" or \"Debug Console\" viewlet, the string longer than this length will be trimmed, defaults to 0 which means no trim is performed.",
           "default": 0
         }
       }

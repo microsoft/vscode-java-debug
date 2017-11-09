@@ -69,10 +69,10 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 ### User Settings
 
 - `java.debug.logLevel`: minimum level of debugger logs that are sent to VS Code, defaults to `warn`.
-- `java.debug.settings.showHex`: show the number in hex format in variable view, defaults to `false`.
-- `java.debug.settings.showStaticVariables`: show the static variables in variable view, defaults to `true`.
-- `java.debug.settings.showQualifiedNames`: show the fully qualified class name in variable view, defaults to `false`.
-- `java.debug.settings.maxStringLength`: the maximum length of string displayed in variable view/console, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
+- `java.debug.settings.showHex`: show numbers in hex format in "Variables" viewlet, defaults to `false`.
+- `java.debug.settings.showStaticVariables`: show static variables in "Variables" viewlet, defaults to `true`.
+- `java.debug.settings.showQualifiedNames`: show the fully qualified class name in "Variables" viewlet, defaults to `false`.
+- `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 
 ## Feedback and Questions
 You can find the full list of issues at [Issue Tracker](https://github.com/Microsoft/vscode-java-debug/issues). You can submit a [bug or feature suggestion](https://github.com/Microsoft/vscode-java-debug/issues/new), and participate community driven [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)
