@@ -165,8 +165,7 @@
               "request": "launch",
               "cwd": "^\"\\${workspaceFolder}\"",
               "mainClass": "",
-              "args": "",
-              "stopOnEntry": true
+              "args": ""
             }
           },
           {
