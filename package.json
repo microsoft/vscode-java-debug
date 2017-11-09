@@ -200,17 +200,17 @@
         },
         "java.debug.settings.showHex": {
           "type": "boolean",
-          "description" : "whether or not the number should be displayed as hex format in variable view",
+          "description" : "show the number in hex format in variable view",
           "default": false
         },
         "java.debug.settings.showStaticVariables": {
           "type": "boolean",
-          "description": "whether or not the static variables will be displayed in variable view",
+          "description": "show the static variables in variable view",
           "default": true
         },
         "java.debug.settings.showQualifiedNames": {
           "type": "boolean",
-          "description": "whether or not the class name should be displayed using the fully qualified class name",
+          "description": "show the fully qualified class name in variable view",
           "default": false
         },
         "java.debug.settings.maxStringLength": {
