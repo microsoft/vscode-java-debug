@@ -111,6 +111,55 @@
                 "type": "object",
                 "description": "The extra environment variables for the program.",
                 "default": {}
+              },
+              "debugFilters": {
+                "type": "object",
+                "description": "Customize the filters to debug \"Just My Code\".",
+                "default": {
+                  "stepFilters": [
+                    "java.*",
+                    "javax.*",
+                    "com.sun.*",
+                    "sun.*",
+                    "sunw.*",
+                    "org.omg.*"
+                  ],
+                  "skipSynthetics": false,
+                  "skipStaticInitializers": false,
+                  "skipConstructors": false
+                },
+                "properties": {
+                  "stepFilters": {
+                    "type": "array",
+                    "description": "Skip these classes when stepping. Each filter could be fully qualified class name or pattern. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
+                    "item": {
+                      "type": "string"
+                    },
+                    "default": [
+                      "java.*",
+                      "javax.*",
+                      "com.sun.*",
+                      "sun.*",
+                      "sunw.*",
+                      "org.omg.*"
+                    ]
+                  },
+                  "skipSynthetics": {
+                    "type": "boolean",
+                    "description": "Skip synthetic methods when stepping.",
+                    "default": true
+                  },
+                  "skipStaticInitializers": {
+                    "type": "boolean",
+                    "description": "Skip static initializer methods when stepping.",
+                    "default": true
+                  },
+                  "skipConstructors": {
+                    "type": "boolean",
+                    "description": "Skip constructor methods when stepping.",
+                    "default": true
+                  }
+                }
               }
             }
           },
@@ -146,6 +195,55 @@
                 "type": "string",
                 "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects.",
                 "default": ""
+              },
+              "debugFilters": {
+                "type": "object",
+                "description": "Customize the filters to debug \"Just My Code\".",
+                "default": {
+                  "stepFilters": [
+                    "java.*",
+                    "javax.*",
+                    "com.sun.*",
+                    "sun.*",
+                    "sunw.*",
+                    "org.omg.*"
+                  ],
+                  "skipSynthetics": false,
+                  "skipStaticInitializers": false,
+                  "skipConstructors": false
+                },
+                "properties": {
+                  "stepFilters": {
+                    "type": "array",
+                    "description": "Skip these classes when stepping. Each filter could be fully qualified class name or pattern. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
+                    "item": {
+                      "type": "string"
+                    },
+                    "default": [
+                      "java.*",
+                      "javax.*",
+                      "com.sun.*",
+                      "sun.*",
+                      "sunw.*",
+                      "org.omg.*"
+                    ]
+                  },
+                  "skipSynthetics": {
+                    "type": "boolean",
+                    "description": "Skip synthetic methods when stepping.",
+                    "default": false
+                  },
+                  "skipStaticInitializers": {
+                    "type": "boolean",
+                    "description": "Skip static initializer methods when stepping.",
+                    "default": false
+                  },
+                  "skipConstructors": {
+                    "type": "boolean",
+                    "description": "Skip constructor methods when stepping.",
+                    "default": false
+                  }
+                }
               }
             }
           }
