@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
+import { startHotCodeReplace } from "./hotCodeReplace";
 
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
@@ -43,8 +44,8 @@ export function activate(context: vscode.ExtensionContext) {
             });
         }
     }
-
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider(reporter)));
+    startHotCodeReplace(context);
 }
 
 // this method is called when your extension is deactivated
