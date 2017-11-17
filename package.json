@@ -198,7 +198,7 @@
               },
               "debugFilters": {
                 "type": "object",
-                "description": "Customize the filters to debug \"Just My Code\".",
+                "description": "Customize the filters to skip the specified methods and classes when stepping.",
                 "default": {
                   "stepFilters": [
                     "java.*",
@@ -215,7 +215,7 @@
                 "properties": {
                   "stepFilters": {
                     "type": "array",
-                    "description": "Skip these classes when stepping. Each filter could be fully qualified class name or pattern. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
+                    "description": "Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '*' or ends with '*'. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
                     "item": {
                       "type": "string"
                     },
