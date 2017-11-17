@@ -86,19 +86,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 await updateDebugSettings();
             }
 
-            // Fix issue: https://github.com/Microsoft/vscode-java-debug/issues/146.
-            // A bug in java launguage support extension causes the compilation task continue to clean and
-            // generate files after the command returned and the debuggee will report
-            // "Could not find or load main class" error when it find the required class file is not in the classpath,
-            // the commented code will be uncommented when java launguage support extension version 0.14.0 release comes out.
-            // the bug is fixed at https://github.com/redhat-developer/vscode-java/commit/d7cb375874665b826377c072a914623f03362f4d
-            // try {
-            //     const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE);
-            //     console.log(buildResult);
-            // } catch (err) {
-            //     vscode.window.showErrorMessage("Build failed, please fix build error first.");
-            //     return config;
-            // }
+            try {
+                const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE);
+                console.log(buildResult);
+            } catch (err) {
+                vscode.window.showErrorMessage("Build failed, please fix build error first.");
+                return config;
+            }
 
             if (Object.keys(config).length === 0) { // No launch.json in current workspace.
                 // check whether it is opened as a folder
