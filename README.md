@@ -19,7 +19,7 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 ## Requirements
 - JDK (version 1.8.0 or later)
 - VS Code (version 1.17.0 or later)
-- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) (version 0.13.0 or later)
+- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) (version 0.14.0 or later)
 
 ## Install
 
