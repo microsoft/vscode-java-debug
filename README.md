@@ -56,8 +56,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program.
 - `cwd` - The working directory of the program.
 - `env` - The extra environment variables for the program.
-- `debugFilters` - Customize the filters to debug "Just My Code".
-  - `stepFilters` - Skip these classes when stepping. Each filter could be fully qualified class name or pattern. Example: [\"java.lang.ClassLoader\", \"java.*\"].
+- `debugFilters` - Customize the filters to skip the specified methods and classes when stepping.
+  - `stepFilters` - Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '\*' or ends with '\*'. Example: [\"java.lang.ClassLoader\", \"java.*\"].
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
