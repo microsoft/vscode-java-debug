@@ -170,6 +170,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 this.log("usageError", "Illegal request type in launch.json");
                 return undefined;
             }
+            const project = !config.projectName ?  await resolveProjectName(config.mainClass): config.projectName;
             const debugServerPort = await startDebugSession();
             if (debugServerPort) {
                 config.debugServer = debugServerPort;
@@ -224,6 +225,10 @@ function resolveClasspath(mainClass, projectName) {
 
 function resolveMainClass() {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
+}
+
+function resolveProjectName(mainClass) {
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_PROJECT, mainClass);
 }
 
 async function updateDebugSettings() {

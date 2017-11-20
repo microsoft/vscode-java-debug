@@ -13,6 +13,8 @@ export const JAVA_RESOLVE_CLASSPATH = "vscode.java.resolveClasspath";
 
 export const JAVA_RESOLVE_MAINCLASS = "vscode.java.resolveMainClass";
 
+export const JAVA_RESOLVE_PROJECT = "vscode.java.resolveProject";
+
 export const JAVA_BUILD_WORKSPACE = "java.workspace.compile";
 
 export const JAVA_EXECUTE_WORKSPACE_COMMAND = "java.execute.workspaceCommand";
