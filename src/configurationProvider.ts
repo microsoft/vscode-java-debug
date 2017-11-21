@@ -34,7 +34,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
             return new Promise((resolve, reject) => {
                 p.report({message: "Auto generating configuration..."});
-                resolveMainClass().then((res: any[]) => {
+                resolveMainClass(folder.uri).then((res: any[]) => {
                     let cache;
                     cache = {};
                     const launchConfigs = res.map((item) => {
@@ -111,7 +111,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
             if (config.request === "launch") {
                 if (!config.mainClass) {
-                    const res = <any[]>(await resolveMainClass());
+                    const res = <any[]>(await resolveMainClass(folder.uri));
                     if (res.length === 0) {
                         vscode.window.showErrorMessage(
                             "Cannot resolve main class automatically, please specify the mainClass " +
@@ -222,8 +222,8 @@ function resolveClasspath(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
-function resolveMainClass() {
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
+function resolveMainClass(workspaceUri: vscode.Uri) {
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
 }
 
 async function updateDebugSettings() {
