@@ -44,6 +44,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             request: "launch",
                             // tslint:disable-next-line
                             cwd: "${workspaceFolder}",
+                            console: "internalConsole",
                             mainClass: item.mainClass,
                             projectName: item.projectName,
                             args: "",

@@ -111,6 +111,21 @@
                 "type": "object",
                 "description": "The extra environment variables for the program.",
                 "default": {}
+              },
+              "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+									"integratedTerminal",
+									"externalTerminal"
+                ],
+                "enumDescriptions": [
+                  "VS Code Debug Console (which doesn't support to read input from a program)",
+                  "VS Code's integrated terminal",
+                  "external terminal that can be configured via user settings"
+                ],
+                "description": "Where to launch the program.",
+                "default": "internalConsole"
               }
             }
           },
@@ -159,6 +174,7 @@
               "name": "Debug (Launch)",
               "request": "launch",
               "cwd": "^\"\\${workspaceFolder}\"",
+              "console": "internalConsole",
               "mainClass": "",
               "args": ""
             }
