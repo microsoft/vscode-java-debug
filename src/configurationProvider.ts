@@ -147,6 +147,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
                     config.modulePaths = result[0];
                     config.classPaths = result[1];
+                    config.projectName = result[2];
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
                     const hintMessage = "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.";
@@ -170,7 +171,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 this.log("usageError", "Illegal request type in launch.json");
                 return undefined;
             }
-            const project = !config.projectName ?  await resolveProjectName(config.mainClass): config.projectName;
             const debugServerPort = await startDebugSession();
             if (debugServerPort) {
                 config.debugServer = debugServerPort;
@@ -225,10 +225,6 @@ function resolveClasspath(mainClass, projectName) {
 
 function resolveMainClass(workspaceUri: vscode.Uri) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
-}
-
-function resolveProjectName(mainClass) {
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_PROJECT, mainClass);
 }
 
 async function updateDebugSettings() {
