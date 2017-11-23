@@ -147,7 +147,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
                     config.modulePaths = result[0];
                     config.classPaths = result[1];
-                    config.projectName = result[2];
+                    config.projectName = result[2] ? result[2][0] : undefined;
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
                     const hintMessage = "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.";
