@@ -45,6 +45,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             // tslint:disable-next-line
                             cwd: "${workspaceFolder}",
                             console: "internalConsole",
+                            stopOnEntry: false,
                             mainClass: item.mainClass,
                             projectName: item.projectName,
                             args: "",
@@ -106,9 +107,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.name = "Java Debug";
                 config.request = "launch";
             }
-
-            // Workaround bug https://github.com/Microsoft/vscode-java-debug/issues/145
-            config.stopOnEntry = false;
 
             if (config.request === "launch") {
                 if (!config.mainClass) {

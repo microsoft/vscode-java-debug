@@ -56,6 +56,11 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program.
 - `cwd` - The working directory of the program.
 - `env` - The extra environment variables for the program.
+- `stopOnEntry` - Automatically stop program after launch.
+- `console` - Where to launch the program. Defaults to `internalConsole`.
+  - `internalConsole` - VS Code Debug Console (which doesn't support to read input from a program)
+  - `integratedTerminal` - VS Code's integrated terminal
+  - `externalTerminal` - external terminal that can be configured via user settings
 
 ### Attach
 

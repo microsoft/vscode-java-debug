@@ -112,6 +112,11 @@
                 "description": "The extra environment variables for the program.",
                 "default": {}
               },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop program after launch.",
+                "default": true
+              },
               "console": {
                 "type": "string",
                 "enum": [
@@ -175,6 +180,7 @@
               "request": "launch",
               "cwd": "^\"\\${workspaceFolder}\"",
               "console": "internalConsole",
+              "stopOnEntry": false,
               "mainClass": "",
               "args": ""
             }
