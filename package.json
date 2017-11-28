@@ -125,9 +125,9 @@
 									"externalTerminal"
                 ],
                 "enumDescriptions": [
-                  "VS Code Debug Console (which doesn't support to read input from a program)",
+                  "VS Code Debug Console (which doesn't support reading input from a program)",
                   "VS Code's integrated terminal",
-                  "external terminal that can be configured via user settings"
+                  "External terminal that can be configured via user settings"
                 ],
                 "description": "Where to launch the program.",
                 "default": "internalConsole"

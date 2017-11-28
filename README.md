@@ -58,9 +58,9 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `env` - The extra environment variables for the program.
 - `stopOnEntry` - Automatically stop program after launch.
 - `console` - Where to launch the program. Defaults to `internalConsole`.
-  - `internalConsole` - VS Code Debug Console (which doesn't support to read input from a program)
+  - `internalConsole` - VS Code Debug Console (which doesn't support reading input from a program)
   - `integratedTerminal` - VS Code's integrated terminal
-  - `externalTerminal` - external terminal that can be configured via user settings
+  - `externalTerminal` - External terminal that can be configured via user settings
 
 ### Attach
 
