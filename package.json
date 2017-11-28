@@ -112,11 +112,11 @@
                 "description": "The extra environment variables for the program.",
                 "default": {}
               },
-              "debugFilters": {
+              "stepFilters": {
                 "type": "object",
                 "description": "Customize the filters to skip the specified methods and classes when stepping.",
                 "default": {
-                  "stepFilters": [
+                  "classNameFilters": [
                     "java.*",
                     "javax.*",
                     "com.sun.*",
@@ -129,7 +129,7 @@
                   "skipConstructors": false
                 },
                 "properties": {
-                  "stepFilters": {
+                  "classNameFilters": {
                     "type": "array",
                     "description": "Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '*' or ends with '*'. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
                     "item": {
@@ -196,11 +196,11 @@
                 "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects.",
                 "default": ""
               },
-              "debugFilters": {
+              "stepFilters": {
                 "type": "object",
                 "description": "Customize the filters to skip the specified methods and classes when stepping.",
                 "default": {
-                  "stepFilters": [
+                  "classNameFilters": [
                     "java.*",
                     "javax.*",
                     "com.sun.*",
@@ -213,7 +213,7 @@
                   "skipConstructors": false
                 },
                 "properties": {
-                  "stepFilters": {
+                  "classNameFilters": {
                     "type": "array",
                     "description": "Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '*' or ends with '*'. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
                     "item": {
