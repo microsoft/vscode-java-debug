@@ -114,22 +114,22 @@
               },
               "stopOnEntry": {
                 "type": "boolean",
-                "description": "Automatically stop program after launch.",
+                "description": "Automatically pause the program after launching.",
                 "default": true
               },
               "console": {
                 "type": "string",
                 "enum": [
                   "internalConsole",
-									"integratedTerminal",
-									"externalTerminal"
+                  "integratedTerminal",
+                  "externalTerminal"
                 ],
                 "enumDescriptions": [
-                  "VS Code Debug Console (which doesn't support reading input from a program)",
-                  "VS Code's integrated terminal",
-                  "External terminal that can be configured via user settings"
+                  "VS Code debug console (input stream not supported).",
+                  "VS Code integrated terminal.",
+                  "External terminal that can be configured in user settings."
                 ],
-                "description": "Where to launch the program.",
+                "description": "The specified console to launch the program.",
                 "default": "internalConsole"
               }
             }
