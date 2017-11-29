@@ -111,6 +111,26 @@
                 "type": "object",
                 "description": "The extra environment variables for the program.",
                 "default": {}
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically pause the program after launching.",
+                "default": true
+              },
+              "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal"
+                ],
+                "enumDescriptions": [
+                  "VS Code debug console (input stream not supported).",
+                  "VS Code integrated terminal.",
+                  "External terminal that can be configured in user settings."
+                ],
+                "description": "The specified console to launch the program.",
+                "default": "internalConsole"
               }
             }
           },
@@ -159,6 +179,8 @@
               "name": "Debug (Launch)",
               "request": "launch",
               "cwd": "^\"\\${workspaceFolder}\"",
+              "console": "internalConsole",
+              "stopOnEntry": false,
               "mainClass": "",
               "args": ""
             }
