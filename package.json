@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "vscjava",
   "preview": true,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -35,7 +35,7 @@
   "main": "./out/src/extension",
   "contributes": {
     "javaExtensions": [
-      "./server/com.microsoft.java.debug.plugin-0.3.1.jar"
+      "./server/com.microsoft.java.debug.plugin-0.4.0.jar"
     ],
     "commands": [],
     "debuggers": [
@@ -111,6 +111,26 @@
                 "type": "object",
                 "description": "The extra environment variables for the program.",
                 "default": {}
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically pause the program after launching.",
+                "default": true
+              },
+              "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal"
+                ],
+                "enumDescriptions": [
+                  "VS Code debug console (input stream not supported).",
+                  "VS Code integrated terminal.",
+                  "External terminal that can be configured in user settings."
+                ],
+                "description": "The specified console to launch the program.",
+                "default": "internalConsole"
               },
               "stepFilters": {
                 "type": "object",
@@ -257,6 +277,8 @@
               "name": "Debug (Launch)",
               "request": "launch",
               "cwd": "^\"\\${workspaceFolder}\"",
+              "console": "internalConsole",
+              "stopOnEntry": false,
               "mainClass": "",
               "args": ""
             }

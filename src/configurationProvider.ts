@@ -34,7 +34,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
             return new Promise((resolve, reject) => {
                 p.report({message: "Auto generating configuration..."});
-                resolveMainClass().then((res: any[]) => {
+                resolveMainClass(folder ? folder.uri : undefined).then((res: any[]) => {
                     let cache;
                     cache = {};
                     const launchConfigs = res.map((item) => {
@@ -44,6 +44,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             request: "launch",
                             // tslint:disable-next-line
                             cwd: "${workspaceFolder}",
+                            console: "internalConsole",
+                            stopOnEntry: false,
                             mainClass: item.mainClass,
                             projectName: item.projectName,
                             args: "",
@@ -86,19 +88,21 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 await updateDebugSettings();
             }
 
-            try {
-                const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE);
-                console.log(buildResult);
-            } catch (err) {
-                vscode.window.showErrorMessage("Build failed, please fix build error first.");
-                return config;
-            }
-
             if (Object.keys(config).length === 0) { // No launch.json in current workspace.
                 // check whether it is opened as a folder
                 if (folder !== undefined) {
                     // for opened with folder, return directly.
                     return config;
+                }
+                // only rebuild for single file case before the build error issue is resolved.
+                try {
+                    const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
+                    console.log(buildResult);
+                } catch (err) {
+                    const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Abort");
+                    if (ans !== "Proceed") {
+                        return undefined;
+                    }
                 }
                 // Generate config in memory for single file
                 config.type = "java";
@@ -106,12 +110,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.request = "launch";
             }
 
-            // Workaround bug https://github.com/Microsoft/vscode-java-debug/issues/145
-            config.stopOnEntry = false;
-
             if (config.request === "launch") {
                 if (!config.mainClass) {
-                    const res = <any[]>(await resolveMainClass());
+                    const res = <any[]>(await resolveMainClass(folder ? folder.uri : undefined));
                     if (res.length === 0) {
                         vscode.window.showErrorMessage(
                             "Cannot resolve main class automatically, please specify the mainClass " +
@@ -222,7 +223,10 @@ function resolveClasspath(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
-function resolveMainClass() {
+function resolveMainClass(workspaceUri: vscode.Uri) {
+    if (workspaceUri) {
+        return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
+    }
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
