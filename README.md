@@ -61,8 +61,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
-- `stepFilters` - Customize the filters to skip the specified methods and classes when stepping.
-  - `classNameFilters` - Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '\*' or ends with '\*'. Example: [\"java.lang.ClassLoader\", \"java.*\"].
+- `stepFilters` - Skip specified classes or methods when stepping.
+  - `classNameFilters` - Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
@@ -74,8 +74,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `timeout` - Timeout value before reconnecting, in milliseconds (default to 30000ms).
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program.
-- `stepFilters` - Customize the filters to skip the specified methods and classes when stepping.
-  - `classNameFilters` - Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '\*' or ends with '\*'. Example: [\"java.lang.ClassLoader\", \"java.*\"].
+- `stepFilters` - Skip specified classes or methods when stepping.
+  - `classNameFilters` - Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.

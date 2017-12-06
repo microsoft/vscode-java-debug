@@ -134,7 +134,7 @@
               },
               "stepFilters": {
                 "type": "object",
-                "description": "Customize the filters to skip the specified methods and classes when stepping.",
+                "description": "Skip specified classes or methods when stepping.",
                 "default": {
                   "classNameFilters": [
                     "java.*",
@@ -151,7 +151,7 @@
                 "properties": {
                   "classNameFilters": {
                     "type": "array",
-                    "description": "Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '*' or ends with '*'. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
+                    "description": "Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.",
                     "item": {
                       "type": "string"
                     },
@@ -218,7 +218,7 @@
               },
               "stepFilters": {
                 "type": "object",
-                "description": "Customize the filters to skip the specified methods and classes when stepping.",
+                "description": "Skip specified classes or methods when stepping.",
                 "default": {
                   "classNameFilters": [
                     "java.*",
@@ -235,7 +235,7 @@
                 "properties": {
                   "classNameFilters": {
                     "type": "array",
-                    "description": "Skip these classes when stepping. Each filter could be fully qualified class name or regular expression that begins with '*' or ends with '*'. Example: [\"java.lang.ClassLoader\", \"java.*\"]",
+                    "description": "Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.",
                     "item": {
                       "type": "string"
                     },
