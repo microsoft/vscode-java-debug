@@ -14,7 +14,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.17.0"
+    "vscode": "^1.19.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -30,7 +30,8 @@
   ],
   "activationEvents": [
     "onLanguage:java",
-    "onDebug"
+    "onDebugInitialConfigurations",
+    "onDebugResolve:java"
   ],
   "main": "./out/src/extension",
   "contributes": {
