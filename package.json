@@ -56,7 +56,7 @@
             "properties": {
               "projectName": {
                 "type": "string",
-                "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required for express evaluation.",
+                "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required for expression evaluation.",
                 "default": ""
               },
               "mainClass": {
