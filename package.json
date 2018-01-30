@@ -332,6 +332,11 @@
           "type": "number",
           "description": "the maximum length of string displayed in \"Variables\" or \"Debug Console\" viewlet, the string longer than this length will be trimmed, defaults to 0 which means no trim is performed.",
           "default": 0
+        },
+        "java.debug.settings.enableHotCodeReplace": {
+          "type": "boolean",
+          "description": "Enable hot code replace for Java code",
+          "default": false
         }
       }
     }
