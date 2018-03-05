@@ -5,7 +5,11 @@ import * as vscode from "vscode";
 
 const suppressedReasons: Set<string> = new Set();
 
-const NOT_SHOW_AGAIN: string = "Not show again";
+const YES_BUTTON: string = "Yes";
+
+const NO_BUTTON: string = "No";
+
+const NEVER_BUTTON: string = "Not show again";
 
 const JAVA_LANGID: string = "java";
 
@@ -34,19 +38,23 @@ export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
         }
 
         if (customEvent.body.changeType === HcrChangeType.BUILD_COMPLETE) {
-            return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (progress) => {
-                progress.report({message: "Applying code changes..."});
+            return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
+                progress.report({ message: "Applying code changes..." });
                 return customEvent.session.customRequest("redefineClasses");
             });
         }
 
         if (customEvent.body.changeType === HcrChangeType.ERROR || customEvent.body.changeType === HcrChangeType.WARNING) {
             if (!suppressedReasons.has(customEvent.body.message)) {
-                vscode.window.showInformationMessage(`Hot code replace failed - ${customEvent.body.message}`, NOT_SHOW_AGAIN).then((res) => {
-                    if (res === NOT_SHOW_AGAIN) {
-                        suppressedReasons.add(customEvent.body.message);
-                    }
-                });
+                vscode.window.showInformationMessage(
+                    `Hot code replace failed - ${customEvent.body.message}. Would you like to restart the debug session?`,
+                    YES_BUTTON, NO_BUTTON, NEVER_BUTTON).then((res) => {
+                        if (res === NEVER_BUTTON) {
+                            suppressedReasons.add(customEvent.body.message);
+                        } else if (res === YES_BUTTON) {
+                            vscode.commands.executeCommand("workbench.action.debug.restart");
+                        }
+                    });
             }
         }
     }));
