@@ -32,7 +32,7 @@
     "onLanguage:java",
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
-    "onCommand:vscJavaDebug.SpecifyProgramArgs"
+    "onCommand:JavaDebug.SpecifyProgramArgs"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -50,7 +50,7 @@
           ]
         },
         "variables": {
-          "SpecifyProgramArgs": "vscJavaDebug.SpecifyProgramArgs"
+          "SpecifyProgramArgs": "JavaDebug.SpecifyProgramArgs"
         },
         "configurationAttributes": {
           "launch": {

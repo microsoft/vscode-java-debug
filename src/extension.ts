@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider(reporter)));
-    context.subscriptions.push(vscode.commands.registerCommand("vscJavaDebug.SpecifyProgramArgs", async () => {
+    context.subscriptions.push(vscode.commands.registerCommand("JavaDebug.SpecifyProgramArgs", async () => {
         return specifyProgramArguments(context);
     }));
     initializeHotCodeReplace(context);
@@ -60,14 +60,14 @@ function fetchUsageData() {
 }
 
 function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<string> {
-    const vscJavaDebugProgramArgsKey = "vscJavaDebugProgramArgs";
+    const javaDebugProgramArgsKey = "JavaDebugProgramArgs";
 
     const options: vscode.InputBoxOptions = {
         ignoreFocusOut: true,
         placeHolder: "Enter program arguments or leave empty to pass no args",
     };
 
-    const prevArgs = context.workspaceState.get(vscJavaDebugProgramArgsKey, "");
+    const prevArgs = context.workspaceState.get(javaDebugProgramArgsKey, "");
     if (prevArgs.length > 0) {
         options.value = prevArgs;
     }
@@ -75,7 +75,7 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
     return vscode.window.showInputBox(options).then((text) => {
         // When user cancels the input box (by pressing Esc), the text value is undefined.
         if (text !== undefined) {
-            context.workspaceState.update(vscJavaDebugProgramArgsKey, text);
+            context.workspaceState.update(javaDebugProgramArgsKey, text);
         }
 
         return text;
