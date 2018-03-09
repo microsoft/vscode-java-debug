@@ -78,6 +78,6 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
             context.workspaceState.update(javaDebugProgramArgsKey, text);
         }
 
-        return text;
+        return text || " ";
     });
 }
