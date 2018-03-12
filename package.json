@@ -31,7 +31,8 @@
   "activationEvents": [
     "onLanguage:java",
     "onDebugInitialConfigurations",
-    "onDebugResolve:java"
+    "onDebugResolve:java",
+    "onCommand:JavaDebug.SpecifyProgramArgs"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -47,6 +48,9 @@
           "languageIds": [
             "java"
           ]
+        },
+        "variables": {
+          "SpecifyProgramArgs": "JavaDebug.SpecifyProgramArgs"
         },
         "configurationAttributes": {
           "launch": {
@@ -282,6 +286,20 @@
               "stopOnEntry": false,
               "mainClass": "",
               "args": ""
+            }
+          },
+          {
+            "label": "Java: Launch Program with Arguments Prompt",
+            "description": "Add a new configuration for launching a java program with arguments prompt.",
+            "body": {
+              "type": "java",
+              "name": "Debug (Launch) with Arguments Prompt",
+              "request": "launch",
+              "cwd": "^\"\\${workspaceFolder}\"",
+              "console": "internalConsole",
+              "stopOnEntry": false,
+              "mainClass": "",
+              "args": "^\"\\${command:SpecifyProgramArgs}\""
             }
           },
           {
