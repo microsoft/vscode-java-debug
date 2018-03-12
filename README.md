@@ -47,7 +47,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 ### Launch
 
 - `mainClass` (required) - The main class of the program (fully qualified name, e.g. [mymodule/]com.xyz.MainClass).
-- `args` - The command line arguments passed to the program. Support prompting for program arguments by using variable `"${command:SpecifyProgramArgs}"`.
+- `args` - The command line arguments passed to the program. Use `"${command:SpecifyProgramArgs}"` to prompt for program arguments.
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `modulePaths` - The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
 - `classPaths` - The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
