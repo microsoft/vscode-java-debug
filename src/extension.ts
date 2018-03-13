@@ -6,7 +6,8 @@ import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
-import { initializeHotCodeReplace } from "./hotCodeReplace";
+import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
+import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
 
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
@@ -49,6 +50,23 @@ export function activate(context: vscode.ExtensionContext) {
         return specifyProgramArguments(context);
     }));
     initializeHotCodeReplace(context);
+    context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent((customEvent) => {
+        const t = customEvent.session ? customEvent.session.type : undefined;
+        if (t !== JAVA_LANGID) {
+            return;
+        }
+        if (customEvent.event === HCR_EVENT) {
+            handleHotCodeReplaceCustomEvent(customEvent);
+        } else if (customEvent.event === USER_NOTIFICATION_EVENT) {
+            if (customEvent.body.type === "ERROR") {
+                vscode.window.showErrorMessage(customEvent.body.message);
+            } else if (customEvent.body.type === "WARNING") {
+                vscode.window.showWarningMessage(customEvent.body.message);
+            } else {
+                vscode.window.showInformationMessage(customEvent.body.message);
+            }
+        }
+    }));
 }
 
 // this method is called when your extension is deactivated
