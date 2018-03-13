@@ -58,9 +58,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (customEvent.event === HCR_EVENT) {
             handleHotCodeReplaceCustomEvent(customEvent);
         } else if (customEvent.event === USER_NOTIFICATION_EVENT) {
-            if (customEvent.body.type === "ERROR") {
+            if (customEvent.body.notifyType === "ERROR") {
                 vscode.window.showErrorMessage(customEvent.body.message);
-            } else if (customEvent.body.type === "WARNING") {
+            } else if (customEvent.body.notifyType === "WARNING") {
                 vscode.window.showWarningMessage(customEvent.body.message);
             } else {
                 vscode.window.showInformationMessage(customEvent.body.message);
