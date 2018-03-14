@@ -68,9 +68,9 @@ export function deactivate() {
 }
 
 function handleUserNotification(customEvent) {
-    if (customEvent.body.notifyType === "ERROR") {
+    if (customEvent.body.notificationType === "ERROR") {
         vscode.window.showErrorMessage(customEvent.body.message);
-    } else if (customEvent.body.notifyType === "WARNING") {
+    } else if (customEvent.body.notificationType === "WARNING") {
         vscode.window.showWarningMessage(customEvent.body.message);
     } else {
         vscode.window.showInformationMessage(customEvent.body.message);
