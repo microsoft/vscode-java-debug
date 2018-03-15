@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Fix the unsupported breakpoint at method entry/exit issue. See [PR#129](https://github.com/Microsoft/java-debug/pull/129)
-- Fix the issue when the projectName is not specified, expression evaluation doesn't work. See [PR#156](https://github.com/Microsoft/java-debug/pull/156)
+- Fix the issue when the projectName is not specified, the expression evaluation doesn't work. See [PR#156](https://github.com/Microsoft/java-debug/pull/156)
 
 ## 0.6.0 - 2018-2-1
 ### Added
