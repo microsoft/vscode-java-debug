@@ -3,6 +3,8 @@
 
 import * as vscode from "vscode";
 
+import { HCR_EVENT, JAVA_LANGID } from "./constants";
+
 const suppressedReasons: Set<string> = new Set();
 
 const YES_BUTTON: string = "Yes";
@@ -10,10 +12,6 @@ const YES_BUTTON: string = "Yes";
 const NO_BUTTON: string = "No";
 
 const NEVER_BUTTON: string = "Not show again";
-
-const JAVA_LANGID: string = "java";
-
-const HCR_EVENT = "hotcodereplace";
 
 enum HcrChangeType {
     ERROR = "ERROR",
@@ -30,32 +28,27 @@ export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
             suppressedReasons.clear();
         }
     }));
+}
 
-    context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent((customEvent) => {
-        const t = customEvent.session ? customEvent.session.type : undefined;
-        if (t !== JAVA_LANGID || customEvent.event !== HCR_EVENT) {
-            return;
-        }
+export function handleHotCodeReplaceCustomEvent(hcrEvent) {
+    if (hcrEvent.body.changeType === HcrChangeType.BUILD_COMPLETE) {
+        return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
+            progress.report({ message: "Applying code changes..." });
+            return hcrEvent.session.customRequest("redefineClasses");
+        });
+    }
 
-        if (customEvent.body.changeType === HcrChangeType.BUILD_COMPLETE) {
-            return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
-                progress.report({ message: "Applying code changes..." });
-                return customEvent.session.customRequest("redefineClasses");
+    if (hcrEvent.body.changeType === HcrChangeType.ERROR || hcrEvent.body.changeType === HcrChangeType.WARNING) {
+        if (!suppressedReasons.has(hcrEvent.body.message)) {
+            vscode.window.showInformationMessage(
+                `Hot code replace failed - ${hcrEvent.body.message}. Would you like to restart the debug session?`,
+                YES_BUTTON, NO_BUTTON, NEVER_BUTTON).then((res) => {
+                if (res === NEVER_BUTTON) {
+                    suppressedReasons.add(hcrEvent.body.message);
+                } else if (res === YES_BUTTON) {
+                    vscode.commands.executeCommand("workbench.action.debug.restart");
+                }
             });
         }
-
-        if (customEvent.body.changeType === HcrChangeType.ERROR || customEvent.body.changeType === HcrChangeType.WARNING) {
-            if (!suppressedReasons.has(customEvent.body.message)) {
-                vscode.window.showInformationMessage(
-                    `Hot code replace failed - ${customEvent.body.message}. Would you like to restart the debug session?`,
-                    YES_BUTTON, NO_BUTTON, NEVER_BUTTON).then((res) => {
-                        if (res === NEVER_BUTTON) {
-                            suppressedReasons.add(customEvent.body.message);
-                        } else if (res === YES_BUTTON) {
-                            vscode.commands.executeCommand("workbench.action.debug.restart");
-                        }
-                    });
-            }
-        }
-    }));
+    }
 }
