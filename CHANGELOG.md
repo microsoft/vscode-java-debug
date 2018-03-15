@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support [conditional breakpoints](https://github.com/Microsoft/vscode-java-debug/issues/118). See [PR#153](https://github.com/Microsoft/java-debug/pull/153), [PR#154](https://github.com/Microsoft/java-debug/pull/154), [PR#156](https://github.com/Microsoft/java-debug/pull/156)
 
 ### Changed
-- Fix an unsupported breakpoint at method entry/exit issue. See [PR#129](https://github.com/Microsoft/java-debug/pull/129)
-- Fix the issue when projectName is not specified, expression evaluation doesn't work. See [PR#156](https://github.com/Microsoft/java-debug/pull/156)
+- Fix the unsupported breakpoint at method entry/exit issue. See [PR#129](https://github.com/Microsoft/java-debug/pull/129)
+- Fix the issue when the projectName is not specified, expression evaluation doesn't work. See [PR#156](https://github.com/Microsoft/java-debug/pull/156)
 
 ## 0.6.0 - 2018-2-1
 ### Added
