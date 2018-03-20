@@ -94,7 +94,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     // for opened with folder, return directly.
                     return config;
                 }
-                // only rebuild for single file case before the build error issue is resolved.
+                // Generate config in memory for single file
+                config.type = "java";
+                config.name = "Java Debug";
+                config.request = "launch";
+            }
+
+            if (config.request === "launch") {
                 try {
                     const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
                     console.log(buildResult);
@@ -104,13 +110,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         return undefined;
                     }
                 }
-                // Generate config in memory for single file
-                config.type = "java";
-                config.name = "Java Debug";
-                config.request = "launch";
-            }
-
-            if (config.request === "launch") {
                 if (!config.mainClass) {
                     const res = <any[]>(await resolveMainClass(folder ? folder.uri : undefined));
                     if (res.length === 0) {
