@@ -88,13 +88,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 await updateDebugSettings();
             }
 
-            if (Object.keys(config).length === 0) { // No launch.json in current workspace.
-                // check whether it is opened as a folder
-                if (folder !== undefined) {
-                    // for opened with folder, return directly.
-                    return config;
-                }
-                // Generate config in memory for single file
+            // just create and open the lanuch.json if there is no lanch.json in current folder
+            if (Object.keys(config).length === 0 && folder !== undefined) {
+                return config;
+            }
+
+            // generate config in memory if there is noly single file and no launch.json
+            if (Object.keys(config).length === 0 && !folder) {
                 config.type = "java";
                 config.name = "Java Debug";
                 config.request = "launch";
