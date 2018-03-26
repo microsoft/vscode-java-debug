@@ -34,7 +34,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
             return new Promise((resolve, reject) => {
                 p.report({message: "Auto generating configuration..."});
-                resolveMainClass(folder ? folder.uri : undefined).then((res: any[]) => {
+                resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption []) => {
                     let cache;
                     cache = {};
                     const launchConfigs = res.map((item) => {
@@ -199,11 +199,11 @@ function resolveClasspath(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
-function resolveMainClass(workspaceUri: vscode.Uri) {
+function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]> {
     if (workspaceUri) {
-        return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
+        return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
     }
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
+    return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
 async function updateDebugSettings() {
@@ -245,7 +245,7 @@ interface IMainClassOption {
 }
 
 async function chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption> {
-    const res = <any[]>(await resolveMainClass(folder ? folder.uri : undefined));
+    const res = await resolveMainClass(folder ? folder.uri : undefined);
     const pickItems = res.map((item) => {
         let name = item.mainClass;
         let details = `main class: ${item.mainClass}`;
@@ -271,7 +271,7 @@ async function chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Prom
         await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
         : pickItems[0];
     if (selection && selection.item) {
-        return <IMainClassOption> selection.item;
+        return selection.item;
     } else {
         vscode.window.showErrorMessage("Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
         this.log("usageError", "Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
