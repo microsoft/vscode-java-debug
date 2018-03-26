@@ -103,7 +103,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             if (config.request === "launch") {
                 try {
                     const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
-                    console.log(buildResult);
                 } catch (err) {
                     const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Abort");
                     if (ans !== "Proceed") {
