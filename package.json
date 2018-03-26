@@ -354,7 +354,7 @@
         "java.debug.settings.enableHotCodeReplace": {
           "type": "boolean",
           "description": "Enable hot code replace for Java code",
-          "default": false
+          "default": true
         }
       }
     }
