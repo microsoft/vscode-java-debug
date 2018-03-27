@@ -34,7 +34,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
             return new Promise((resolve, reject) => {
                 p.report({message: "Auto generating configuration..."});
-                resolveMainClass(folder ? folder.uri : undefined).then((res: any[]) => {
+                resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption []) => {
                     let cache;
                     cache = {};
                     const launchConfigs = res.map((item) => {
@@ -112,37 +112,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
             if (config.request === "launch") {
                 if (!config.mainClass) {
-                    const res = <any[]>(await resolveMainClass(folder ? folder.uri : undefined));
-                    if (res.length === 0) {
-                        vscode.window.showErrorMessage(
-                            "Cannot resolve main class automatically, please specify the mainClass " +
-                            "(e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
+                    const userSelection = await chooseMainClass(folder);
+                    if (!userSelection || !userSelection.mainClass) {
+                        // the error is handled inside chooseMainClass
                         return;
                     }
-                    const pickItems = res.map((item) => {
-                        let name = item.mainClass;
-                        let details = `main class: ${item.mainClass}`;
-                        if (item.projectName !== undefined) {
-                            name += `<${item.projectName}>`;
-                            details += ` | project name: ${item.projectName}`;
-                        }
-                        return {
-                            description: details,
-                            label: name,
-                            item,
-                        };
-                    }).sort ((a, b): number => {
-                        return a.label > b.label ? 1 : -1;
-                    });
-                    const selection = await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" });
-                    if (selection) {
-                        config.mainClass = selection.item.mainClass;
-                        config.projectName = selection.item.projectName;
-                    } else {
-                        vscode.window.showErrorMessage("Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
-                        this.log("usageError", "Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
-                        return undefined;
-                    }
+                    config.mainClass = userSelection.mainClass;
+                    config.projectName  = userSelection.projectName;
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
@@ -223,11 +199,11 @@ function resolveClasspath(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
-function resolveMainClass(workspaceUri: vscode.Uri) {
+function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]> {
     if (workspaceUri) {
-        return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
+        return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
     }
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
+    return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
 async function updateDebugSettings() {
@@ -260,5 +236,45 @@ function convertLogLevel(commonLogLevel: string) {
             return "INFO";
         default:
             return "FINE";
+    }
+}
+
+interface IMainClassOption {
+    readonly projectName?: string;
+    readonly mainClass: string;
+}
+
+async function chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption> {
+    const res = await resolveMainClass(folder ? folder.uri : undefined);
+    const pickItems = res.map((item) => {
+        let name = item.mainClass;
+        let details = `main class: ${item.mainClass}`;
+        if (item.projectName !== undefined) {
+            name += `<${item.projectName}>`;
+            details += ` | project name: ${item.projectName}`;
+        }
+        return {
+            description: details,
+            label: name,
+            item,
+        };
+    }).sort ((a, b): number => {
+        return a.label > b.label ? 1 : -1;
+    });
+    if (pickItems.length === 0) {
+        vscode.window.showErrorMessage(
+            "Cannot resolve main class automatically, please specify the mainClass " +
+            "(e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
+        return;
+    }
+    const selection = pickItems.length > 1 ?
+        await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
+        : pickItems[0];
+    if (selection && selection.item) {
+        return selection.item;
+    } else {
+        vscode.window.showErrorMessage("Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
+        this.log("usageError", "Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
+        return undefined;
     }
 }
