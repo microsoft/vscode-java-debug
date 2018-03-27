@@ -240,8 +240,8 @@ function convertLogLevel(commonLogLevel: string) {
 }
 
 interface IMainClassOption {
-    readonly projectName?: string;
-    readonly mainClass?: string;
+    readonly projectName: string;
+    readonly mainClass: string;
 }
 
 async function chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption> {
