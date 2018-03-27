@@ -112,37 +112,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     }
                 }
                 if (!config.mainClass) {
-                    const res = <any[]>(await resolveMainClass(folder ? folder.uri : undefined));
-                    if (res.length === 0) {
-                        vscode.window.showErrorMessage(
-                            "Cannot resolve main class automatically, please specify the mainClass " +
-                            "(e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
+                    const userSelection = await chooseMainClass(folder);
+                    if (!userSelection || !userSelection.mainClass) {
+                        // the error is handled inside chooseMainClass
                         return;
                     }
-                    const pickItems = res.map((item) => {
-                        let name = item.mainClass;
-                        let details = `main class: ${item.mainClass}`;
-                        if (item.projectName !== undefined) {
-                            name += `<${item.projectName}>`;
-                            details += ` | project name: ${item.projectName}`;
-                        }
-                        return {
-                            description: details,
-                            label: name,
-                            item,
-                        };
-                    }).sort ((a, b): number => {
-                        return a.label > b.label ? 1 : -1;
-                    });
-                    const selection = await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" });
-                    if (selection) {
-                        config.mainClass = selection.item.mainClass;
-                        config.projectName = selection.item.projectName;
-                    } else {
-                        vscode.window.showErrorMessage("Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
-                        this.log("usageError", "Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
-                        return undefined;
-                    }
+                    config.mainClass = userSelection.mainClass;
+                    config.projectName  = userSelection.projectName;
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
@@ -163,6 +139,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
             } else {
                 const ans = await vscode.window.showErrorMessage(
+                    // tslint:disable-next-line:max-line-length
                     "Request type \"" + config.request + "\" is not supported. Only \"launch\" and \"attach\" are supported.", "Open launch.json");
                 if (ans === "Open launch.json") {
                     await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
