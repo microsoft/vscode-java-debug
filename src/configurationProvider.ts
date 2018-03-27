@@ -240,7 +240,7 @@ function convertLogLevel(commonLogLevel: string) {
 }
 
 interface IMainClassOption {
-    readonly projectName: string;
+    readonly projectName?: string;
     readonly mainClass: string;
 }
 
