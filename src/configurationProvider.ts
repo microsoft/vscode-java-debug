@@ -88,12 +88,14 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 await updateDebugSettings();
             }
 
-            // just create and open the lanuch.json if there is no lanch.json in current folder
+            /**
+             * If no launch.json exists in the current workspace folder
+             * delegate to provideDebugConfigurations api to generate the initial launch.json configurations
+             */
             if (Object.keys(config).length === 0 && folder !== undefined) {
                 return config;
             }
-
-            // generate config in memory if there is noly single file and no launch.json
+            // If it's the single file case that no workspace folder is opened, generate debug config in memory
             if (Object.keys(config).length === 0 && !folder) {
                 config.type = "java";
                 config.name = "Java Debug";
@@ -161,7 +163,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
             } else {
                 const ans = await vscode.window.showErrorMessage(
-                    // tslint:disable-next-line:max-line-length
                     "Request type \"" + config.request + "\" is not supported. Only \"launch\" and \"attach\" are supported.", "Open launch.json");
                 if (ans === "Open launch.json") {
                     await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
