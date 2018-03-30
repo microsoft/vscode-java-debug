@@ -190,12 +190,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return !Array.isArray(configItems) || !configItems.length;
     }
 
-    private async chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption> {
+    private async chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption | undefined> {
         const res = await resolveMainClass(folder ? folder.uri : undefined);
         if (res.length === 0) {
             vscode.window.showErrorMessage(
                 "Cannot find a class with the main method.");
-            return;
+            return undefined;
         }
         const pickItems = res.map((item) => {
             let name = item.mainClass;
@@ -214,7 +214,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         });
         if (pickItems.length === 0) {
             // user gives up the selection, quit sliently
-            return;
+            return undefined;
         }
         const selection = pickItems.length > 1 ?
             await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
