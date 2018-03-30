@@ -217,7 +217,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             : pickItems[0];
         if (selection && selection.item) {
             return selection.item;
-        } else {            
+        } else {
             return undefined;
         }
     }
