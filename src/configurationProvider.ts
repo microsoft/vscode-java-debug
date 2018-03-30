@@ -212,10 +212,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }).sort ((a, b): number => {
             return a.label > b.label ? 1 : -1;
         });
-        if (pickItems.length === 0) {
-            // user gives up the selection, quit sliently
-            return undefined;
-        }
         const selection = pickItems.length > 1 ?
             await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
             : pickItems[0];
