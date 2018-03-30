@@ -88,29 +88,29 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 await updateDebugSettings();
             }
 
-            if (Object.keys(config).length === 0) { // No launch.json in current workspace.
-                // check whether it is opened as a folder
-                if (folder !== undefined) {
-                    // for opened with folder, return directly.
-                    return config;
-                }
-                // only rebuild for single file case before the build error issue is resolved.
-                try {
-                    const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
-                    console.log(buildResult);
-                } catch (err) {
-                    const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Abort");
-                    if (ans !== "Proceed") {
-                        return undefined;
-                    }
-                }
-                // Generate config in memory for single file
+            /**
+             * If no launch.json exists in the current workspace folder
+             * delegate to provideDebugConfigurations api to generate the initial launch.json configurations
+             */
+            if (Object.keys(config).length === 0 && folder !== undefined) {
+                return config;
+            }
+            // If it's the single file case that no workspace folder is opened, generate debug config in memory
+            if (Object.keys(config).length === 0 && !folder) {
                 config.type = "java";
                 config.name = "Java Debug";
                 config.request = "launch";
             }
 
             if (config.request === "launch") {
+                try {
+                    const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
+                } catch (err) {
+                    const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Abort");
+                    if (ans !== "Proceed") {
+                        return undefined;
+                    }
+                }
                 if (!config.mainClass) {
                     const userSelection = await this.chooseMainClass(folder);
                     if (!userSelection || !userSelection.mainClass) {
