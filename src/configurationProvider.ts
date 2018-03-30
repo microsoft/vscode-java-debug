@@ -217,9 +217,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             : pickItems[0];
         if (selection && selection.item) {
             return selection.item;
-        } else {
-            vscode.window.showErrorMessage("Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
-            this.log("usageError", "Please specify the mainClass (e.g. [mymodule/]com.xyz.MainClass) in the launch.json.");
+        } else {            
             return undefined;
         }
     }
