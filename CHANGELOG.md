@@ -4,6 +4,17 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+## 0.8.0 - 2018-4-3
+### Added
+- Support [restart frame](https://github.com/Microsoft/vscode-java-debug/issues/235). See [PR#160](https://github.com/Microsoft/java-debug/pull/160)
+
+### Changed
+- Enable hot code replace by default. See [PR#263](https://github.com/Microsoft/vscode-java-debug/pull/263)
+- Wait for building successfully before launch debug session. See [PR#257](https://github.com/Microsoft/vscode-java-debug/pull/257)
+- Automatically detect projectName when only one main class or project available.  See [PR#164](https://github.com/Microsoft/java-debug/pull/164)
+
+
 ## 0.7.0 - 2018-3-15
 ### Added
 - Support [conditional breakpoints](https://github.com/Microsoft/vscode-java-debug/issues/118). See [PR#153](https://github.com/Microsoft/java-debug/pull/153), [PR#154](https://github.com/Microsoft/java-debug/pull/154), [PR#156](https://github.com/Microsoft/java-debug/pull/156)
