@@ -216,14 +216,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         if (vscode.window.activeTextEditor
             && vscode.window.activeTextEditor.document && vscode.window.activeTextEditor.document.fileName) {
                 const narrowedChoice = pickItems.filter((options) => {
-                    try {
-                        return options && options.item.filePath &&
-                            (options.item.filePath === vscode.window.activeTextEditor.document.fileName ||
-                                (process.platform === "win32"
-                                    && options.item.filePath.toLowerCase() === vscode.window.activeTextEditor.document.fileName.toLowerCase()));
-                    } catch (e) {
-                        return false;
-                    }
+                    return options && options.item && options.item.filePath &&
+                        (options.item.filePath === vscode.window.activeTextEditor.document.fileName ||
+                            (process.platform === "win32"
+                                && options.item.filePath.toLowerCase() === vscode.window.activeTextEditor.document.fileName.toLowerCase()));
                 });
 
                 if (narrowedChoice.length === 1) {
