@@ -212,6 +212,21 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }).sort ((a, b): number => {
             return a.label > b.label ? 1 : -1;
         });
+        // try to filter the only class same as the current file, if found one, use this one.
+        if (vscode.window.activeTextEditor
+            && vscode.window.activeTextEditor.document && vscode.window.activeTextEditor.document.fileName) {
+                const narrowedChoice = pickItems.filter((options) => {
+                    return options && options.item && options.item.filePath &&
+                        (options.item.filePath === vscode.window.activeTextEditor.document.fileName ||
+                            (process.platform === "win32"
+                                && options.item.filePath.toLowerCase() === vscode.window.activeTextEditor.document.fileName.toLowerCase()));
+                });
+
+                if (narrowedChoice.length === 1) {
+                    return narrowedChoice[0].item;
+                }
+            }
+
         const selection = pickItems.length > 1 ?
             await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
             : pickItems[0];
@@ -273,5 +288,6 @@ function convertLogLevel(commonLogLevel: string) {
 
 interface IMainClassOption {
     readonly projectName?: string;
+    readonly filePath?: string;
     readonly mainClass: string;
 }
