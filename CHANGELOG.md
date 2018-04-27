@@ -4,6 +4,15 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.9.0 - 2018-4-26
+### Added
+- Support auto-complete feature in debug console view. See the feature request [#237](https://github.com/Microsoft/vscode-java-debug/issues/237)
+
+### Fixed
+- Fix the ObjectCollectedException when enabling ExceptionBreakpoint. See [Issue #182](https://github.com/Microsoft/vscode-java-debug/issues/182)
+- Fix the [issue #277](https://github.com/Microsoft/vscode-java-debug/issues/277) that the debugger doesn't stop on caught/uncaught exceptions. See [PR #172](https://github.com/Microsoft/java-debug/pull/172)
+- Fix the [issue #273](https://github.com/Microsoft/vscode-java-debug/issues/273) that Chinese characters directory will cause messy code during stack trace's source looking up. See [PR #170](https://github.com/Microsoft/java-debug/pull/170)
+
 
 ## 0.8.0 - 2018-4-3
 ### Added
