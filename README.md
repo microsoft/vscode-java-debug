@@ -4,7 +4,7 @@
 [![Travis CI](https://travis-ci.org/Microsoft/vscode-java-debug.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-java-debug)
 
 ## Overview
-A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users debugging Java code using Visual Studio Code (VS Code). Here's a list of features:
+A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users to debug Java code using Visual Studio Code (VS Code). Here's a list of features:
 
 - Launch/Attach
 - Breakpoints
