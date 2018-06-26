@@ -372,13 +372,13 @@
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",
     "cross-env": "^5.2.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-tslint": "^8.1.2",
-    "mocha": "^2.3.3",
+    "mocha": "^5.2.0",
     "shelljs": "^0.8.2",
     "tslint": "^5.7.0",
     "typescript": "^2.0.3",
-    "vscode": "^1.1.6"
+    "vscode": "^1.1.18"
   },
   "dependencies": {
     "vscode-extension-telemetry": "0.0.8"
