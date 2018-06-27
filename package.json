@@ -14,7 +14,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.19.0"
+    "vscode": "^1.22.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
