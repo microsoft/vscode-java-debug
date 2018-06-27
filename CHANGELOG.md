@@ -4,6 +4,14 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.10.0 - 2018-6-27
+### Added
+- Add support for logpoint in Java Debugger. The compatible minimum VS Code version is 1.22. See the feature request [#272](https://github.com/Microsoft/vscode-java-debug/issues/272)
+
+### Fixed
+- Contribution from [LunarArcanus](https://github.com/LunarArcanus): Fix the grammar issue in README. See [PR#306](https://github.com/Microsoft/vscode-java-debug/pull/306).
+- Fix the project's build errors in JDK 9/10. See [PR#178](https://github.com/Microsoft/java-debug/pull/178)
+
 ## 0.9.0 - 2018-4-26
 ### Added
 - Support auto-complete feature in debug console view. See the feature request [#237](https://github.com/Microsoft/vscode-java-debug/issues/237)
