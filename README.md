@@ -7,7 +7,7 @@
 A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users to debug Java code using Visual Studio Code (VS Code). Here's a list of features:
 
 - Launch/Attach
-- Breakpoints
+- Breakpoints/Conditional Breakpoints/Logpoints
 - Exceptions
 - Pause & Continue
 - Step In/Out/Over
