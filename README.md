@@ -15,6 +15,8 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Callstacks
 - Threads
 - Debug console
+- Evaluation
+- Hot Code Replace
 
 ## Requirements
 - JDK (version 1.8.0 or later)
