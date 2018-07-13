@@ -299,10 +299,10 @@ anonymous
 
 1. Open project `19.java9-app` in vscode.
 2. Follow gif to verify step filters feature.
-![stepfilter](https://user-images.githubusercontent.com/14052197/33868694-673f14b0-df3f-11e7-9983-b3cff5842020.gif)
+![stepfilter](images/33868694-673f14b0-df3f-11e7-9983-b3cff5842020.gif)
 
 The new gif:
-![stepfilters](https://user-images.githubusercontent.com/14052197/34507770-69597114-f074-11e7-8f32-027ad1d7a4fd.gif)
+![stepfilters](images/34507770-69597114-f074-11e7-8f32-027ad1d7a4fd.gif)
 
 ## Hot Code Replace
 
@@ -342,7 +342,7 @@ public class App
 
 2. set conditional breakpoint on line 13  with condition `i ==1000`, F5 and wait the breakpoint to be hit
 
-![java-conditional-bp-demo](https://user-images.githubusercontent.com/17075863/37269785-0ffef8e6-2607-11e8-955f-93548ad5a0ad.gif)
+![java-conditional-bp-demo](images/37269785-0ffef8e6-2607-11e8-955f-93548ad5a0ad.gif)
 
 3. verify i equals 1000 in variable window.
 4. F5 and wait for program to exit.
@@ -406,7 +406,7 @@ Exception in thread "main" java.lang.IllegalStateException
 2.  Launch java debugger and continue your program.
 3. When the logpoint code branch is hit, it just log the message to the console and doesn't stop your program.
 
-![logpoint](https://user-images.githubusercontent.com/14052197/41949312-77627a40-79f3-11e8-9fd2-def4fa06e28d.gif)
+![logpoint](images/41949312-77627a40-79f3-11e8-9fd2-def4fa06e28d.gif)
 
 
 
