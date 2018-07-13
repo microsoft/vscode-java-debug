@@ -1,0 +1,39 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies { classpath "commons-io:commons-io:2.5" }
+}
+
+import org.apache.commons.io.FilenameUtils;
+
+sourceSets {
+     main.java.srcDirs = ['src/main/java']
+}
+dependencies {    	
+    testCompile 'junit:junit:4.12'
+}
+
+
+repositories {    
+    mavenCentral()
+}
+
+def getShortJar = { e -> FilenameUtils.getName(e) }
+eclipse.classpath.file {
+    withXml{xml ->
+        def node = xml.asNode()
+
+        node.classpathentry.each{
+            if (it.@kind == 'lib') {
+                it.@path = 'lib/' + getShortJar(it.@path);
+                it.@sourcepath = 'lib/' + getShortJar(it.@sourcepath);
+            }
+
+        }
+    }
+}
