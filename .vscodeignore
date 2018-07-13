@@ -9,3 +9,5 @@ gulpfile.js
 .gitignore
 images/**
 testprojects/**
+TestPlan.md
+.github/**
