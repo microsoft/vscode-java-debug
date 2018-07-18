@@ -1,5 +1,5 @@
-import * as vscode from "vscode";
 import * as opn from "opn";
+import * as vscode from "vscode";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 
