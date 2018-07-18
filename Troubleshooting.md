@@ -2,7 +2,6 @@
 
 This document will help troubleshoot the common debugging errors.
 
----
 ## Java Language Support extension is not started or broken.
 Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extension for source mapping and project support. If Java Language Support extension is not started or broken, Java Debugger may not work as expected. Here is a simple way to check the Language Server is started. Open a Java or pom.xml file, and then check the status icon at the right corner of VS Code status bar is thumbs up or not.
 
@@ -16,7 +15,6 @@ Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extensi
 - Linux : $HOME/.config/Code/User/workspaceStorage/
 3. Try more [troubleshooting guide]((https://github.com/redhat-developer/vscode-java/wiki/Troubleshooting)) from the Language Support extension.
 
----
 ## Failed to resolve classpath: xxx.
 ### Reason:
 In launch mode, Java Debugger will auto resolve the classpath based on the given `"mainClass"` and `"projectName"`, if the mainClass or projectName is not correctly configured, it probably throws this kind of error.
@@ -26,12 +24,10 @@ In launch mode, Java Debugger will auto resolve the classpath based on the given
 2. Check the projectName is correct. The projectName is not always same as the workspace folder name. The right project name is read from the `"projectDescription/name"` field in the `".project"` file, or the `"artificatId"` field in the `"pom.xml"`.
 3. The recommended way is to let the Java Debugger auto resolve the mainClass and projectName. Please backup your launch.json first, then remove it. After that, click F5 to trigger debugging and the Java Debugger will auto resolve the debug configurations into the new generated launch.json.
 
----
 ## Illegal request type in launch.json.
 ### Try:
 1. The `"request"` type is an enum type, it should be `launch` or `attach`.
 
----
 ## Failed to complete hot code replace: xxx.
 ### Reason:
 The `hot code replace` feature depends on the underlying JVM implementation. If you got this error, that means the new changes cannot be hot replaced by JVM.
@@ -39,7 +35,6 @@ The `hot code replace` feature depends on the underlying JVM implementation. If 
 ### Try:
 1. Restart the debug session to apply the new changes. Or ignore the message, and continue to debug.
 
----
 ## Please specify the host name and the port of the remote debuggee in the launch.json.
 ### Reason:
 This error occurs when you try to debug remote Java application. You didn't configure the remote machine's host name and debug port correctly.
@@ -48,7 +43,6 @@ This error occurs when you try to debug remote Java application. You didn't conf
 1. Check the remote Java application is launched with debug mode. The typical command to enable debug mode is like `"java -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n -classpath xxx MyMainClass"`.
 2. Check the debug port is not blocked by the remote machine's firewall.
 
----
 ## Failed to evaluate. Reason: Cannot evaluate because the thread is resumed.
 ### Reason:
 There are two possible reasons for this error. 
@@ -59,7 +53,6 @@ There are two possible reasons for this error.
 1. For Reason 1, try to add a breakpoint and stop your program there, then run evaluation expression.
 2. For Reason 2, try to change the `console` option in the launch.json to `externalTerminal` or `integratedTerminal`. That's the official solution for console input.
 
----
 ## The Debug CONSOLE throws Error: Could not find or load main class xxx
 ### Reason:
 You configured the wrong main class name in the launch.json.
@@ -68,7 +61,6 @@ You configured the wrong main class name in the launch.json.
 1. Check the mainClass field is configured correctly.
 2. If the problem still exists, try to reference `"Java Language Support extension is not started or broken"` paragraph to troubleshoot if the Language Server works well.
 
----
 ## The DEBUG CONSOLE throws ClassNotFoundException
 ### Reason:
 The debugger doesn't resolve the whole classpath list correctly. The possible reason is the Java Language Server is broken.
@@ -76,7 +68,6 @@ The debugger doesn't resolve the whole classpath list correctly. The possible re
 ### Try:
 1. Reference `"Java Language Support extension is not started or broken"` paragraph for troubleshooting.
 
----
 ## Cannot find a class with the main method
 ### Reason:
 When mainClass is not configured in the launch.json, the debugger will try to resolve a class with main method. This error means the debugger doesn't find any main class in your workspace.
