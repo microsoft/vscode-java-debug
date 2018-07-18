@@ -44,6 +44,9 @@
       {
         "type": "java",
         "label": "Java",
+        "languages": [
+          "java"
+        ],
         "enableBreakpointsFor": {
           "languageIds": [
             "java"
