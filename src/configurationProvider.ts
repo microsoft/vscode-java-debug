@@ -51,13 +51,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             args: "",
                         };
                     });
-                    resolve([...launchConfigs, {
-                        type: "java",
-                        name: "Debug (Attach)",
-                        request: "attach",
-                        hostName: "localhost",
-                        port: 0,
-                    }]);
+                    resolve(launchConfigs);
                 }, (ex) => {
                     p.report({message: `failed to generate configuration. ${ex}`});
                     reject(ex);
