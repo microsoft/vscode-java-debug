@@ -13,7 +13,7 @@ Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extensi
 - Windows : %APPDATA%\Code\User\workspaceStorage\
 - MacOS : $HOME/Library/Application Support/Code/User/workspaceStorage/
 - Linux : $HOME/.config/Code/User/workspaceStorage/
-3. Try more [troubleshooting guide]((https://github.com/redhat-developer/vscode-java/wiki/Troubleshooting)) from the Language Support extension.
+3. Try more [troubleshooting guide](https://github.com/redhat-developer/vscode-java/wiki/Troubleshooting) from the Language Support extension.
 
 ## Failed to resolve classpath: xxx.
 ### Reason:
