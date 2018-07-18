@@ -1,0 +1,28 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+
+sourceSets {
+     main.java.srcDirs = ['src/main/java']
+}
+
+dependencies {
+     compile files("lib/test1.jar")
+	 compile files("lib/commons-io-2.5.jar")
+}
+
+
+repositories {    
+    mavenCentral()
+}
+
+eclipse.classpath.file {
+  withXml{xml ->
+    def node = xml.asNode()
+
+	node.classpathentry.find{
+      it.@kind == 'lib' && it.@path.contains('/test1.jar')
+    }.@sourcepath = 'lib/test1-sources.jar'
+  }
+}
