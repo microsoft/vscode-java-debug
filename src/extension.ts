@@ -8,6 +8,7 @@ import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
+import * as utility from "./utility";
 
 export function activate(context: vscode.ExtensionContext) {
     // The reporter will be initialized by the later telemetry handler.
@@ -69,9 +70,9 @@ export function deactivate() {
 
 function handleUserNotification(customEvent) {
     if (customEvent.body.notificationType === "ERROR") {
-        vscode.window.showErrorMessage(customEvent.body.message);
+        utility.showErrorMessage(customEvent.body.message);
     } else if (customEvent.body.notificationType === "WARNING") {
-        vscode.window.showWarningMessage(customEvent.body.message);
+        utility.showWarningMessage(customEvent.body.message);
     } else {
         vscode.window.showInformationMessage(customEvent.body.message);
     }
