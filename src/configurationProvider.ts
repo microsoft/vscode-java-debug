@@ -37,7 +37,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption[]) => {
                     let cache;
                     cache = {};
-                    const defaultConfig = {
+                    const defaultLaunchConfig = {
                         type: "java",
                         name: "Debug (Launch)",
                         request: "launch",
@@ -50,14 +50,20 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     };
                     const launchConfigs = res.map((item) => {
                         return {
-                            ...defaultConfig,
+                            ...defaultLaunchConfig,
                             name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
                             mainClass: item.mainClass,
                             projectName: item.projectName,
                         };
                     });
-
-                    resolve([defaultConfig, ...launchConfigs]);
+                    const defaultAttachConfig = {
+                        type: "java",
+                        name: "Debug (Attach)",
+                        request: "attach",
+                        hostName: "localhost",
+                        port: "<debug port of remote debuggee>",
+                    };
+                    resolve([defaultLaunchConfig, ...launchConfigs, defaultAttachConfig]);
                 }, (ex) => {
                     p.report({message: `failed to generate configuration. ${ex}`});
                     reject(ex);
