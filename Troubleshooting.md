@@ -2,8 +2,8 @@
 
 This document will help troubleshoot the common debugging errors.
 
-## Java Language Support extension is not started or broken.
-Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extension for source mapping and project support. If Java Language Support extension is not started or broken, Java Debugger may not work as expected. Here is a simple way to check the Language Server is started. Open a Java or pom.xml file, and then check the status icon at the right corner of VS Code status bar is thumbs up or not.
+## Java Language Support extension fails to start.
+Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extension for source mapping and project support. If Java Language Support extension fails to start, Java Debugger may not work as expected. Here is a simple way to check the Language Server is started. Open a Java or pom.xml file, and then check the status icon at the right corner of VS Code status bar is thumbs up or not.
 
  ![ status indicator ](https://raw.githubusercontent.com/redhat-developer/vscode-java/master/images/statusMarker.png).
 
@@ -40,7 +40,7 @@ The `hot code replace` feature depends on the underlying JVM implementation. If 
 This error occurs when you try to debug remote Java application. You didn't configure the remote machine's host name and debug port correctly.
 
 ### Try:
-1. Check the remote Java application is launched with debug mode. The typical command to enable debug mode is like `"java -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n -classpath xxx MyMainClass"`.
+1. Check the remote Java application is launched with debug mode. The typical command to enable debug mode is like `"java -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n -classpath xxx MyMainClass"`. The parameter `address=5005` represents the target VM exposes `5005` as the debug port.
 2. Check the debug port is not blocked by the remote machine's firewall.
 
 ## Failed to evaluate. Reason: Cannot evaluate because the thread is resumed.
@@ -51,27 +51,27 @@ There are two possible reasons for this error.
 
 ### Try:
 1. For Reason 1, try to add a breakpoint and stop your program there, then run evaluation expression.
-2. For Reason 2, try to change the `console` option in the launch.json to `externalTerminal` or `integratedTerminal`. That's the official solution for console input.
+2. For Reason 2, try to change the `console` option in the launch.json to `externalTerminal` or `integratedTerminal`. That's the official solution for program console input.
 
-## The Debug CONSOLE throws Error: Could not find or load main class xxx
+## The DEBUG CONSOLE throws Error: Could not find or load main class xxx
 ### Reason:
 You configured the wrong main class name in the launch.json.
 
 ### Try:
 1. Check the mainClass field is configured correctly.
-2. If the problem still exists, try to reference `"Java Language Support extension is not started or broken"` paragraph to troubleshoot if the Language Server works well.
+2. If the problem still exists, try to reference `"Java Language Support extension fails to start"` paragraph to troubleshoot if the Language Server works well.
 
 ## The DEBUG CONSOLE throws ClassNotFoundException
 ### Reason:
-The debugger doesn't resolve the whole classpath list correctly. The possible reason is the Java Language Server is broken.
+The debugger doesn't resolve the whole classpath list correctly. The possible reason is the Java Language Server fails to start.
 
 ### Try:
-1. Reference `"Java Language Support extension is not started or broken"` paragraph for troubleshooting.
+1. Reference `"Java Language Support extension fails to start"` paragraph for troubleshooting.
 
 ## Cannot find a class with the main method
 ### Reason:
-When mainClass is not configured in the launch.json, the debugger will try to resolve a class with main method. This error means the debugger doesn't find any main class in your workspace.
+When mainClass is not configured in the launch.json, the debugger will try to auto resolve a class with main method. This error means the debugger doesn't find any main class in your workspace.
 
 ### Try:
 1. Check if there is main class existed in your workspace.
-2. If so, it's probably because the Java Language Server is broken. Reference `"Java Language Support extension is not started or broken"` paragraph for troubleshooting.
+2. If so, it's probably because the Java Language Server fails to start. Reference `"Java Language Support extension fails to start"` paragraph for troubleshooting.
