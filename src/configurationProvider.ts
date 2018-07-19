@@ -34,24 +34,30 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
             return new Promise((resolve, reject) => {
                 p.report({message: "Auto generating configuration..."});
-                resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption []) => {
+                resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption[]) => {
                     let cache;
                     cache = {};
+                    const defaultConfig = {
+                        type: "java",
+                        name: "Debug (Launch)",
+                        request: "launch",
+                        // tslint:disable-next-line
+                        cwd: "${workspaceFolder}",
+                        console: "internalConsole",
+                        stopOnEntry: false,
+                        mainClass: "",
+                        args: "",
+                    };
                     const launchConfigs = res.map((item) => {
                         return {
-                            type: "java",
+                            ...defaultConfig,
                             name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
-                            request: "launch",
-                            // tslint:disable-next-line
-                            cwd: "${workspaceFolder}",
-                            console: "internalConsole",
-                            stopOnEntry: false,
                             mainClass: item.mainClass,
                             projectName: item.projectName,
-                            args: "",
                         };
                     });
-                    resolve(launchConfigs);
+
+                    resolve([defaultConfig, ...launchConfigs]);
                 }, (ex) => {
                     p.report({message: `failed to generate configuration. ${ex}`});
                     reject(ex);
@@ -112,7 +118,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         return;
                     }
                     config.mainClass = userSelection.mainClass;
-                    config.projectName  = userSelection.projectName;
+                    config.projectName = userSelection.projectName;
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
@@ -203,7 +209,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 label: name,
                 item,
             };
-        }).sort ((a, b): number => {
+        }).sort((a, b): number => {
             return a.label > b.label ? 1 : -1;
         });
         const selection = pickItems.length > 1 ?
