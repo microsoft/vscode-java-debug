@@ -13,7 +13,7 @@ export async function showWarningMessage(message: string, ...items: string[]): P
 }
 
 export async function showErrorMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    const choice = await vscode.window.showErrorMessage(message, "Learn More");
+    const choice = await vscode.window.showErrorMessage(message, ...items, "Learn More");
     if (choice === "Learn More") {
         opn(TROUBLESHOOTING_LINK);
         return;
