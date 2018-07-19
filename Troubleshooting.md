@@ -22,11 +22,15 @@ In launch mode, Java Debugger will auto resolve the classpath based on the given
 ### Try:
 1. Check the mainClass is correct. The illegal class name is like `"C:\todoapp\main\src\org\microsoft\app\Main.java"`. The debugger doesn't accept the file name as mainClass. It should be `"${packageName}.${className}"` with `"."` seperated, e.g. `"org.microsoft.app.Main"`.
 2. Check the projectName is correct. The projectName is not always same as the workspace folder name. The right project name is read from the `"projectDescription/name"` field in the `".project"` file, or the `"artificatId"` field in the `"pom.xml"`.
-3. The recommended way is to let the Java Debugger auto resolve the mainClass and projectName. Please backup your launch.json first, then remove it. After that, click F5 to trigger debugging and the Java Debugger will auto resolve the debug configurations into the new generated launch.json.
+3. The best practice is to let the Java Debugger auto resolve the mainClass and projectName for you. Please backup your launch.json first, then remove it. After that, click F5 to trigger debugging and the Java Debugger will auto resolve the debug configurations into the new generated launch.json.
 
-## Illegal request type in launch.json.
+## Request type "xxx" is not supported. Only "launch" and "attach" are supported.
+### Reason:
+The configurations in the launch.json is illegal.
+
 ### Try:
-1. The `"request"` type is an enum type, it should be `launch` or `attach`.
+1. Reference the VSCode official document [launch configurations](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) about how to configure launch.json.
+2. Another alternative choice is to remove the existing launch.json, and click F5, then Java Debugger will auto generate the launch.json for you.
 
 ## Failed to complete hot code replace: xxx.
 ### Reason:
