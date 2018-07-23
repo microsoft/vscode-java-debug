@@ -8,12 +8,13 @@ Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extensi
  ![ status indicator ](https://raw.githubusercontent.com/redhat-developer/vscode-java/master/images/statusMarker.png).
 
 ### Try:
-1. The usual failure is because the Java Language Support extension doesn't resolve the project model correctly. The workaround is to open VS Code Command Palette (`Ctrl+Shift+P`), and run command `"Java: Update project configuration"`.
-2. The other possible failure is due to the stale workspace cache. Please close all opened VS Code windows first and delete the following cache directory:
+1. If you get the error `"The JAVA_HOME environment variable points to a missing folder"` or `"Java runtime could not be located"`, please make sure the JAVA_HOME and bin path point to a valid JDK home directory. Otherwise, ignore this step.
+2. Open VS Code Command Palette (`Ctrl+Shift+P`), and run command `"Java: Update project configuration"` to force the Language Support extension to resolve the project relationship again.
+3. If the step above doesn't work, please try to clean the stale workspace cache. Close all opened VS Code windows first and delete the following cache directory:
 - Windows : %APPDATA%\Code\User\workspaceStorage\
 - MacOS : $HOME/Library/Application Support/Code/User/workspaceStorage/
 - Linux : $HOME/.config/Code/User/workspaceStorage/
-3. Try more [troubleshooting guide](https://github.com/redhat-developer/vscode-java/wiki/Troubleshooting) from the Language Support extension.
+4. Try more [troubleshooting guide](https://github.com/redhat-developer/vscode-java/wiki/Troubleshooting) from the Language Support extension.
 
 ## Failed to resolve classpath: xxx.
 ### Reason:
