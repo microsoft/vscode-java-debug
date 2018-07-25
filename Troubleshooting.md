@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This document will help troubleshoot the common debugging errors.
+This document will help troubleshoot the common debugging errors. If you still cannot solve your problems, please [submit an issue](https://github.com/Microsoft/vscode-java-debug/issues).
 
 ## Java Language Support extension fails to start.
 Java Debugger is leveraging `"Language Support for Java(TM) by Red Hat"` extension for source mapping and project support. If Java Language Support extension fails to start, Java Debugger may not work as expected. Here is a simple way to check the Language Server is started. Open a Java or pom.xml file, and then check the status icon at the right corner of VS Code status bar is thumbs up or not.
