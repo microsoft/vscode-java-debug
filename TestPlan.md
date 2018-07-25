@@ -64,7 +64,7 @@ public class App
 1. Open test project `4.variable`
 
 1. Set BP on the last statement of `VariableTest#test`
-1. Press F5 choose `java` and F5 again to start debug and wait for BP to be hit
+1. Press F5 to generate `launch.json` and press F5  again to start debug and wait for BP to be hit
 1. Verify 
     1. `i` should be `111`
     1.  `nullstr` should be `null` 
@@ -100,7 +100,7 @@ public class App
 ## Big stack frame
 1. Open test project `6. recursivefunction`
 2. Open `RecursiveTest.java`, and set BP on line 8: return 1
-1. Press F5 choose `java` and F5 again to start debug and wait for BP to be hit
+1. Press F5 to generate `launch.json` and press F5  again to start debug and wait for BP to be hit
 1. Add watch `number + 100` and verify the call stack list is a long list, and you can switch between them freely with changed arguments number and changed watch values
 1. click on the Load More Stack Frames button, verify you can click on it continually. (The total stack frame count is 1000, and vscode will load 20 of them in one page, so you can click Load More Stack Frames button about 50 times), verify there is no PERFORMANCE issue (no delay more than 1 second during the test steps).
 1. Press F5, verify program terminates.
@@ -183,7 +183,7 @@ anonymous
 ## Variable Performance Test
 1. Open test project `7.variableperformance`
 2. Open `TooManyVariables.java`, and set BP on `System.out.println("variable perf test.")`
-1. Press F5 choose `java` and F5 again to start debug
+1. Press F5 to generate `launch.json` and press F5  again to start debug
 1. Open debug view and expand the ‘this’ variable in variable view.
 1. Verify the time for expanding are less than 5 seconds
 1. Press F5, verify program terminates.
@@ -191,7 +191,7 @@ anonymous
 ## No Debug Information Test
 1. Open test project `8.nosource`
 1. Open `NoSourceTest.java`, and set breakpoint on line 4: `System.out.println(i+10);`
-1. Press F5 choose `java` and F5 again to start debug, verify the BP is hit
+1. Press F5 to generate `launch.json` and press F5  again to start debug, verify the BP is hit
 1. Verify the following stack frames:
     <pre>
     NoSourceTest.lambda$0(Integer) (NoSourceTest.java:4)
@@ -210,7 +210,7 @@ anonymous
 1. Open generated `simple-app` folder using vscode
 1. Wait and verify `.project` and `.classpath` files and `target` folder are generated.
 1. Set BP on the `println`
-1. Press F5 choose `java` and F5 again to start debug, verify the BP is hit
+1. Press F5 to generate `launch.json` and press F5  again to start debug, verify the BP is hit
 1. Press F5, verify program terminates with output `Hello World!`
 
 ## Gradle Test
@@ -231,14 +231,14 @@ anonymous
     </pre>
 1. copy the src/main folder from prevous test case `Maven Test` to this folder.
 1. Set BP on the `println`
-1. Press F5 choose `java` and F5 again to start debug, verify the BP is hit
+1. Press F5 to generate `launch.json` and press F5  again to start debug, verify the BP is hit
 1. Press F5, verify program terminates with output `Hello World!`
 
 ## PetClinic
 1. Clone code from `https://github.com/spring-projects/spring-petclinic.git`
 1. Open the cloned project and verify `.project` and `.classpath` files and `target` folder are generated.
 1. Set BP on `WelcomeController.java` on line `return "welcome";` and `main` on `PetClinicApplication.java`
-1. Press F5 choose `java` and F5 again to start debug, verify the BP on `main` is hit.
+1. Press F5 to generate `launch.json` and press F5  again to start debug, verify the BP on `main` is hit.
 1. Press F5 and verify the BP on `main` is hit again.
 1. Wait for output `2017-11-23 20:23:25.230  INFO 9448 --- [  restartedMain] s.b.c.e.t.TomcatEmbeddedServletContainer : Tomcat started on port(s): 8080 (http)
 `
@@ -251,7 +251,7 @@ anonymous
 1. Open the cloned project and verify `.project` and `.classpath` files and `target` folder are generated.
 1. Open file `todo-app-java-on-azure\src\main\resources\application.properties` and replaces it with a test configuration(see my email attachment)
 1. Set BP on `TodoListController.java` on `addNewTodoItem(@RequestBody TodoItem item)` and `main` on `TodoApplication.java`
-1. Press F5 choose `java` and F5 again to start debug, verify the BP on `main` is hit.
+1. Press F5 to generate `launch.json` and press F5  again to start debug, verify the BP on `main` is hit.
 1. Press F5 to continue, open IE and open `http://localhost:8080/#/TodoList` and add a todo, press Button `Add` and verify the BP on addNewTodoItem is hit, wait a little time to load the stack frame.
 1. Press F10 and then Press F5, verify the todo item is added.
 
