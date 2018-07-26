@@ -72,7 +72,8 @@ This error indicates your application attempts to reference some classes which a
 
 ### Try:
 1. Check you configure the dependency settings file (e.g. pom.xml) correctly.
-2. If the problem still exists, it's probably because Java Language Support extension doesn't load your project correctly. Please try to reference `"Java Language Support extension fails to start"` paragraph to troubleshoot if the Language Server works well.
+2. Open VS Code Command Palette (`Ctrl+Shift+P`), and run command `"Java: Force Java compilation"` to force a build.
+3. If the problem still exists, it's probably because Java Language Support extension doesn't load your project correctly. Please try to reference `"Java Language Support extension fails to start"` paragraph to troubleshoot if the Language Server works well.
 
 ## Cannot find a class with the main method
 ### Reason:
