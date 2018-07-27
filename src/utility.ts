@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
 import * as opn from "opn";
 import * as vscode from "vscode";
 import { logger, Type } from "./logger";
