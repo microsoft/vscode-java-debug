@@ -92,7 +92,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.enableHotCodeReplace`: enable hot code replace for Java code. Make sure the auto build is not disabled for [VSCode Java](https://github.com/redhat-developer/vscode-java). See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
 
 ## Troubleshooting
-Reference the [troubleshooting guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for the frequently asked errors.
+Reference the [troubleshooting guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for common errors.
 
 ## Feedback and Questions
 You can find the full list of issues at [Issue Tracker](https://github.com/Microsoft/vscode-java-debug/issues). You can submit a [bug or feature suggestion](https://github.com/Microsoft/vscode-java-debug/issues/new), and participate community driven [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)
