@@ -14,20 +14,31 @@ function openLearnMoreLink(message: string): void {
     });
 }
 
-export async function showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    const choice = await vscode.window.showWarningMessage(message, ...items, "Learn More");
+enum MessageType {
+    WARNING = "WARNING",
+    ERROR = "ERROR",
+}
+
+async function showMessage(type: MessageType, message: string, ...items: string[]): Promise<string | undefined> {
+    let choice;
+    if (type === MessageType.WARNING) {
+        choice = await vscode.window.showWarningMessage(message, ...items, "Learn More");
+    } else if (type === MessageType.ERROR) {
+        choice = await vscode.window.showErrorMessage(message, ...items, "Learn More");
+    }
+
     if (choice === "Learn More") {
         openLearnMoreLink(message);
         return;
     }
+
     return choice;
 }
 
+export async function showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await showMessage(MessageType.WARNING, message, ...items);
+}
+
 export async function showErrorMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    const choice = await vscode.window.showErrorMessage(message, ...items, "Learn More");
-    if (choice === "Learn More") {
-        openLearnMoreLink(message);
-        return;
-    }
-    return choice;
+    return await showMessage(MessageType.ERROR, message, ...items);
 }
