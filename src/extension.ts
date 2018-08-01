@@ -12,7 +12,10 @@ import * as utility from "./utility";
 
 export function activate(context: vscode.ExtensionContext) {
     logger.initialize(context);
-    logger.log(Type.ACTIVATEEXTENSION, {});
+    logger.log(Type.ACTIVATEEXTENSION, {}); // TODO: Activation belongs to usage data, remove this line.
+    logger.log(Type.USAGEDATA, {
+        description: "activateExtension",
+    });
 
     const measureKeys = ["duration"];
     vscode.debug.onDidTerminateDebugSession(() => {

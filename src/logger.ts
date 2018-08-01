@@ -8,7 +8,7 @@ export enum Type {
     EXCEPTION = "exception",
     USAGEDATA = "usageData",
     USAGEERROR = "usageError",
-    ACTIVATEEXTENSION = "activateExtension",
+    ACTIVATEEXTENSION = "activateExtension", // TODO: Activation belongs to usage data, remove this category.
 }
 
 class Logger {

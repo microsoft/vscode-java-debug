@@ -5,13 +5,10 @@ import * as opn from "opn";
 import * as vscode from "vscode";
 import { logger, Type } from "./logger";
 
-function openLearnMoreLink(message: string): void {
-    const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
-    opn(TROUBLESHOOTING_LINK);
-    logger.log(Type.USAGEDATA, {
-        troubleshooting: "yes",
-        troubleshootingMessage: message,
-    });
+const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
+
+function openLink(url: string): void {
+    opn(url);
 }
 
 enum MessageType {
@@ -28,7 +25,11 @@ async function showMessage(type: MessageType, message: string, ...items: string[
     }
 
     if (choice === "Learn More") {
-        openLearnMoreLink(message);
+        openLink(TROUBLESHOOTING_LINK);
+        logger.log(Type.USAGEDATA, {
+            troubleshooting: "yes",
+            troubleshootingMessage: message,
+        });
         return;
     }
 
