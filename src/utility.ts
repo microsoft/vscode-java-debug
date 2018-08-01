@@ -6,25 +6,62 @@ import * as vscode from "vscode";
 import { logger, Type } from "./logger";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
+const LEARN_MORE = "Learn More";
+
+interface IMessage {
+    message: string;
+    type?: Type;
+    details?: { [key: string]: string; };
+}
+
+function logMessage(message: IMessage): void {
+    if (!message.type) {
+        return;
+    }
+
+    if (message.details) {
+        logger.log(message.type, message.details);
+    } else {
+        logger.logMessage(message.type, message.message);
+    }
+}
+
+export async function showInformationMessage(message: IMessage, ...items: string[]): Promise<string | undefined> {
+    logMessage(message);
+    return await vscode.window.showInformationMessage(message.message, ...items);
+}
+
+export async function showWarningMessage(message: IMessage, ...items: string[]): Promise<string | undefined> {
+    logMessage(message);
+    return await vscode.window.showWarningMessage(message.message, ...items);
+}
+
+export async function showErrorMessage(message: IMessage, ...items: string[]): Promise<string | undefined> {
+    logMessage(message);
+    return await vscode.window.showErrorMessage(message.message, ...items);
+}
+
+export async function showInformationMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
+    const choice = await showInformationMessage(message, ...items, LEARN_MORE);
+    return handleTroubleshooting(choice, message.message);
+}
+
+export async function showWarningMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
+    const choice = await showWarningMessage(message, ...items, LEARN_MORE);
+    return handleTroubleshooting(choice, message.message);
+}
+
+export async function showErrorMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
+    const choice = await showErrorMessage(message, ...items, LEARN_MORE);
+    return handleTroubleshooting(choice, message.message);
+}
 
 function openLink(url: string): void {
     opn(url);
 }
 
-enum MessageType {
-    WARNING = "WARNING",
-    ERROR = "ERROR",
-}
-
-async function showMessage(type: MessageType, message: string, ...items: string[]): Promise<string | undefined> {
-    let choice;
-    if (type === MessageType.WARNING) {
-        choice = await vscode.window.showWarningMessage(message, ...items, "Learn More");
-    } else if (type === MessageType.ERROR) {
-        choice = await vscode.window.showErrorMessage(message, ...items, "Learn More");
-    }
-
-    if (choice === "Learn More") {
+function handleTroubleshooting(choice: string, message: string): string | undefined {
+    if (choice === LEARN_MORE) {
         openLink(TROUBLESHOOTING_LINK);
         logger.log(Type.USAGEDATA, {
             troubleshooting: "yes",
@@ -34,12 +71,4 @@ async function showMessage(type: MessageType, message: string, ...items: string[
     }
 
     return choice;
-}
-
-export async function showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    return await showMessage(MessageType.WARNING, message, ...items);
-}
-
-export async function showErrorMessage(message: string, ...items: string[]): Promise<string | undefined> {
-    return await showMessage(MessageType.ERROR, message, ...items);
 }

@@ -133,25 +133,28 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.classPaths = result[1];
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
-                    const hintMessage = "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.";
-                    utility.showErrorMessage(hintMessage);
-                    logger.logMessage(Type.USAGEERROR, hintMessage);
+                    utility.showErrorMessageWithTroubleshooting({
+                        message: "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.",
+                        type: Type.USAGEERROR,
+                    });
                     return undefined;
                 }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
-                    utility.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
-                    logger.logMessage(Type.USAGEERROR, "Please specify the host name and the port of the remote debuggee in the launch.json.");
+                    utility.showErrorMessageWithTroubleshooting({
+                        message: "Please specify the host name and the port of the remote debuggee in the launch.json.",
+                        type: Type.USAGEERROR,
+                    });
                     return undefined;
                 }
             } else {
-                const ans = await utility.showErrorMessage(
-                    // tslint:disable-next-line:max-line-length
-                    "Request type \"" + config.request + "\" is not supported. Only \"launch\" and \"attach\" are supported.", "Open launch.json");
+                const ans = await utility.showErrorMessageWithTroubleshooting({
+                    message: `Request type "${config.request}" is not supported. Only "launch" and "attach" are supported.`,
+                    type: Type.USAGEERROR,
+                }, "Open launch.json");
                 if (ans === "Open launch.json") {
                     await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
                 }
-                logger.logMessage(Type.USAGEERROR, "Illegal request type in launch.json");
                 return undefined;
             }
             const debugServerPort = await startDebugSession();
@@ -166,8 +169,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
         } catch (ex) {
             const errorMessage = (ex && ex.message) || ex;
-            utility.showErrorMessage(String(errorMessage));
-
             const exception = (ex && ex.data && ex.data.cause)
                 || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
             const properties = {
@@ -181,7 +182,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             } else {
                 properties.message = String(exception);
             }
-            logger.log(Type.EXCEPTION, properties);
+            utility.showErrorMessageWithTroubleshooting({
+                message: String(errorMessage),
+                type: Type.EXCEPTION,
+                details: properties,
+            });
             return undefined;
         }
     }
@@ -193,9 +198,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption | undefined> {
         const res = await resolveMainClass(folder ? folder.uri : undefined);
         if (res.length === 0) {
-            utility.showErrorMessage(
-                "Cannot find a class with the main method.");
-            logger.logMessage(Type.EXCEPTION, "Cannot find a class with the main method.");
+            utility.showErrorMessageWithTroubleshooting({
+                message: "Cannot find a class with the main method.",
+                type: Type.USAGEERROR,
+            });
             return undefined;
         }
         const pickItems = res.map((item) => {
