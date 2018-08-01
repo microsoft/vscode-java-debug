@@ -3,49 +3,41 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
-import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
+import { logger, Type } from "./logger";
+import * as utility from "./utility";
 
 export function activate(context: vscode.ExtensionContext) {
-    // The reporter will be initialized by the later telemetry handler.
-    let reporter: TelemetryReporter = null;
+    logger.initialize(context);
+    logger.log(Type.ACTIVATEEXTENSION, {}); // TODO: Activation belongs to usage data, remove this line.
+    logger.log(Type.USAGEDATA, {
+        description: "activateExtension",
+    });
 
-    // Telemetry.
-    const extensionPackage = require(context.asAbsolutePath("./package.json"));
-    if (extensionPackage) {
-        const packageInfo = {
-            name: extensionPackage.name,
-            version: extensionPackage.version,
-            aiKey: extensionPackage.aiKey,
-        };
-        if (packageInfo.aiKey) {
-            reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
-            reporter.sendTelemetryEvent("activateExtension", {});
-            const measureKeys = ["duration"];
-            vscode.debug.onDidTerminateDebugSession(() => {
-                fetchUsageData().then((ret) => {
-                    if (Array.isArray(ret) && ret.length) {
-                        ret.forEach((entry) => {
-                            const commonProperties: any = {};
-                            const measureProperties: any = {};
-                            for (const key of Object.keys(entry)) {
-                                if (measureKeys.indexOf(key) >= 0) {
-                                    measureProperties[key] = entry[key];
-                                } else {
-                                    commonProperties[key] = String(entry[key]);
-                                }
-                            }
-                            reporter.sendTelemetryEvent(entry.scope === "exception" ? "exception" : "usageData", commonProperties, measureProperties);
-                        });
+    const measureKeys = ["duration"];
+    vscode.debug.onDidTerminateDebugSession(() => {
+        fetchUsageData().then((ret) => {
+            if (Array.isArray(ret) && ret.length) {
+                ret.forEach((entry) => {
+                    const commonProperties: any = {};
+                    const measureProperties: any = {};
+                    for (const key of Object.keys(entry)) {
+                        if (measureKeys.indexOf(key) >= 0) {
+                            measureProperties[key] = entry[key];
+                        } else {
+                            commonProperties[key] = String(entry[key]);
+                        }
                     }
+                    logger.log(entry.scope === "exception" ? Type.EXCEPTION : Type.USAGEDATA, commonProperties, measureProperties);
                 });
-            });
-        }
-    }
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider(reporter)));
+            }
+        });
+    });
+
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(vscode.commands.registerCommand("JavaDebug.SpecifyProgramArgs", async () => {
         return specifyProgramArguments(context);
     }));
@@ -69,9 +61,13 @@ export function deactivate() {
 
 function handleUserNotification(customEvent) {
     if (customEvent.body.notificationType === "ERROR") {
-        vscode.window.showErrorMessage(customEvent.body.message);
+        utility.showErrorMessageWithTroubleshooting({
+            message: customEvent.body.message,
+        });
     } else if (customEvent.body.notificationType === "WARNING") {
-        vscode.window.showWarningMessage(customEvent.body.message);
+        utility.showWarningMessageWithTroubleshooting({
+            message: customEvent.body.message,
+        });
     } else {
         vscode.window.showInformationMessage(customEvent.body.message);
     }

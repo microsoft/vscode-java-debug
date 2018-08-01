@@ -2,12 +2,13 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
-import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
+import { logger, Type } from "./logger";
+import * as utility from "./utility";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
-    constructor(private _reporter: TelemetryReporter) {
+    constructor() {
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (vscode.debug.activeDebugSession) {
                 this.isUserSettingsDirty = false;
@@ -132,25 +133,28 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.classPaths = result[1];
                 }
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
-                    const hintMessage = "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.";
-                    vscode.window.showErrorMessage(hintMessage);
-                    this.log("usageError", hintMessage);
+                    utility.showErrorMessageWithTroubleshooting({
+                        message: "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.",
+                        type: Type.USAGEERROR,
+                    });
                     return undefined;
                 }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
-                    vscode.window.showErrorMessage("Please specify the host name and the port of the remote debuggee in the launch.json.");
-                    this.log("usageError", "Please specify the host name and the port of the remote debuggee in the launch.json.");
+                    utility.showErrorMessageWithTroubleshooting({
+                        message: "Please specify the host name and the port of the remote debuggee in the launch.json.",
+                        type: Type.USAGEERROR,
+                    });
                     return undefined;
                 }
             } else {
-                const ans = await vscode.window.showErrorMessage(
-                    // tslint:disable-next-line:max-line-length
-                    "Request type \"" + config.request + "\" is not supported. Only \"launch\" and \"attach\" are supported.", "Open launch.json");
+                const ans = await utility.showErrorMessageWithTroubleshooting({
+                    message: `Request type "${config.request}" is not supported. Only "launch" and "attach" are supported.`,
+                    type: Type.USAGEERROR,
+                }, "Open launch.json");
                 if (ans === "Open launch.json") {
                     await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
                 }
-                this.log("usageError", "Illegal request type in launch.json");
                 return undefined;
             }
             const debugServerPort = await startDebugSession();
@@ -158,37 +162,32 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.debugServer = debugServerPort;
                 return config;
             } else {
-                this.log("exception", "Failed to start debug server.");
+                logger.logMessage(Type.EXCEPTION, "Failed to start debug server.");
                 // Information for diagnostic:
                 console.log("Cannot find a port for debugging session");
                 return undefined;
             }
         } catch (ex) {
             const errorMessage = (ex && ex.message) || ex;
-            vscode.window.showErrorMessage(String(errorMessage));
-            if (this._reporter) {
-                const exception = (ex && ex.data && ex.data.cause)
-                    || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
-                const properties = {
-                    message: "",
-                    stackTrace: "",
-                };
-                if (exception && typeof exception === "object") {
-                    properties.message = exception.detailMessage;
-                    properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
-                        || String(exception.stackTrace);
-                } else {
-                    properties.message = String(exception);
-                }
-                this._reporter.sendTelemetryEvent("exception", properties);
+            const exception = (ex && ex.data && ex.data.cause)
+                || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
+            const properties = {
+                message: "",
+                stackTrace: "",
+            };
+            if (exception && typeof exception === "object") {
+                properties.message = exception.detailMessage;
+                properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
+                    || String(exception.stackTrace);
+            } else {
+                properties.message = String(exception);
             }
+            utility.showErrorMessageWithTroubleshooting({
+                message: String(errorMessage),
+                type: Type.EXCEPTION,
+                details: properties,
+            });
             return undefined;
-        }
-    }
-
-    private log(type: string, message: string) {
-        if (this._reporter) {
-            this._reporter.sendTelemetryEvent(type, { message });
         }
     }
 
@@ -199,8 +198,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption | undefined> {
         const res = await resolveMainClass(folder ? folder.uri : undefined);
         if (res.length === 0) {
-            vscode.window.showErrorMessage(
-                "Cannot find a class with the main method.");
+            utility.showErrorMessageWithTroubleshooting({
+                message: "Cannot find a class with the main method.",
+                type: Type.USAGEERROR,
+            });
             return undefined;
         }
         const pickItems = res.map((item) => {
