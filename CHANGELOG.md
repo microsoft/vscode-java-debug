@@ -4,6 +4,20 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.11.0 - 2018-8-2
+### Added
+- Add a troubleshooting page for common errors. See [the troubleshooting guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md).
+- Build and publish the Java Debug Server plugin as p2 artifacts. See [PR#191](https://github.com/Microsoft/java-debug/pull/191), [PR#192](https://github.com/Microsoft/java-debug/pull/192).
+
+### Changed
+- Auto select Java Debugger for .java file. See [PR#329](https://github.com/Microsoft/vscode-java-debug/pull/329).
+- Improve the *launch.json* auto-generation UX. See [PR#342](https://github.com/Microsoft/vscode-java-debug/pull/342).
+- Improve the logger coverage for the error response. See [PR#190](https://github.com/Microsoft/java-debug/pull/190).
+
+### Fixed
+- Fix the attach error in JDK 10. See [PR#187](https://github.com/Microsoft/java-debug/pull/187).
+- Fix the Java Debug Server plugin build error in JDK 10. See [PR#194](https://github.com/Microsoft/java-debug/pull/194).
+
 ## 0.10.0 - 2018-6-27
 ### Added
 - Add support for Logpoint. The minimum compatible VS Code version is 1.22. See the feature request [#272](https://github.com/Microsoft/vscode-java-debug/issues/272)
