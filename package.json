@@ -373,7 +373,7 @@
   ],
   "devDependencies": {
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.5.4",
+    "@types/node": "^8.10.22",
     "cross-env": "^5.2.0",
     "gulp": "^3.9.1",
     "gulp-tslint": "^8.1.2",
