@@ -375,13 +375,13 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^8.10.22",
     "cross-env": "^5.2.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-tslint": "^8.1.2",
     "mocha": "^5.2.0",
     "shelljs": "^0.8.2",
     "tslint": "^5.7.0",
     "typescript": "^3.0.1",
-    "vscode": "^1.1.6"
+    "vscode": "^1.1.18"
   },
   "dependencies": {
     "opn": "^5.3.0",
