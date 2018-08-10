@@ -9,7 +9,7 @@ The debugger works with [Language Support for Java(TM) by Red Hat](https://marke
 
 ### Try:
 1. If you get the error *"The JAVA_HOME environment variable points to a missing folder"* or *"Java runtime could not be located"*, please make sure that the environment variable JAVA_HOME points to a valid JDK. Otherwise, ignore this step.
-2. Open your Maven *pom.xml* file or Gradle *build.gradle* file, then run VS Code command *"Java: Update project configuration"* to force the language server to reload the current project.
+2. Open your Maven *pom.xml* file or Gradle *build.gradle* file, then run VS Code command *"Java: Update project configuration"* to force the language server to update the project configuration/classpath.
 3. Try cleaning the stale workspace cache. Quit all VS Code processes and clean the following cache directory:
 - Windows : %APPDATA%\Code\User\workspaceStorage\
 - MacOS : $HOME/Library/Application Support/Code/User/workspaceStorage/
