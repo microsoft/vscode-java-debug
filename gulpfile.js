@@ -15,7 +15,7 @@ gulp.task('build_server', () => {
 		cwd: server_dir,
 		stdio: [0, 1, 2]
 	});
-	gulp.src(server_dir + '/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.*.jar')
+	return gulp.src(server_dir + '/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.*.jar')
 		.pipe(gulp.dest('./server'));
 });
 
@@ -32,5 +32,5 @@ function isLinux() {
 }
 
 function mvnw() {
-	return isWin()?"mvnw.cmd":"./mvnw";
+	return isWin() ? "mvnw.cmd" : "./mvnw";
 }
