@@ -118,15 +118,14 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         return undefined;
                     }
                 }
-                if (!config.mainClass) {
-                    const userSelection = await this.chooseMainClass(folder);
-                    if (!userSelection || !userSelection.mainClass) {
-                        // the error is handled inside chooseMainClass
-                        return;
-                    }
-                    config.mainClass = userSelection.mainClass;
-                    config.projectName = userSelection.projectName;
+
+                const userSelection = await this.quickFixLaunchConfig(folder ? folder.uri : undefined, config);
+                if (!userSelection || !userSelection.mainClass) {
+                    return;
                 }
+                config.mainClass = userSelection.mainClass;
+                config.projectName = userSelection.projectName;
+
                 if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
                     config.modulePaths = result[0];
@@ -195,8 +194,101 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return !Array.isArray(configItems) || !configItems.length;
     }
 
-    private async chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption | undefined> {
-        const res = await resolveMainClass(folder ? folder.uri : undefined);
+    private async quickFixLaunchConfig(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration):
+        Promise<IMainClassOption | undefined> {
+        if (!config.mainClass) {
+            return this.chooseMainClass(folder);
+        }
+
+        const validationResponse = await validateLaunchConfig(folder, config.mainClass, config.projectName);
+        if (validationResponse.mainClass.passed && validationResponse.projectName.passed) {
+            return {
+                mainClass: config.mainClass,
+                projectName: config.projectName,
+            };
+        } else {
+            const errors: string[] = [];
+            if (!validationResponse.mainClass.passed) {
+                errors.push(String(validationResponse.mainClass.message));
+            }
+
+            if (!validationResponse.projectName.passed) {
+                errors.push(String(validationResponse.projectName.message));
+            }
+
+            if (validationResponse.proposals && validationResponse.proposals.length) {
+                const answer = await utility.showErrorMessageWithTroubleshooting({
+                    message: errors.join("\n"),
+                    type: Type.USAGEERROR,
+                }, "Quick Fix");
+                if (answer === "Quick Fix") {
+                    const quickFix: IMainClassOption = await this.showMainClassQuickPick(validationResponse.proposals,
+                        "Please select main class<project name>", true);
+                    this.persistLaunchConfig(folder, config, quickFix);
+                    return quickFix;
+                }
+            } else {
+                utility.showErrorMessageWithTroubleshooting({
+                    message: errors.join("\n"),
+                    type: Type.USAGEERROR,
+                });
+            }
+
+            return;
+        }
+    }
+
+    private persistLaunchConfig(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration, change: IMainClassOption): void {
+        if (!change) {
+            return;
+        }
+
+        const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", folder);
+        const rawConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
+        const targetIndex: number = this.findDebugConfig(rawConfigs, config);
+        if (targetIndex >= 0) {
+            rawConfigs[targetIndex].mainClass = change.mainClass;
+            rawConfigs[targetIndex].projectName = change.projectName;
+
+            launchConfigurations.update("configurations", rawConfigs);
+        }
+    }
+
+    private findDebugConfig(rawConfigs: vscode.DebugConfiguration[], config: vscode.DebugConfiguration): number {
+        const candidates = [];
+        for (let i = 0; i < rawConfigs.length; i++) {
+            if (rawConfigs[i].name === config.name) {
+                candidates.push(i);
+            }
+        }
+
+        if (candidates.length > 1) {
+            for (const index of candidates) {
+                if (this.compareDebugConfig(rawConfigs[index], config)) {
+                    return index;
+                }
+            }
+
+            return candidates[0];
+        } else if (candidates.length === 1) {
+            return candidates[0];
+        }
+
+        return -1;
+    }
+
+    private compareDebugConfig(config1: object, config2: object): boolean {
+        for (const key of Object.keys(config1)) {
+            if (config1[key] !== config2[key]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async chooseMainClass(folder: vscode.Uri | undefined): Promise<IMainClassOption | undefined> {
+        const res = await resolveMainClass(folder);
         if (res.length === 0) {
             utility.showErrorMessageWithTroubleshooting({
                 message: "Cannot find a class with the main method.",
@@ -204,7 +296,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             });
             return undefined;
         }
-        const pickItems = res.map((item) => {
+
+        return await this.showMainClassQuickPick(res, "Select main class<project name>");
+    }
+
+    private async showMainClassQuickPick(candidates: IMainClassOption[], quickPickHintMessage: string, alwaysShowQuickPickBox?: boolean):
+        Promise<IMainClassOption | undefined> {
+        const pickItems = candidates.map((item) => {
             let name = item.mainClass;
             let details = `main class: ${item.mainClass}`;
             if (item.projectName !== undefined) {
@@ -216,11 +314,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 label: name,
                 item,
             };
-        }).sort((a, b): number => {
-            return a.label > b.label ? 1 : -1;
         });
-        const selection = pickItems.length > 1 ?
-            await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
+
+        const selection = alwaysShowQuickPickBox || pickItems.length > 1 ?
+            await vscode.window.showQuickPick(pickItems, { placeHolder: quickPickHintMessage })
             : pickItems[0];
         if (selection && selection.item) {
             return selection.item;
@@ -243,6 +340,11 @@ function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]>
         return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
     }
     return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
+}
+
+function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass, projectName): Promise<ILaunchValidationResponse> {
+    return <Promise<ILaunchValidationResponse>> commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
+        workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName);
 }
 
 async function updateDebugSettings() {
@@ -281,4 +383,15 @@ function convertLogLevel(commonLogLevel: string) {
 interface IMainClassOption {
     readonly projectName?: string;
     readonly mainClass: string;
+}
+
+interface IValidationResult {
+    readonly passed: boolean;
+    readonly message?: string;
+}
+
+interface ILaunchValidationResponse {
+    readonly mainClass: IValidationResult;
+    readonly projectName: IValidationResult;
+    readonly proposals?: IMainClassOption[];
 }
