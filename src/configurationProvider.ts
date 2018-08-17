@@ -219,11 +219,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         Promise<IMainClassOption | undefined> {
         const errors: string[] = [];
         if (!validationResponse.mainClass.isValid) {
-            errors.push(String(validationResponse.mainClass.errorMessage));
+            errors.push(String(validationResponse.mainClass.message));
         }
 
         if (!validationResponse.projectName.isValid) {
-            errors.push(String(validationResponse.projectName.errorMessage));
+            errors.push(String(validationResponse.projectName.message));
         }
 
         if (validationResponse.proposals && validationResponse.proposals.length) {
@@ -378,7 +378,7 @@ interface IMainClassOption {
 
 interface IValidationResult {
     readonly isValid: boolean;
-    readonly errorMessage?: string;
+    readonly message?: string;
 }
 
 interface ILaunchValidationResponse {
