@@ -204,7 +204,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             return await this.promptMainClass(folder);
         }
 
-        const validationResponse = await validateLaunchConfig(folder, config.mainClass, config.projectName);
+        const containsExternalClasspaths = !this.isEmptyArray(config.classPaths) || !this.isEmptyArray(config.modulePaths);
+        const validationResponse = await validateLaunchConfig(folder, config.mainClass, config.projectName, containsExternalClasspaths);
         if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
             return await this.fixMainClass(folder, config, validationResponse);
         }
@@ -333,9 +334,10 @@ function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]>
     return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
-function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass, projectName): Promise<ILaunchValidationResponse> {
+function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string, projectName: string, containsExternalClasspaths: boolean):
+    Promise<ILaunchValidationResponse> {
     return <Promise<ILaunchValidationResponse>> commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
-        workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName);
+        workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName, containsExternalClasspaths);
 }
 
 async function updateDebugSettings() {
