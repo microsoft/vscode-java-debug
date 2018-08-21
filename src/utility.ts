@@ -12,6 +12,7 @@ interface IMessage {
     message: string;
     type?: Type;
     details?: { [key: string]: string; };
+    anchor?: string;
 }
 
 function logMessage(message: IMessage): void {
@@ -43,26 +44,27 @@ export async function showErrorMessage(message: IMessage, ...items: string[]): P
 
 export async function showInformationMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showInformationMessage(message, ...items, LEARN_MORE);
-    return handleTroubleshooting(choice, message.message);
+    return handleTroubleshooting(choice, message.message, message.anchor);
 }
 
 export async function showWarningMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showWarningMessage(message, ...items, LEARN_MORE);
-    return handleTroubleshooting(choice, message.message);
+    return handleTroubleshooting(choice, message.message, message.anchor);
 }
 
 export async function showErrorMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showErrorMessage(message, ...items, LEARN_MORE);
-    return handleTroubleshooting(choice, message.message);
+    return handleTroubleshooting(choice, message.message, message.anchor);
 }
 
 function openLink(url: string): void {
     opn(url);
 }
 
-function handleTroubleshooting(choice: string, message: string): string | undefined {
+function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
     if (choice === LEARN_MORE) {
-        openLink(TROUBLESHOOTING_LINK);
+        const link = anchor ? `${TROUBLESHOOTING_LINK}#${anchor}`: TROUBLESHOOTING_LINK;
+        openLink(link);
         logger.log(Type.USAGEDATA, {
             troubleshooting: "yes",
             troubleshootingMessage: message,
