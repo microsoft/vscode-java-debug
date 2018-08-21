@@ -8,14 +8,17 @@ import { logger, Type } from "./logger";
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 const LEARN_MORE = "Learn More";
 
-interface IMessage {
+interface ILoggingMessage {
     message: string;
     type?: Type;
     details?: { [key: string]: string; };
+}
+
+interface ITroubleshootingMessage extends ILoggingMessage {
     anchor?: string;
 }
 
-function logMessage(message: IMessage): void {
+function logMessage(message: ILoggingMessage): void {
     if (!message.type) {
         return;
     }
@@ -27,32 +30,32 @@ function logMessage(message: IMessage): void {
     }
 }
 
-export async function showInformationMessage(message: IMessage, ...items: string[]): Promise<string | undefined> {
+export async function showInformationMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
     logMessage(message);
     return await vscode.window.showInformationMessage(message.message, ...items);
 }
 
-export async function showWarningMessage(message: IMessage, ...items: string[]): Promise<string | undefined> {
+export async function showWarningMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
     logMessage(message);
     return await vscode.window.showWarningMessage(message.message, ...items);
 }
 
-export async function showErrorMessage(message: IMessage, ...items: string[]): Promise<string | undefined> {
+export async function showErrorMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
     logMessage(message);
     return await vscode.window.showErrorMessage(message.message, ...items);
 }
 
-export async function showInformationMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
+export async function showInformationMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showInformationMessage(message, ...items, LEARN_MORE);
     return handleTroubleshooting(choice, message.message, message.anchor);
 }
 
-export async function showWarningMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
+export async function showWarningMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showWarningMessage(message, ...items, LEARN_MORE);
     return handleTroubleshooting(choice, message.message, message.anchor);
 }
 
-export async function showErrorMessageWithTroubleshooting(message: IMessage, ...items: string[]): Promise<string | undefined> {
+export async function showErrorMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showErrorMessage(message, ...items, LEARN_MORE);
     return handleTroubleshooting(choice, message.message, message.anchor);
 }
@@ -63,8 +66,7 @@ function openLink(url: string): void {
 
 function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
     if (choice === LEARN_MORE) {
-        const link = anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK;
-        openLink(link);
+        openLink(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK);
         logger.log(Type.USAGEDATA, {
             troubleshooting: "yes",
             troubleshootingMessage: message,
