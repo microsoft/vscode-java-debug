@@ -63,7 +63,7 @@ function openLink(url: string): void {
 
 function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
     if (choice === LEARN_MORE) {
-        const link = anchor ? `${TROUBLESHOOTING_LINK}#${anchor}`: TROUBLESHOOTING_LINK;
+        const link = anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK;
         openLink(link);
         logger.log(Type.USAGEDATA, {
             troubleshooting: "yes",
