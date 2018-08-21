@@ -70,7 +70,7 @@ You configure the incorrect main class name in `mainClass` of *launch.json*.
 
 ### Try:
 1. Check whether the class name specified in `mainClass` exists and is in the right form.
-2. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference *"Java Language Support extension fails to start"* paragraph for more troubleshooting info.
+2. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## The DEBUG CONSOLE throws ClassNotFoundException
 ### Reason:
@@ -79,7 +79,7 @@ This error indicates your application attempts to reference some classes which a
 ### Try:
 1. Check whether you configure the required libraries in the dependency settings file (e.g. *pom.xml*).
 2. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
-3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference *"Java Language Support extension fails to start"* paragraph for more troubleshooting info.
+3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## Cannot find a class with the main method
 ### Reason:
@@ -87,7 +87,7 @@ When the `mainClass` is unconfigured in the *launch.json*, the debugger will res
 
 ### Try:
 1. Check at least one main class exists in your workspace.
-2. If no main class exists, please create a main class first. Otherwise, it's probably because the language server fails to start. Please reference *"Java Language Support extension fails to start"* paragraph for more troubleshooting info.
+2. If no main class exists, please create a main class first. Otherwise, it's probably because the language server fails to start. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## Build failed, do you want to continue?
 ### Reason:
