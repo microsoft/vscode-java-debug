@@ -19,9 +19,9 @@ The debugger works with [Language Support for Java(TM) by Red Hat](https://marke
 ## Failed to resolve classpath:
 ### Reason:
 Below are the common failure reasons.
-- Main class 'xyz' doesn't exist in the workspace.
-- Main class 'xyz' isn't unique in the workspace.
-- The project 'xyz' is not a valid java project.
+- Main class 'C:\demo\org\microsoft\app\Main.java' doesn't exist in the workspace.
+- Main class 'org.microsoft.app.Main' isn't unique in the workspace.
+- The project 'demo' is not a valid java project.
 
 In launch mode, the debugger resolves the classpaths automatically based on the given `mainClass` and `projectName`. It looks for the class specified by `mainClass` as the entry point for launching an application. If there are multiple classes with the same name in the current workspace, the debugger uses the one inside the project specified by `projectName`.
 
