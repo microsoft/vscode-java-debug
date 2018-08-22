@@ -257,6 +257,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             utility.showErrorMessageWithTroubleshooting({
                 message: errors.join(os.EOL),
                 type: Type.USAGEERROR,
+                anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
             });
         }
 
