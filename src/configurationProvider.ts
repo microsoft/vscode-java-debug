@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-
+import * as path from "path";
 import * as vscode from "vscode";
 
 import * as anchor from "./anchor";
@@ -10,6 +10,8 @@ import * as utility from "./utility";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
+    private debugHistory: RecentlyUsedHistory = new RecentlyUsedHistory();
+
     constructor() {
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (vscode.debug.activeDebugSession) {
@@ -213,29 +215,93 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             });
             return undefined;
         }
-        const pickItems = res.map((item) => {
-            let name = item.mainClass;
-            let details = `main class: ${item.mainClass}`;
-            if (item.projectName !== undefined) {
-                name += `<${item.projectName}>`;
-                details += ` | project name: ${item.projectName}`;
-            }
-            return {
-                description: details,
-                label: name,
-                item,
-            };
-        }).sort((a, b): number => {
-            return a.label > b.label ? 1 : -1;
-        });
+
+        const pickItems: IMainClassQuickPick[] = this.formatRecentlyUsedMainClassOptions(res);
+
         const selection = pickItems.length > 1 ?
             await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
             : pickItems[0];
+
         if (selection && selection.item) {
+            this.debugHistory.updateRecentlyUsedTime(selection.item);
             return selection.item;
         } else {
             return undefined;
         }
+    }
+
+    private isOpenedInActiveEditor(file: string): boolean {
+        const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
+        const currentActiveFile: string = activeEditor ? activeEditor.document.uri.fsPath : undefined;
+
+        if (!file || !currentActiveFile) {
+            return false;
+        }
+
+        if (path.relative(file, currentActiveFile) === "") {
+            return true;
+        }
+
+        return false;
+    }
+
+    private formatRecentlyUsedMainClassOptions(options: IMainClassOption[]): IMainClassQuickPick[] {
+        // Sort the Main Class options with the recently used timestamp.
+        options.sort((a: IMainClassOption, b: IMainClassOption) => {
+            return this.debugHistory.getRecentlyUsedTime(b) - this.debugHistory.getRecentlyUsedTime(a);
+        });
+
+        // Move the Main Class from Active Editor to the top.
+        // If it's not the most recently used one, then put it as the second.
+        let positionForActiveEditor = options.findIndex((value: IMainClassOption) => {
+            return this.isOpenedInActiveEditor(value.filePath);
+        });
+        if (positionForActiveEditor >= 1) {
+            let newPosition = 0;
+            if (this.debugHistory.getRecentlyUsedTime(options[0])) {
+                newPosition = 1;
+            }
+
+            if (newPosition !== positionForActiveEditor) {
+                const update: IMainClassOption[] = options.splice(positionForActiveEditor, 1);
+                options.splice(newPosition, 0, ...update);
+                positionForActiveEditor = newPosition;
+            }
+        }
+
+        const quickPicks: IMainClassQuickPick[] = this.formatMainClassOptions(options);
+
+        if (this.debugHistory.isRecentlyUsed(options[0])) {
+            quickPicks[0].detail = "$(clock) recently used";
+        }
+
+        if (positionForActiveEditor >= 0) {
+            if (quickPicks[positionForActiveEditor].detail) {
+                quickPicks[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+            } else {
+                quickPicks[positionForActiveEditor].detail = `$(clock) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+            }
+        }
+
+        return quickPicks;
+    }
+
+    private formatMainClassOptions(options: IMainClassOption[]): IMainClassQuickPick[] {
+        return options.map((item) => {
+            let label = item.mainClass;
+            let description = `main class: ${item.mainClass}`;
+            if (item.projectName) {
+                label += `<${item.projectName}>`;
+                description += ` | project name: ${item.projectName}`;
+            }
+
+            return {
+                label,
+                description,
+                detail: null,
+                item,
+            };
+        });
     }
 }
 
@@ -290,4 +356,29 @@ function convertLogLevel(commonLogLevel: string) {
 interface IMainClassOption {
     readonly projectName?: string;
     readonly mainClass: string;
+    readonly filePath?: string;
+}
+
+interface IMainClassQuickPick extends vscode.QuickPickItem {
+    item: IMainClassOption;
+}
+
+class RecentlyUsedHistory {
+    private cache: { [key: string]: number } = {};
+
+    public getRecentlyUsedTime(mainClassOption: IMainClassOption): number {
+        return this.cache[this.getId(mainClassOption)] || 0;
+    }
+
+    public updateRecentlyUsedTime(mainClassOption: IMainClassOption): void {
+        this.cache[this.getId(mainClassOption)] = Date.now();
+    }
+
+    public isRecentlyUsed(mainClassOption: IMainClassOption): boolean {
+        return Boolean(this.cache[this.getId(mainClassOption)]);
+    }
+
+    private getId(mainClassOption: IMainClassOption): string {
+        return mainClassOption.mainClass + "|" + mainClassOption.projectName;
+    }
 }
