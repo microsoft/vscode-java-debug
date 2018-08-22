@@ -3,6 +3,7 @@
 
 import * as vscode from "vscode";
 
+import * as anchor from "./anchor";
 import { HCR_EVENT, JAVA_LANGID } from "./constants";
 import * as utility from "./utility";
 
@@ -43,6 +44,7 @@ export function handleHotCodeReplaceCustomEvent(hcrEvent) {
         if (!suppressedReasons.has(hcrEvent.body.message)) {
             utility.showWarningMessageWithTroubleshooting({
                 message: `Hot code replace failed - ${hcrEvent.body.message}. Would you like to restart the debug session?`,
+                anchor: anchor.FAILED_TO_COMPLETE_HCR,
             }, YES_BUTTON, NO_BUTTON, NEVER_BUTTON).then((res) => {
                 if (res === NEVER_BUTTON) {
                     suppressedReasons.add(hcrEvent.body.message);

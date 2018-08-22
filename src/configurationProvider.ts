@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
+
+import * as anchor from "./anchor";
 import * as commands from "./commands";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
@@ -113,7 +115,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 try {
                     const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
                 } catch (err) {
-                    const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Abort");
+                    const ans = await utility.showErrorMessageWithTroubleshooting({
+                        message: "Build failed, do you want to continue?",
+                        type: Type.USAGEERROR,
+                        anchor: anchor.BUILD_FAILED,
+                    }, "Proceed", "Abort");
                     if (ans !== "Proceed") {
                         return undefined;
                     }
@@ -144,6 +150,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     utility.showErrorMessageWithTroubleshooting({
                         message: "Please specify the host name and the port of the remote debuggee in the launch.json.",
                         type: Type.USAGEERROR,
+                        anchor: anchor.ATTACH_CONFIG_ERROR,
                     });
                     return undefined;
                 }
@@ -151,6 +158,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 const ans = await utility.showErrorMessageWithTroubleshooting({
                     message: `Request type "${config.request}" is not supported. Only "launch" and "attach" are supported.`,
                     type: Type.USAGEERROR,
+                    anchor: anchor.REQUEST_TYPE_NOT_SUPPORTED,
                 }, "Open launch.json");
                 if (ans === "Open launch.json") {
                     await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
@@ -201,6 +209,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             utility.showErrorMessageWithTroubleshooting({
                 message: "Cannot find a class with the main method.",
                 type: Type.USAGEERROR,
+                anchor: anchor.CANNOT_FIND_MAIN_CLASS,
             });
             return undefined;
         }
