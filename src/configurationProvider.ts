@@ -238,6 +238,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             const answer = await utility.showErrorMessageWithTroubleshooting({
                 message: errors.join(os.EOL),
                 type: Type.USAGEERROR,
+                anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
             }, "Fix");
             if (answer === "Fix") {
                 const selectedFix: IMainClassOption = await this.showMainClassQuickPick(validationResponse.proposals,
