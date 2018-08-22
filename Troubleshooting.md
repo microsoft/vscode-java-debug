@@ -18,6 +18,11 @@ The debugger works with [Language Support for Java(TM) by Red Hat](https://marke
 
 ## Failed to resolve classpath:
 ### Reason:
+Below are the common failure reasons.
+- Main class 'C:\demo\org\microsoft\app\Main.java' doesn't exist in the workspace.
+- Main class 'org.microsoft.app.Main' isn't unique in the workspace.
+- The project 'demo' is not a valid java project.
+
 In launch mode, the debugger resolves the classpaths automatically based on the given `mainClass` and `projectName`. It looks for the class specified by `mainClass` as the entry point for launching an application. If there are multiple classes with the same name in the current workspace, the debugger uses the one inside the project specified by `projectName`.
 
 ### Try:
@@ -65,7 +70,7 @@ You configure the incorrect main class name in `mainClass` of *launch.json*.
 
 ### Try:
 1. Check whether the class name specified in `mainClass` exists and is in the right form.
-2. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference *"Java Language Support extension fails to start"* paragraph for more troubleshooting info.
+2. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## The DEBUG CONSOLE throws ClassNotFoundException
 ### Reason:
@@ -74,7 +79,7 @@ This error indicates your application attempts to reference some classes which a
 ### Try:
 1. Check whether you configure the required libraries in the dependency settings file (e.g. *pom.xml*).
 2. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
-3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference *"Java Language Support extension fails to start"* paragraph for more troubleshooting info.
+3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## Cannot find a class with the main method
 ### Reason:
@@ -82,4 +87,12 @@ When the `mainClass` is unconfigured in the *launch.json*, the debugger will res
 
 ### Try:
 1. Check at least one main class exists in your workspace.
-2. If no main class exists, please create a main class first. Otherwise, it's probably because the language server fails to start. Please reference *"Java Language Support extension fails to start"* paragraph for more troubleshooting info.
+2. If no main class exists, please create a main class first. Otherwise, it's probably because the language server fails to start. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
+
+## Build failed, do you want to continue?
+### Reason:
+The error indicates your workspace has build errors. There are two kinds of build errors. One is compilation error for source code, the other is project error.
+
+### Try:
+1. Open VS Code PROBLEMS View, and fix the errors there.
+2. If no errors are found in the PROBLEMS View, reference the [language server troubleshooting](#try) paragraph to update project configuration, and clean workspace cache.
