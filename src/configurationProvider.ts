@@ -10,7 +10,7 @@ import * as utility from "./utility";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
-    private debugHistory: RecentlyUsedHistory = new RecentlyUsedHistory();
+    private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
 
     constructor() {
         vscode.workspace.onDidChangeConfiguration((event) => {
@@ -216,14 +216,14 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             return undefined;
         }
 
-        const pickItems: IMainClassQuickPick[] = this.formatRecentlyUsedMainClassOptions(res);
+        const pickItems: IMainClassQuickPickItem[] = this.formatRecentlyUsedMainClassOptions(res);
 
         const selection = pickItems.length > 1 ?
             await vscode.window.showQuickPick(pickItems, { placeHolder: "Select main class<project name>" })
             : pickItems[0];
 
         if (selection && selection.item) {
-            this.debugHistory.updateRecentlyUsedTime(selection.item);
+            this.debugHistory.updateMRUTimestamp(selection.item);
             return selection.item;
         } else {
             return undefined;
@@ -245,10 +245,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return false;
     }
 
-    private formatRecentlyUsedMainClassOptions(options: IMainClassOption[]): IMainClassQuickPick[] {
+    private formatRecentlyUsedMainClassOptions(options: IMainClassOption[]): IMainClassQuickPickItem[] {
         // Sort the Main Class options with the recently used timestamp.
         options.sort((a: IMainClassOption, b: IMainClassOption) => {
-            return this.debugHistory.getRecentlyUsedTime(b) - this.debugHistory.getRecentlyUsedTime(a);
+            return this.debugHistory.getMRUTimestamp(b) - this.debugHistory.getMRUTimestamp(a);
         });
 
         // Move the Main Class from Active Editor to the top.
@@ -258,7 +258,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         });
         if (positionForActiveEditor >= 1) {
             let newPosition = 0;
-            if (this.debugHistory.getRecentlyUsedTime(options[0])) {
+            if (this.debugHistory.contains(options[0])) {
                 newPosition = 1;
             }
 
@@ -269,24 +269,24 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
         }
 
-        const quickPicks: IMainClassQuickPick[] = this.formatMainClassOptions(options);
+        const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(options);
 
-        if (this.debugHistory.isRecentlyUsed(options[0])) {
-            quickPicks[0].detail = "$(clock) recently used";
+        if (this.debugHistory.contains(options[0])) {
+            pickItems[0].detail = "$(clock) recently used";
         }
 
         if (positionForActiveEditor >= 0) {
-            if (quickPicks[positionForActiveEditor].detail) {
-                quickPicks[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+            if (pickItems[positionForActiveEditor].detail) {
+                pickItems[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             } else {
-                quickPicks[positionForActiveEditor].detail = `$(clock) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+                pickItems[positionForActiveEditor].detail = `$(clock) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             }
         }
 
-        return quickPicks;
+        return pickItems;
     }
 
-    private formatMainClassOptions(options: IMainClassOption[]): IMainClassQuickPick[] {
+    private formatMainClassOptions(options: IMainClassOption[]): IMainClassQuickPickItem[] {
         return options.map((item) => {
             let label = item.mainClass;
             let description = `main class: ${item.mainClass}`;
@@ -354,27 +354,27 @@ function convertLogLevel(commonLogLevel: string) {
 }
 
 interface IMainClassOption {
-    readonly projectName?: string;
     readonly mainClass: string;
+    readonly projectName?: string;
     readonly filePath?: string;
 }
 
-interface IMainClassQuickPick extends vscode.QuickPickItem {
+interface IMainClassQuickPickItem extends vscode.QuickPickItem {
     item: IMainClassOption;
 }
 
-class RecentlyUsedHistory {
+class MostRecentlyUsedHistory {
     private cache: { [key: string]: number } = {};
 
-    public getRecentlyUsedTime(mainClassOption: IMainClassOption): number {
+    public getMRUTimestamp(mainClassOption: IMainClassOption): number {
         return this.cache[this.getId(mainClassOption)] || 0;
     }
 
-    public updateRecentlyUsedTime(mainClassOption: IMainClassOption): void {
+    public updateMRUTimestamp(mainClassOption: IMainClassOption): void {
         this.cache[this.getId(mainClassOption)] = Date.now();
     }
 
-    public isRecentlyUsed(mainClassOption: IMainClassOption): boolean {
+    public contains(mainClassOption: IMainClassOption): boolean {
         return Boolean(this.cache[this.getId(mainClassOption)]);
     }
 
