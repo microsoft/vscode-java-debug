@@ -101,11 +101,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
              * If no launch.json exists in the current workspace folder
              * delegate to provideDebugConfigurations api to generate the initial launch.json configurations
              */
-            if (!config.request && folder !== undefined) {
+            if (this.isEmptyConfig(config) && folder !== undefined) {
                 return config;
             }
             // If it's the single file case that no workspace folder is opened, generate debug config in memory
-            if (!config.request && !folder) {
+            if (this.isEmptyConfig(config) && !folder) {
                 config.type = "java";
                 config.name = "Java Debug";
                 config.request = "launch";
@@ -201,6 +201,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private isEmptyArray(configItems: any): boolean {
         return !Array.isArray(configItems) || !configItems.length;
+    }
+
+    private isEmptyConfig(config: vscode.DebugConfiguration): boolean {
+        // filter out the auto filled field "noDebug"
+        return Object.keys(config).filter((key: string) => key !== "noDebug").length === 0;
     }
 
     private async chooseMainClass(folder: vscode.WorkspaceFolder | undefined): Promise<IMainClassOption | undefined> {
