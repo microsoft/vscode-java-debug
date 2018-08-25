@@ -203,7 +203,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return !Array.isArray(configItems) || !configItems.length;
     }
 
-    private isEmptyConfig(config: vscode.DebugConfiguration): boolean {
+    private isValidConfig(config: vscode.DebugConfiguration): boolean {
         // filter out the auto filled field "noDebug"
         return Object.keys(config).filter((key: string) => key !== "noDebug").length === 0;
     }
