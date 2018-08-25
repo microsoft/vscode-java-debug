@@ -101,11 +101,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
              * If no launch.json exists in the current workspace folder
              * delegate to provideDebugConfigurations api to generate the initial launch.json configurations
              */
-            if (this.isEmptyConfig(config) && folder !== undefined) {
+            if (this.isValidConfig(config) && folder !== undefined) {
                 return config;
             }
             // If it's the single file case that no workspace folder is opened, generate debug config in memory
-            if (this.isEmptyConfig(config) && !folder) {
+            if (this.isValidConfig(config) && !folder) {
                 config.type = "java";
                 config.name = "Java Debug";
                 config.request = "launch";
