@@ -234,15 +234,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
         const currentActiveFile: string = activeEditor ? activeEditor.document.uri.fsPath : undefined;
 
-        if (!file || !currentActiveFile) {
-            return false;
-        }
-
-        if (path.relative(file, currentActiveFile) === "") {
-            return true;
-        }
-
-        return false;
+        return file && currentActiveFile && path.relative(file, currentActiveFile) === "";
     }
 
     private formatRecentlyUsedMainClassOptions(options: IMainClassOption[]): IMainClassQuickPickItem[] {
