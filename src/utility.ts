@@ -8,6 +8,15 @@ import { logger, Type } from "./logger";
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 const LEARN_MORE = "Learn More";
 
+export class UserError extends Error {
+    public context: ITroubleshootingMessage;
+
+    constructor(context: ITroubleshootingMessage) {
+        super(context.message);
+        this.context = context;
+    }
+}
+
 interface ILoggingMessage {
     message: string;
     type?: Type;

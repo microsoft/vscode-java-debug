@@ -130,7 +130,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
 
                 const mainClassOption = await this.resolveLaunchConfig(folder ? folder.uri : undefined, config);
-                if (!mainClassOption || !mainClassOption.mainClass) {
+                if (!mainClassOption || !mainClassOption.mainClass) { // Exit silently if the user cancels the prompt fix by ESC.
                     // Exit the debug session.
                     return;
                 }
@@ -144,46 +144,44 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.classPaths = result[1];
                 }
                 if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
-                    utility.showErrorMessageWithTroubleshooting({
+                    throw new utility.UserError({
                         message: "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.",
                         type: Type.USAGEERROR,
                     });
-                    return undefined;
                 }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
-                    utility.showErrorMessageWithTroubleshooting({
+                    throw new utility.UserError({
                         message: "Please specify the host name and the port of the remote debuggee in the launch.json.",
                         type: Type.USAGEERROR,
                         anchor: anchor.ATTACH_CONFIG_ERROR,
                     });
-                    return undefined;
                 }
             } else {
-                const ans = await utility.showErrorMessageWithTroubleshooting({
+                throw new utility.UserError({
                     message: `Request type "${config.request}" is not supported. Only "launch" and "attach" are supported.`,
                     type: Type.USAGEERROR,
                     anchor: anchor.REQUEST_TYPE_NOT_SUPPORTED,
-                }, "Open launch.json");
-                if (ans === "Open launch.json") {
-                    await vscode.commands.executeCommand(commands.VSCODE_ADD_DEBUGCONFIGURATION);
-                }
-                return undefined;
+                });
             }
             const debugServerPort = await startDebugSession();
             if (debugServerPort) {
                 config.debugServer = debugServerPort;
                 return config;
             } else {
-                logger.logMessage(Type.EXCEPTION, "Failed to start debug server.");
                 // Information for diagnostic:
                 console.log("Cannot find a port for debugging session");
-                return undefined;
+                throw new Error("Failed to start debug server.");
             }
         } catch (ex) {
+            if (ex instanceof utility.UserError) {
+                utility.showErrorMessageWithTroubleshooting(ex.context);
+                return undefined;
+            }
+
             const errorMessage = (ex && ex.message) || ex;
             const exception = (ex && ex.data && ex.data.cause)
-                || { stackTrace: [], detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
+                || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
             const properties = {
                 message: "",
                 stackTrace: "",
@@ -259,15 +257,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
                 return selectedFix;
             }
-        } else {
-            utility.showErrorMessageWithTroubleshooting({
-                message: errors.join(os.EOL),
-                type: Type.USAGEERROR,
-                anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
-            });
         }
 
-        return;
+        throw new utility.UserError({
+            message: errors.join(os.EOL),
+            type: Type.USAGEERROR,
+            anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
+        });
     }
 
     private async persistMainClassOption(folder: vscode.Uri | undefined, oldConfig: vscode.DebugConfiguration, change: IMainClassOption):
@@ -293,12 +289,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async promptMainClass(folder: vscode.Uri | undefined): Promise<IMainClassOption | undefined> {
         const res = await resolveMainClass(folder);
         if (res.length === 0) {
-            utility.showErrorMessageWithTroubleshooting({
+            throw new utility.UserError({
                 message: "Cannot find a class with the main method.",
                 type: Type.USAGEERROR,
                 anchor: anchor.CANNOT_FIND_MAIN_CLASS,
             });
-            return undefined;
         }
 
         const pickItems: IMainClassQuickPickItem[] = this.formatRecentlyUsedMainClassOptions(res);
@@ -312,10 +307,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async showMainClassQuickPick(pickItems: IMainClassQuickPickItem[], quickPickHintMessage: string, autoPick: boolean = true):
         Promise<IMainClassOption | undefined> {
-        if (pickItems.length === 0) {
-            return;
-        }
-
+        // return undefined when the user cancels QuickPick by pressing ESC.
         const selected = (pickItems.length === 1 && autoPick) ?
             pickItems[0] : await vscode.window.showQuickPick(pickItems, { placeHolder: quickPickHintMessage });
 
