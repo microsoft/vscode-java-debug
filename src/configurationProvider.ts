@@ -138,12 +138,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.mainClass = mainClassOption.mainClass;
                 config.projectName = mainClassOption.projectName;
 
-                if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
+                if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
                     const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
                     config.modulePaths = result[0];
                     config.classPaths = result[1];
                 }
-                if (this.isEmptyArray(config.classPaths) && this.isEmptyArray(config.modulePaths)) {
+                if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
                     utility.showErrorMessageWithTroubleshooting({
                         message: "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.",
                         type: Type.USAGEERROR,
@@ -212,16 +212,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return Object.keys(config).filter((key: string) => key !== "noDebug").length === 0;
     }
 
-    private isEmptyArray(configItems: any): boolean {
-        return !Array.isArray(configItems) || !configItems.length;
-    }
-
     private async resolveLaunchConfig(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration): Promise<IMainClassOption> {
         if (!config.mainClass) {
             return await this.promptMainClass(folder);
         }
 
-        const containsExternalClasspaths = !this.isEmptyArray(config.classPaths) || !this.isEmptyArray(config.modulePaths);
+        const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
         const validationResponse = await validateLaunchConfig(folder, config.mainClass, config.projectName, containsExternalClasspaths);
         if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
             return await this.fixMainClass(folder, config, validationResponse);
