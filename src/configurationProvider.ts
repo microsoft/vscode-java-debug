@@ -359,18 +359,18 @@ class MostRecentlyUsedHistory {
     private cache: { [key: string]: number } = {};
 
     public getMRUTimestamp(mainClassOption: IMainClassOption): number {
-        return this.cache[this.getId(mainClassOption)] || 0;
+        return this.cache[this.getKey(mainClassOption)] || 0;
     }
 
     public updateMRUTimestamp(mainClassOption: IMainClassOption): void {
-        this.cache[this.getId(mainClassOption)] = Date.now();
+        this.cache[this.getKey(mainClassOption)] = Date.now();
     }
 
     public contains(mainClassOption: IMainClassOption): boolean {
-        return Boolean(this.cache[this.getId(mainClassOption)]);
+        return Boolean(this.cache[this.getKey(mainClassOption)]);
     }
 
-    private getId(mainClassOption: IMainClassOption): string {
+    private getKey(mainClassOption: IMainClassOption): string {
         return mainClassOption.mainClass + "|" + mainClassOption.projectName;
     }
 }
