@@ -257,6 +257,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
                 return selectedFix;
             }
+            // return undefined if the user clicks "Learn More".
+            return;
         }
 
         throw new utility.UserError({
