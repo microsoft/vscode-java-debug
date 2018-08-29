@@ -409,4 +409,13 @@ Exception in thread "main" java.lang.IllegalStateException
 ![logpoint](images/41949312-77627a40-79f3-11e8-9fd2-def4fa06e28d.gif)
 
 
-
+## Start without debugging
+1. Open a Hello world project in VS Code.
+2. Set a breakpoint.
+3. Press <kbd>Ctrl+F5</kbd> to start without debugging.
+4. Verify that the program starts without hitting the breakpoint. 
+5. Open a spring-boot project in VS Code.
+6. Press <kbd>Ctrl+F5</kbd> to start without debugging.
+7. Verify that the program starts, and there is no information in "watch" and "callstack" view.
+8. Click the "pause" button in the toolbar, it should NOT pause the program.
+9. Click the "stop" button in the toolbar, it should stop the program.
