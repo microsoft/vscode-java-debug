@@ -6,14 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.12.0 - 2018-8-29
 ### Added
-- Start without debugging. See [PR@198](https://github.com/Microsoft/java-debug/pull/198),[PR#204](https://github.com/Microsoft/java-debug/pull/204), [PR@207](https://github.com/Microsoft/java-debug/pull/207)
-- Add the validation to mainClass and projectName before launching. See [PR@368](https://github.com/Microsoft/vscode-java-debug/pull/368), [PR@205](https://github.com/Microsoft/java-debug/pull/205).
+- Start without debugging. See [PR#198](https://github.com/Microsoft/java-debug/pull/198),[PR#204](https://github.com/Microsoft/java-debug/pull/204), [PR#207](https://github.com/Microsoft/java-debug/pull/207)
+- Add the validation to mainClass and projectName before launching. See [PR#368](https://github.com/Microsoft/vscode-java-debug/pull/368), [PR#205](https://github.com/Microsoft/java-debug/pull/205).
 - Add "Learn More" link jumps to the associated troubleshooting paragraph [PR#371](https://github.com/Microsoft/vscode-java-debug/pull/371)
 
 ### Changed
-- Put recently used main class in the top [PR@372](https://github.com/Microsoft/vscode-java-debug/pull/372)
-- Use evaluation for variables hovered [PR@208](https://github.com/Microsoft/java-debug/pull/208)
-- Distinguish user errors and system errors [PR@208](https://github.com/Microsoft/java-debug/pull/208)
+- Put recently used main class in the top [PR#372](https://github.com/Microsoft/vscode-java-debug/pull/372)
+- Enable evaluation for hovers [PR#208](https://github.com/Microsoft/java-debug/pull/208)
+- Distinguish user errors and system errors [PR#208](https://github.com/Microsoft/java-debug/pull/208)
 
 ### Fixed
 - Fix: vulnerabilities issue [PR#356](https://github.com/Microsoft/vscode-java-debug/pull/356)
