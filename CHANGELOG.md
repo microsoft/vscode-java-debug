@@ -6,20 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.12.0 - 2018-8-29
 ### Added
-- Start without debugging. See [PR#198](https://github.com/Microsoft/java-debug/pull/198),[PR#204](https://github.com/Microsoft/java-debug/pull/204), [PR#207](https://github.com/Microsoft/java-debug/pull/207)
-- Add the validation to mainClass and projectName before launching. See [PR#368](https://github.com/Microsoft/vscode-java-debug/pull/368), [PR#205](https://github.com/Microsoft/java-debug/pull/205).
-- Add "Learn More" link jumps to the associated troubleshooting paragraph [PR#371](https://github.com/Microsoft/vscode-java-debug/pull/371)
+- Start without debugging. See [#351](https://github.com/Microsoft/vscode-java-debug/issues/351).
+- Add the validation to mainClass and projectName before launching. See [#355](https://github.com/Microsoft/vscode-java-debug/issues/355).
+- Add "Learn More" link jumps to the associated troubleshooting paragraph [#360](https://github.com/Microsoft/vscode-java-debug/issues/360).
 
 ### Changed
-- Put recently used main class in the top [PR#372](https://github.com/Microsoft/vscode-java-debug/pull/372)
-- Enable evaluation for hovers [PR#208](https://github.com/Microsoft/java-debug/pull/208)
-- Distinguish user errors and system errors [PR#208](https://github.com/Microsoft/java-debug/pull/208)
+- Put recently used main class in the top [#350](https://github.com/Microsoft/vscode-java-debug/issues/350).
+- Enable evaluation for hovers [#297](https://github.com/Microsoft/vscode-java-debug/issues/297).
+- Distinguish user errors and system errors [#288](https://github.com/Microsoft/vscode-java-debug/issues/288).
 
 ### Fixed
-- Fix: vulnerabilities issue [PR#356](https://github.com/Microsoft/vscode-java-debug/pull/356)
-- Fix: NPE for CompletionsProvider [PR#206](https://github.com/Microsoft/java-debug/pull/206)
-- Fix: Debugger slow when watching variables [PR#203](https://github.com/Microsoft/java-debug/pull/203)
-- Fix: Should not include test classes in classpath [PR#202](https://github.com/Microsoft/java-debug/pull/202)
+- Fix: vulnerabilities issue [PR#356](https://github.com/Microsoft/vscode-java-debug/pull/356).
+- Fix: NPE for CompletionsProvider [PR#206](https://github.com/Microsoft/java-debug/pull/206).
+- Fix: Debugger slow when watching variables [#305](https://github.com/Microsoft/vscode-java-debug/issues/305).
+- Fix: Should not include test classes in classpath [#111](https://github.com/Microsoft/vscode-java-debug/issues/111).
 
 ## 0.11.0 - 2018-8-2
 ### Added
