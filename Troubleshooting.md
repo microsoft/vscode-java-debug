@@ -19,7 +19,8 @@ The debugger works with [Language Support for Java(TM) by Red Hat](https://marke
 ## Failed to resolve classpath:
 ### Reason:
 Below are the common failure reasons.
-- Main class 'C:\demo\org\microsoft\app\Main.java' doesn't exist in the workspace.
+- 'C:\demo\org\microsoft\app\Main.java' is not a valid class name.
+- Main class 'org.microsoft.app.Main' doesn't exist in the workspace.
 - Main class 'org.microsoft.app.Main' isn't unique in the workspace.
 - The project 'demo' is not a valid java project.
 
