@@ -419,3 +419,13 @@ Exception in thread "main" java.lang.IllegalStateException
 7. Verify that the program starts, and there is no information in "watch" and "callstack" view.
 8. Click the "pause" button in the toolbar, it should NOT pause the program.
 9. Click the "stop" button in the toolbar, it should stop the program.
+
+
+## Environment Variables
+1. Open `` in vscode.
+2. Press <kbd>F5</kbd> to start.
+3. Verify the output in Debug Console should be as following:
+    ```
+    CustomEnv: This env is for test plan.
+    SystemPath: <value of PATH >
+    ```
