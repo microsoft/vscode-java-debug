@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.12.1 - 2018-8-31
+### Fixed
+- Fix: `env` config in launch.json not respected. [PR#393](https://github.com/Microsoft/vscode-java-debug/issues/393).
+
 ## 0.12.0 - 2018-8-29
 ### Added
 - Start without debugging. See [#351](https://github.com/Microsoft/vscode-java-debug/issues/351).
