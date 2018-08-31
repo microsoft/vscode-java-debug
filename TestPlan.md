@@ -422,7 +422,7 @@ Exception in thread "main" java.lang.IllegalStateException
 
 
 ## Environment Variables
-1. Open `` in vscode.
+1. Open `26.environmentVariables` in vscode.
 2. Press <kbd>F5</kbd> to start.
 3. Verify the output in Debug Console should be as following:
     ```
