@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.12.1 - 2018-8-31
 ### Fixed
-- Fix: `env` config in launch.json not respected. [PR#393](https://github.com/Microsoft/vscode-java-debug/issues/393).
+- Fix: `env` config in launch.json not respected. [#393](https://github.com/Microsoft/vscode-java-debug/issues/393).
 
 ## 0.12.0 - 2018-8-29
 ### Added
