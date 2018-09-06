@@ -180,23 +180,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             const errorMessage = (ex && ex.message) || ex;
-            const exception = (ex && ex.data && ex.data.cause)
-                || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
-            const properties = {
-                message: "",
-                stackTrace: "",
-            };
-            if (exception && typeof exception === "object") {
-                properties.message = exception.detailMessage;
-                properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
-                    || String(exception.stackTrace);
-            } else {
-                properties.message = String(exception);
-            }
             utility.showErrorMessageWithTroubleshooting({
                 message: String(errorMessage),
                 type: Type.EXCEPTION,
-                details: properties,
+                details: utility.formatErrorProperties(ex),
             });
             return undefined;
         }
