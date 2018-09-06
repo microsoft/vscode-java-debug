@@ -429,3 +429,11 @@ Exception in thread "main" java.lang.IllegalStateException
     CustomEnv: This env is for test plan.
     SystemPath: <value of PATH >
     ```
+
+## Runtime classpath entry
+1. Open `27.runtimeClassEntry` in vscode.
+2. Press <kbd>F5</kbd> to start.
+3. Verify the output in Debug Console should be as following:
+    ```
+      Tomcat started on port(s): 8080 (http)
+    ```
