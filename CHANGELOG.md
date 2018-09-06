@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.12.2 - 2018-9-6
+### Fixed
+- Fix: Runtime scope class path entries are missing. [#402](https://github.com/Microsoft/vscode-java-debug/issues/402).
+
 ## 0.12.1 - 2018-8-31
 ### Fixed
 - Fix: `env` config in launch.json not respected. [#393](https://github.com/Microsoft/vscode-java-debug/issues/393).
