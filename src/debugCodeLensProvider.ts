@@ -35,7 +35,7 @@ class DebugCodeLensProvider implements vscode.CodeLensProvider {
 
     public async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
         const mainMethods: IMainMethod[] = await resolveMainMethod(document);
-        return mainMethods.map((method) => {
+        return _.flatten(mainMethods.map((method) => {
             return [
                 new vscode.CodeLens(method.range, {
                     title: "▶ Run",
@@ -50,7 +50,7 @@ class DebugCodeLensProvider implements vscode.CodeLensProvider {
                     arguments: [ method.mainClass, method.projectName, document.uri ],
                 }),
             ];
-        }).reduce((a, b) => a.concat(b));
+        }));
     }
 }
 
