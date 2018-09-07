@@ -10,6 +10,8 @@ import { logger, Type } from "./logger";
 import * as utility from "./utility";
 
 const onDidChange: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
+const JAVA_RUN_COMMAND = "vscode.java.run";
+const JAVA_DEBUG_COMMAND = "vscode.java.debug";
 
 export function initializeCodeLensProvider(context: vscode.ExtensionContext): void {
     const watcher = vscode.workspace.createFileSystemWatcher("**/*.{[jJ][aA][vV][aA]}");
@@ -19,8 +21,8 @@ export function initializeCodeLensProvider(context: vscode.ExtensionContext): vo
     });
 
     context.subscriptions.push(vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider(onDidChange)));
-    context.subscriptions.push(vscode.commands.registerCommand(commands.JAVA_RUN_COMMAND, runJavaProgram));
-    context.subscriptions.push(vscode.commands.registerCommand(commands.JAVA_DEBUG_COMMAND, debugJavaProgram));
+    context.subscriptions.push(vscode.commands.registerCommand(JAVA_RUN_COMMAND, runJavaProgram));
+    context.subscriptions.push(vscode.commands.registerCommand(JAVA_DEBUG_COMMAND, debugJavaProgram));
 }
 
 class DebugCodeLensProvider implements vscode.CodeLensProvider {
@@ -37,13 +39,13 @@ class DebugCodeLensProvider implements vscode.CodeLensProvider {
             return [
                 new vscode.CodeLens(method.range, {
                     title: "▶ Run",
-                    command: commands.JAVA_RUN_COMMAND,
+                    command: JAVA_RUN_COMMAND,
                     tooltip: "Run Java Program",
                     arguments: [ method.mainClass, method.projectName, document.uri ],
                 }),
                 new vscode.CodeLens(method.range, {
                     title: "🐞 Debug",
-                    command: commands.JAVA_DEBUG_COMMAND,
+                    command: JAVA_DEBUG_COMMAND,
                     tooltip: "Debug Java Program",
                     arguments: [ method.mainClass, method.projectName, document.uri ],
                 }),
