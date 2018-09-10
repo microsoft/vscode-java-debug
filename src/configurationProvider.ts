@@ -9,12 +9,14 @@ import * as anchor from "./anchor";
 import * as commands from "./commands";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
+import { VariableResolver } from "./variableResoler";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
     private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
 
-    constructor() {
+    constructor(private resolver: VariableResolver) {
+        this.resolver = new VariableResolver();
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (vscode.debug.activeDebugSession) {
                 this.isUserSettingsDirty = false;
@@ -34,6 +36,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     // Try to add all missing attributes to the debug configuration being launched.
     public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
+        this.resolveVariables(folder, config);
         return this.heuristicallyResolveDebugConfiguration(folder, config);
     }
 
@@ -77,6 +80,26 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 });
             });
         });
+    }
+
+    private resolveVariables(folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration): void {
+        // all the properties whose values are string or array of string
+        const keys =  ["mainClass", "args", "vmArgs", "modulePaths", "classPaths", "projectName",
+            "env", "sourcePaths", "encoding",  "cwd",  "hostName"];
+        if (!config) {
+            return;
+        }
+        for (const key of keys) {
+            if (config.hasOwnProperty(key)) {
+                const value = config[key];
+                if (_.isString(value)) {
+                    config[key] = this.resolver.resolveString(folder.uri, value);
+                } else if (_.isArray(value)) {
+                    config[key] = _.map(value, (item) =>
+                        _.isString(item) ? this.resolver.resolveString(folder.uri, item) : item);
+                }
+            }
+        }
     }
 
     private constructLaunchConfigName(mainClass: string, projectName: string, cache: {}) {
