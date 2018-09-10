@@ -14,8 +14,8 @@ import { VariableResolver } from "./variableResoler";
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
     private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
-
-    constructor(private resolver: VariableResolver) {
+    private resolver: VariableResolver;
+    constructor() {
         this.resolver = new VariableResolver();
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (vscode.debug.activeDebugSession) {
