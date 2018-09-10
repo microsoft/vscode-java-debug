@@ -164,6 +164,15 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     anchor: anchor.REQUEST_TYPE_NOT_SUPPORTED,
                 });
             }
+
+            if (Array.isArray(config.args)) {
+                config.args = this.concatArgs(config.args);
+            }
+
+            if (Array.isArray(config.vmArgs)) {
+                config.vmArgs = this.concatArgs(config.vmArgs);
+            }
+
             const debugServerPort = await startDebugSession();
             if (debugServerPort) {
                 config.debugServer = debugServerPort;
@@ -187,6 +196,22 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             });
             return undefined;
         }
+    }
+
+    /**
+     * Converts an array of arguments to a string as the args and vmArgs.
+     */
+    private concatArgs(args: any[]): string {
+        return _.join(_.map(args, (arg: any): string  => {
+            const str = String(arg);
+            // if it has quotes or spaces, use double quotes to wrap it
+            if (/['"\s]/.test(str)) {
+                return "\"" + str.replace(/(['"\\])/g, "\\$1") + "\"";
+            }
+            return str;
+
+            // if it has only single quotes
+        }), " ");
     }
 
     /**
