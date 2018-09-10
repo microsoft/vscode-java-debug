@@ -437,3 +437,23 @@ Exception in thread "main" java.lang.IllegalStateException
     ```
       Tomcat started on port(s): 8080 (http)
     ```
+
+
+
+## Resolve Variables
+1. Open `17.argstest` in vscode.
+2. Change the launch.json as following:
+```
+"mainClass": "test.${fileBasenameNoExtension}",
+"args": [  "\"${execPath}\"",
+           "${env:APPDATA}",
+           "${fileExtname}",
+           "${workspaceRootFolderName}"]
+]
+```
+3. Make a BP at line one of main method, Keep ArgsTest.java open and press <kbd>F5</kbd> to start.
+3. Verify the `args` has the values:
+    -  "C:\Users\andxu\AppData\Local\Programs\Microsoft VS Code\Code.exe"
+    -  "C:\Users\andxu\AppData\Roaming"
+    -  ".json"
+    -  "17.argstest"
