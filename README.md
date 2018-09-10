@@ -49,12 +49,12 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 ### Launch
 
 - `mainClass` (required) - The main class of the program (fully qualified name, e.g. [mymodule/]com.xyz.MainClass).
-- `args` - The command line arguments passed to the program. Use `"${command:SpecifyProgramArgs}"` to prompt for program arguments.
+- `args` - The command line arguments passed to the program. Use `"${command:SpecifyProgramArgs}"` to prompt for program arguments. It accepts a string or a array of string.
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `modulePaths` - The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
 - `classPaths` - The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
 - `encoding` - The `file.encoding` setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.
-- `vmArgs` - The extra options and system properties for the JVM (e.g. -Xms\<size\> -Xmx\<size\> -D\<name\>=\<value\>).
+- `vmArgs` - The extra options and system properties for the JVM (e.g. -Xms\<size\> -Xmx\<size\> -D\<name\>=\<value\>), it accepts a string or a array of string.
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required when the workspace has multiple java projects, otherwise the expression evaluation and conditional breakpoint may not work.
 - `cwd` - The working directory of the program.
 - `env` - The extra environment variables for the program.
