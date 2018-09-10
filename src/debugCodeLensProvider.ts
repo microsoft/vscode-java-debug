@@ -54,12 +54,12 @@ class DebugCodeLensProvider implements vscode.CodeLensProvider {
     }
 }
 
-function runJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): void {
-    runCodeLens(mainClass, projectName, uri, true);
+function runJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): Promise<void> {
+    return runCodeLens(mainClass, projectName, uri, true);
 }
 
-function debugJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): void {
-    runCodeLens(mainClass, projectName, uri, false);
+function debugJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): Promise<void> {
+    return runCodeLens(mainClass, projectName, uri, false);
 }
 
 async function runCodeLens(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<void> {
