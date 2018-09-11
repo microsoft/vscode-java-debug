@@ -382,7 +382,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             if (pickItems[positionForActiveEditor].detail) {
                 pickItems[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             } else {
-                pickItems[positionForActiveEditor].detail = `$(clock) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+                pickItems[positionForActiveEditor].detail = `$(file-text) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             }
         }
 
