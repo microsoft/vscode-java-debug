@@ -212,23 +212,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             const errorMessage = (ex && ex.message) || ex;
-            const exception = (ex && ex.data && ex.data.cause)
-                || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
-            const properties = {
-                message: "",
-                stackTrace: "",
-            };
-            if (exception && typeof exception === "object") {
-                properties.message = exception.detailMessage;
-                properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
-                    || String(exception.stackTrace);
-            } else {
-                properties.message = String(exception);
-            }
             utility.showErrorMessageWithTroubleshooting({
                 message: String(errorMessage),
                 type: Type.EXCEPTION,
-                details: properties,
+                details: utility.formatErrorProperties(ex),
             });
             return undefined;
         }
@@ -405,7 +392,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             if (pickItems[positionForActiveEditor].detail) {
                 pickItems[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             } else {
-                pickItems[positionForActiveEditor].detail = `$(clock) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+                pickItems[positionForActiveEditor].detail =
+                `$(file-text) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             }
         }
 

@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
+import { initializeCodeLensProvider } from "./debugCodeLensProvider"
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
@@ -53,6 +54,8 @@ export function activate(context: vscode.ExtensionContext) {
             handleUserNotification(customEvent);
         }
     }));
+
+    initializeCodeLensProvider(context);
 }
 
 // this method is called when your extension is deactivated
