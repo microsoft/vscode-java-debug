@@ -1,5 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+// Originally copied from https://github.com/Microsoft/vscode/blob/1.27.1/src/vs/workbench/services/configurationResolver/node/variableResolver.ts
+
 import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
