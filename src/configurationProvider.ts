@@ -9,7 +9,7 @@ import * as anchor from "./anchor";
 import * as commands from "./commands";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
-import { VariableResolver } from "./variableResoler";
+import { VariableResolver } from "./variableResolver";
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
