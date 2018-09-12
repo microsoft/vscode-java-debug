@@ -17,10 +17,14 @@ export class UserError extends Error {
     }
 }
 
+interface IProperties {
+    [key: string]: string;
+}
+
 interface ILoggingMessage {
     message: string;
     type?: Type;
-    details?: { [key: string]: string; };
+    details?: IProperties;
 }
 
 interface ITroubleshootingMessage extends ILoggingMessage {
@@ -84,4 +88,24 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
     }
 
     return choice;
+}
+
+export function formatErrorProperties(ex: any): IProperties {
+    const exception = (ex && ex.data && ex.data.cause)
+        || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
+
+    const properties = {
+        message: "",
+        stackTrace: "",
+    };
+
+    if (exception && typeof exception === "object") {
+        properties.message = exception.detailMessage;
+        properties.stackTrace = (Array.isArray(exception.stackTrace) && JSON.stringify(exception.stackTrace))
+            || String(exception.stackTrace);
+    } else {
+        properties.message = String(exception);
+    }
+
+    return properties;
 }
