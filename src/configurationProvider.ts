@@ -358,7 +358,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         });
 
         const mostRecentlyUsedOption: IMainClassOption = (options.length && this.debugHistory.contains(options[0])) ? options[0] : undefined;
-        const isMostRecentlyUsed = (option: IMainClassOption) => {
+        const isMostRecentlyUsed = (option: IMainClassOption): boolean => {
             return mostRecentlyUsedOption
             && (mostRecentlyUsedOption.mainClass === option.mainClass)
             && mostRecentlyUsedOption.projectName === option.projectName;
@@ -368,7 +368,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             const currentActiveFile: string = activeEditor ? activeEditor.document.uri.fsPath : undefined;
             return option.filePath && currentActiveFile && path.relative(option.filePath, currentActiveFile) === "";
         };
-        const isPrivileged = (option: IMainClassOption) => {
+        const isPrivileged = (option: IMainClassOption): boolean => {
             return isMostRecentlyUsed(option) || isFromActiveEditor(option);
         };
 
