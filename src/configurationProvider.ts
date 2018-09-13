@@ -364,38 +364,47 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             return this.debugHistory.getMRUTimestamp(b) - this.debugHistory.getMRUTimestamp(a);
         });
 
-        // Move the Main Class from Active Editor to the top.
-        // If it's not the most recently used one, then put it as the second.
-        let positionForActiveEditor = options.findIndex((value: IMainClassOption) => {
-            return this.isOpenedInActiveEditor(value.filePath);
+        // Show the most recently used Main Class as the first one,
+        // then the Main Class from Active Editor as second,
+        // finally other Main Class.
+        const isPrivilegedOption = (option: IMainClassOption, index: number) => {
+            if (index === 0 && this.debugHistory.contains(option)) {
+                return true;
+            } else if (this.isOpenedInActiveEditor(option.filePath)) {
+                return true;
+            }
+
+            return false;
+        };
+        const adjustedOptions: IMainClassOption[] = [];
+        options.forEach((option: IMainClassOption, index: number) => {
+            if (isPrivilegedOption(option, index)) {
+                adjustedOptions.push(option);
+            }
         });
-        if (positionForActiveEditor >= 1) {
-            let newPosition = 0;
-            if (this.debugHistory.contains(options[0])) {
-                newPosition = 1;
+        options.forEach((option: IMainClassOption, index: number) => {
+            if (!isPrivilegedOption(option, index)) {
+                adjustedOptions.push(option);
+            }
+        });
+
+        const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(adjustedOptions);
+        pickItems.forEach((pickItem: IMainClassQuickPickItem, index: number) => {
+            let adjustedDetail;
+            if (index === 0 && this.debugHistory.contains(pickItem.item)) {
+                adjustedDetail = "$(clock) recently used";
             }
 
-            if (newPosition !== positionForActiveEditor) {
-                const update: IMainClassOption[] = options.splice(positionForActiveEditor, 1);
-                options.splice(newPosition, 0, ...update);
-                positionForActiveEditor = newPosition;
+            if (this.isOpenedInActiveEditor(pickItem.item.filePath)) {
+                if (adjustedDetail) {
+                    adjustedDetail += `, $(file-text) active editor (${path.basename(pickItem.item.filePath)})`;
+                } else {
+                    adjustedDetail = `$(file-text) active editor (${path.basename(pickItem.item.filePath)})`;
+                }
             }
-        }
 
-        const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(options);
-
-        if (this.debugHistory.contains(options[0])) {
-            pickItems[0].detail = "$(clock) recently used";
-        }
-
-        if (positionForActiveEditor >= 0) {
-            if (pickItems[positionForActiveEditor].detail) {
-                pickItems[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
-            } else {
-                pickItems[positionForActiveEditor].detail =
-                `$(file-text) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
-            }
-        }
+            pickItem.detail = adjustedDetail;
+        });
 
         return pickItems;
     }
