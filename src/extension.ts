@@ -3,6 +3,7 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
+import { initializeFromJsonFile, instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
@@ -11,7 +12,12 @@ import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hot
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+    await initializeFromJsonFile(context.asAbsolutePath("./package.json"), true);
+    await instrumentOperation("activation", initializeExtension)(context);
+}
+
+export function initializeExtension(operationId: string, context: vscode.ExtensionContext) {
     logger.initialize(context);
     logger.log(Type.ACTIVATEEXTENSION, {}); // TODO: Activation belongs to usage data, remove this line.
     logger.log(Type.USAGEDATA, {
@@ -39,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
-    context.subscriptions.push(vscode.commands.registerCommand("JavaDebug.SpecifyProgramArgs", async () => {
+    context.subscriptions.push(instrumentAndRegisterCommand("JavaDebug.SpecifyProgramArgs", async () => {
         return specifyProgramArguments(context);
     }));
     initializeHotCodeReplace(context);
@@ -101,4 +107,9 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
 
         return text || " ";
     });
+}
+
+function instrumentAndRegisterCommand(name: string, cb: (...args: any[]) => any) {
+    const instrumented = instrumentOperation(name, async (_operationId, myargs) => await cb(myargs));
+    return vscode.commands.registerCommand(name, instrumented);
 }

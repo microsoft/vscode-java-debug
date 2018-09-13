@@ -5,6 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import * as commands from "./commands";
 import { logger, Type } from "./logger";
@@ -30,20 +31,26 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     // Returns an initial debug configurations based on contextual information.
     public provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration[]> {
-        return <Thenable<vscode.DebugConfiguration[]>>this.provideDebugConfigurationsAsync(folder);
+        const provideDebugConfigurationsHandler = instrumentOperation("provideDebugConfigurations", (operationId: string) => {
+            return <Thenable<vscode.DebugConfiguration[]>>this.provideDebugConfigurationsAsync(folder);
+        });
+        return provideDebugConfigurationsHandler();
     }
 
     // Try to add all missing attributes to the debug configuration being launched.
     public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
-        this.resolveVariables(folder, config);
-        return this.heuristicallyResolveDebugConfiguration(folder, config);
+        const resolveDebugConfigurationHandler = instrumentOperation("resolveDebugConfiguration", (operationId: string) => {
+            this.resolveVariables(folder, config);
+            return this.heuristicallyResolveDebugConfiguration(folder, config);
+        });
+        return resolveDebugConfigurationHandler();
     }
 
     private provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
-        return vscode.window.withProgress({location: vscode.ProgressLocation.Window}, (p) => {
+        return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (p) => {
             return new Promise((resolve, reject) => {
-                p.report({message: "Auto generating configuration..."});
+                p.report({ message: "Auto generating configuration..." });
                 resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption[]) => {
                     let cache;
                     cache = {};
@@ -75,7 +82,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     };
                     resolve([defaultLaunchConfig, ...launchConfigs, defaultAttachConfig]);
                 }, (ex) => {
-                    p.report({message: `failed to generate configuration. ${ex}`});
+                    p.report({ message: `failed to generate configuration. ${ex}` });
                     reject(ex);
                 });
             });
@@ -84,8 +91,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private resolveVariables(folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration): void {
         // all the properties whose values are string or array of string
-        const keys =  ["mainClass", "args", "vmArgs", "modulePaths", "classPaths", "projectName",
-            "env", "sourcePaths", "encoding",  "cwd",  "hostName"];
+        const keys = ["mainClass", "args", "vmArgs", "modulePaths", "classPaths", "projectName",
+            "env", "sourcePaths", "encoding", "cwd", "hostName"];
         if (!config) {
             return;
         }
@@ -225,7 +232,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
      * Converts an array of arguments to a string as the args and vmArgs.
      */
     private concatArgs(args: any[]): string {
-        return _.join(_.map(args, (arg: any): string  => {
+        return _.join(_.map(args, (arg: any): string => {
             const str = String(arg);
             // if it has quotes or spaces, use double quotes to wrap it
             if (/['"\s]/.test(str)) {
@@ -393,7 +400,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 pickItems[positionForActiveEditor].detail += `, active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             } else {
                 pickItems[positionForActiveEditor].detail =
-                `$(file-text) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
+                    `$(file-text) active editor (${path.basename(options[positionForActiveEditor].filePath)})`;
             }
         }
 
@@ -436,7 +443,7 @@ function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]>
 
 function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string, projectName: string, containsExternalClasspaths: boolean):
     Promise<ILaunchValidationResponse> {
-    return <Promise<ILaunchValidationResponse>> commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
+    return <Promise<ILaunchValidationResponse>>commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
         workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName, containsExternalClasspaths);
 }
 
