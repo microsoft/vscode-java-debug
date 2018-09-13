@@ -93,10 +93,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             if (config.hasOwnProperty(key)) {
                 const value = config[key];
                 if (_.isString(value)) {
-                    config[key] = this.resolver.resolveString(folder.uri, value);
+                    config[key] = this.resolver.resolveString(folder ? folder.uri : undefined, value);
                 } else if (_.isArray(value)) {
                     config[key] = _.map(value, (item) =>
-                        _.isString(item) ? this.resolver.resolveString(folder.uri, item) : item);
+                        _.isString(item) ? this.resolver.resolveString(folder ? folder.uri : undefined, item) : item);
                 }
             }
         }
