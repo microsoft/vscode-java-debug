@@ -13,7 +13,7 @@ import { logger, Type } from "./logger";
 import * as utility from "./utility";
 
 export async function activate(context: vscode.ExtensionContext) {
-    await initializeFromJsonFile(context.asAbsolutePath("./package.json"), true);
+    await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await instrumentOperation("activation", initializeExtension)(context);
 }
 
