@@ -351,59 +351,54 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return selected && selected.item;
     }
 
-    private isOpenedInActiveEditor(file: string): boolean {
-        const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
-        const currentActiveFile: string = activeEditor ? activeEditor.document.uri.fsPath : undefined;
-
-        return file && currentActiveFile && path.relative(file, currentActiveFile) === "";
-    }
-
     private formatRecentlyUsedMainClassOptions(options: IMainClassOption[]): IMainClassQuickPickItem[] {
         // Sort the Main Class options with the recently used timestamp.
         options.sort((a: IMainClassOption, b: IMainClassOption) => {
             return this.debugHistory.getMRUTimestamp(b) - this.debugHistory.getMRUTimestamp(a);
         });
 
+        const mostRecentlyUsedOption: IMainClassOption = (options.length && this.debugHistory.contains(options[0])) ? options[0] : undefined;
+        const isMostRecentlyUsed = (option: IMainClassOption) => {
+            return mostRecentlyUsedOption
+            && (mostRecentlyUsedOption.mainClass === option.mainClass)
+            && mostRecentlyUsedOption.projectName === option.projectName;
+        };
+        const isFromActiveEditor = (option: IMainClassOption): boolean => {
+            const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
+            const currentActiveFile: string = activeEditor ? activeEditor.document.uri.fsPath : undefined;
+            return option.filePath && currentActiveFile && path.relative(option.filePath, currentActiveFile) === "";
+        };
+        const isPrivileged = (option: IMainClassOption) => {
+            return isMostRecentlyUsed(option) || isFromActiveEditor(option);
+        };
+
         // Show the most recently used Main Class as the first one,
         // then the Main Class from Active Editor as second,
         // finally other Main Class.
-        const isPrivilegedOption = (option: IMainClassOption, index: number) => {
-            if (index === 0 && this.debugHistory.contains(option)) {
-                return true;
-            } else if (this.isOpenedInActiveEditor(option.filePath)) {
-                return true;
-            }
-
-            return false;
-        };
         const adjustedOptions: IMainClassOption[] = [];
-        options.forEach((option: IMainClassOption, index: number) => {
-            if (isPrivilegedOption(option, index)) {
+        options.forEach((option: IMainClassOption) => {
+            if (isPrivileged(option)) {
                 adjustedOptions.push(option);
             }
         });
-        options.forEach((option: IMainClassOption, index: number) => {
-            if (!isPrivilegedOption(option, index)) {
+        options.forEach((option: IMainClassOption) => {
+            if (!isPrivileged(option)) {
                 adjustedOptions.push(option);
             }
         });
 
         const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(adjustedOptions);
-        pickItems.forEach((pickItem: IMainClassQuickPickItem, index: number) => {
-            let adjustedDetail;
-            if (index === 0 && this.debugHistory.contains(pickItem.item)) {
-                adjustedDetail = "$(clock) recently used";
+        pickItems.forEach((pickItem: IMainClassQuickPickItem) => {
+            const adjustedDetail = [];
+            if (isMostRecentlyUsed(pickItem.item)) {
+                adjustedDetail.push("$(clock) recently used");
             }
 
-            if (this.isOpenedInActiveEditor(pickItem.item.filePath)) {
-                if (adjustedDetail) {
-                    adjustedDetail += `, $(file-text) active editor (${path.basename(pickItem.item.filePath)})`;
-                } else {
-                    adjustedDetail = `$(file-text) active editor (${path.basename(pickItem.item.filePath)})`;
-                }
+            if (isFromActiveEditor(pickItem.item)) {
+                adjustedDetail.push(`$(file-text) active editor (${path.basename(pickItem.item.filePath)})`);
             }
 
-            pickItem.detail = adjustedDetail;
+            pickItem.detail = adjustedDetail.join(", ");
         });
 
         return pickItems;
