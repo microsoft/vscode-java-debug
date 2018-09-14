@@ -114,7 +114,7 @@ export function formatErrorProperties(ex: any): IProperties {
     return properties;
 }
 
-export function checkJavaHome(): Promise<string> {
+export function getJavaHome(): Promise<string> {
     const EXE_SUFFIX = process.platform.startsWith("win") ? ".exe" : "";
     return new Promise((resolve, reject) => {
         let javaHome: string = readJavaConfig() || process.env.JDK_HOME || process.env.JAVA_HOME;
@@ -126,7 +126,7 @@ export function checkJavaHome(): Promise<string> {
         }
 
         findJavaHome((err, home) => {
-            resolve(err ? "" : home);
+            resolve(err ? "" : expandHomeDir(home));
         });
     });
 }

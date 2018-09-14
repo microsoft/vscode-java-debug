@@ -450,7 +450,7 @@ async function updateDebugSettings() {
         return;
     }
     const logLevel = convertLogLevel(debugSettingsRoot.logLevel || "");
-    const javaHome = await utility.checkJavaHome();
+    const javaHome = await utility.getJavaHome();
     if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
         try {
             console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
