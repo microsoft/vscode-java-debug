@@ -17,7 +17,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await instrumentOperation("activation", initializeExtension)(context);
 }
 
-export function initializeExtension(operationId: string, context: vscode.ExtensionContext) {
+function initializeExtension(operationId: string, context: vscode.ExtensionContext) {
     logger.initialize(context);
     logger.log(Type.ACTIVATEEXTENSION, {}); // TODO: Activation belongs to usage data, remove this line.
     logger.log(Type.USAGEDATA, {
