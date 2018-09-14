@@ -360,8 +360,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         const mostRecentlyUsedOption: IMainClassOption = (options.length && this.debugHistory.contains(options[0])) ? options[0] : undefined;
         const isMostRecentlyUsed = (option: IMainClassOption): boolean => {
             return mostRecentlyUsedOption
-            && (mostRecentlyUsedOption.mainClass === option.mainClass)
-            && mostRecentlyUsedOption.projectName === option.projectName;
+                && mostRecentlyUsedOption.mainClass === option.mainClass
+                && mostRecentlyUsedOption.projectName === option.projectName;
         };
         const isFromActiveEditor = (option: IMainClassOption): boolean => {
             const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
