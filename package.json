@@ -391,8 +391,11 @@
     "vscode": "^1.1.21"
   },
   "dependencies": {
+    "expand-home-dir": "0.0.3",
+    "find-java-home": "^0.2.0",
     "lodash": "^4.17.10",
     "opn": "^5.3.0",
+    "path-exists": "^3.0.0",
     "vscode-extension-telemetry": "0.0.18"
   }
 }

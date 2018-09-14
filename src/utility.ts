@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as expandHomeDir from "expand-home-dir";
+import * as findJavaHome from "find-java-home";
 import * as opn from "opn";
+import * as path from "path";
+import * as pathExists from "path-exists";
 import * as vscode from "vscode";
 import { logger, Type } from "./logger";
 
@@ -108,4 +112,26 @@ export function formatErrorProperties(ex: any): IProperties {
     }
 
     return properties;
+}
+
+export function checkJavaHome(): Promise<string> {
+    const EXE_SUFFIX = process.platform.startsWith("win") ? ".exe" : "";
+    return new Promise((resolve, reject) => {
+        let javaHome: string = readJavaConfig() || process.env.JDK_HOME || process.env.JAVA_HOME;
+        if (javaHome) {
+            javaHome = expandHomeDir(javaHome);
+            if (pathExists.sync(javaHome) && pathExists.sync(path.resolve(javaHome, "bin", `javac${EXE_SUFFIX}`))) {
+                return resolve(javaHome);
+            }
+        }
+
+        findJavaHome((err, home) => {
+            resolve(err ? "" : home);
+        });
+    });
+}
+
+function readJavaConfig(): string {
+    const config = vscode.workspace.getConfiguration();
+    return config.get<string>("java.home", null);
 }

@@ -450,10 +450,11 @@ async function updateDebugSettings() {
         return;
     }
     const logLevel = convertLogLevel(debugSettingsRoot.logLevel || "");
+    const javaHome = await utility.checkJavaHome();
     if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
         try {
             console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
-                { ...debugSettingsRoot.settings, logLevel })));
+                { ...debugSettingsRoot.settings, logLevel, javaHome })));
         } catch (err) {
             // log a warning message and continue, since update settings failure should not block debug session
             console.log("Cannot update debug settings.", err)
