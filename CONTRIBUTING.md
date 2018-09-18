@@ -20,7 +20,7 @@ This debugger is written in [TypeScript](https://github.com/Microsoft/TypeScript
 Now the folder structure looks like following:
 ```bash
 javaDebugger/
-├── vscode-java
+├── java-debug
 └── vscode-java-debug
 ```
 
@@ -40,7 +40,7 @@ npm install
 #### Build the Debug Server
 For convenience, there is task `build_server` defined in `gulpfile.js`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
 ```bash
-node node_modules/gulp/bin/gulp.js build_server
+npx gulp build_server
 ```
 **NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [gulpfile.js](https://github.com/Microsoft/vscode-java-debug/blob/master/gulpfile.js#L5).
 
