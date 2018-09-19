@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.13.0 - 2018-9-19
 ### Added
-- Use code lens to run java program in much simpler way. [#375](https://github.com/Microsoft/vscode-java-debug/issues/375).
+- Use code lens to run java program in a much simpler way. [#375](https://github.com/Microsoft/vscode-java-debug/issues/375).
 - Make vmArgs accept an array. [#389](https://github.com/Microsoft/vscode-java-debug/issues/389).
 - Make mainClass accept variable. [#85](https://github.com/Microsoft/vscode-java-debug/issues/85).
 
