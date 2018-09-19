@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.13.0 - 2018-9-19
 ### Added
 - Use code lens to run java program in a much simpler way. [#375](https://github.com/Microsoft/vscode-java-debug/issues/375).
-- Make vmArgs accept an array. [#389](https://github.com/Microsoft/vscode-java-debug/issues/389).
-- Make mainClass accept variable. [#85](https://github.com/Microsoft/vscode-java-debug/issues/85).
+- Make args/vmArgs accept an array. [#389](https://github.com/Microsoft/vscode-java-debug/issues/389).
+- Make mainClass accept variables. [#85](https://github.com/Microsoft/vscode-java-debug/issues/85).
 
 ### Fixed
 - Fix: Still include test classes in classpaths when auto resolve maven project. [#378](https://github.com/Microsoft/vscode-java-debug/issues/378).
 - Fix: Duplicate class path during launching. [#370](https://github.com/Microsoft/vscode-java-debug/issues/370).
 - Fix: Update Active Editor oct icon to file instead of clock. [#403](https://github.com/Microsoft/vscode-java-debug/issues/403).
-- Fix: Launching the same JDK as java language server other than JRE. [#366](https://github.com/Microsoft/vscode-java-debug/issues/366).
-- Fix: Should not pop up error window many times for logpoints in a loop. [#360](https://github.com/Microsoft/vscode-java-debug/issues/390).
+- Fix: Launching the debuggee with the same JDK as java language server instead of JRE. [#366](https://github.com/Microsoft/vscode-java-debug/issues/366).
+- Fix: Avoid pop up error window many times for logpoints in a loop. [#360](https://github.com/Microsoft/vscode-java-debug/issues/390).
 
 ## 0.12.2 - 2018-9-6
 ### Fixed
