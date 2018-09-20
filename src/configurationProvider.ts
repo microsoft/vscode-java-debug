@@ -135,9 +135,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
              * If no launch.json exists in the current workspace folder
              * delegate to provideDebugConfigurations api to generate the initial launch.json configurations
              */
-            if (this.isEmptyConfig(config) && folder !== undefined) {
-                return config;
+            if (this.isEmptyConfig(config) && folder) {
+                // Follow the feature request https://github.com/Microsoft/vscode/issues/54213#issuecomment-420965778,
+                // in order to generate launch.json, the resolveDebugConfiguration api must return null explicitly.
+                return null;
             }
+
             // If it's the single file case that no workspace folder is opened, generate debug config in memory
             if (this.isEmptyConfig(config) && !folder) {
                 config.type = "java";
@@ -457,10 +460,11 @@ async function updateDebugSettings() {
         return;
     }
     const logLevel = convertLogLevel(debugSettingsRoot.logLevel || "");
+    const javaHome = await utility.getJavaHome();
     if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
         try {
             console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
-                { ...debugSettingsRoot.settings, logLevel })));
+                { ...debugSettingsRoot.settings, logLevel, javaHome })));
         } catch (err) {
             // log a warning message and continue, since update settings failure should not block debug session
             console.log("Cannot update debug settings.", err)

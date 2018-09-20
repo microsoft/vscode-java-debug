@@ -4,6 +4,21 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.13.0 - 2018-9-19
+### Added
+- Use code lens to run java program in a much simpler way. [#375](https://github.com/Microsoft/vscode-java-debug/issues/375).
+- Make args/vmArgs accept an array. [#389](https://github.com/Microsoft/vscode-java-debug/issues/389).
+- Make mainClass accept variables. [#85](https://github.com/Microsoft/vscode-java-debug/issues/85).
+
+### Fixed
+- Fix: Still include test classes in classpaths when auto resolve maven project. [#378](https://github.com/Microsoft/vscode-java-debug/issues/378).
+- Fix: Duplicate class path during launching. [#370](https://github.com/Microsoft/vscode-java-debug/issues/370).
+- Fix: Update Active Editor oct icon to file instead of clock. [#403](https://github.com/Microsoft/vscode-java-debug/issues/403).
+- Fix: Launching the debuggee with the same JDK as java language server instead of JRE. [#366](https://github.com/Microsoft/vscode-java-debug/issues/366).
+- Fix: Avoid pop up error window many times for logpoints in a loop. [#360](https://github.com/Microsoft/vscode-java-debug/issues/390).
+- Fix: Debug buttons disabled. [#411](https://github.com/Microsoft/vscode-java-debug/issues/411)
+- Fix: StepResponse/ContinueResponse should be sent before StoppedEvent. [java-debug#134](https://github.com/Microsoft/java-debug/issues/134)
+
 ## 0.12.2 - 2018-9-6
 ### Fixed
 - Fix: Runtime scope class path entries are missing. [#402](https://github.com/Microsoft/vscode-java-debug/issues/402).

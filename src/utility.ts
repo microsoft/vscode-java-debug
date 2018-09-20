@@ -109,3 +109,16 @@ export function formatErrorProperties(ex: any): IProperties {
 
     return properties;
 }
+
+export async function getJavaHome(): Promise<string> {
+    const extension = vscode.extensions.getExtension("redhat.java");
+    try {
+        const extensionApi = await extension.activate();
+        if (extensionApi && extensionApi.javaRequirement) {
+            return extensionApi.javaRequirement.java_home;
+        }
+    } catch (ex) {
+    }
+
+    return "";
+}
