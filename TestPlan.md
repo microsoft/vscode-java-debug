@@ -457,3 +457,19 @@ Exception in thread "main" java.lang.IllegalStateException
     -  "C:\Users\andxu\AppData\Roaming"
     -  ".json"
     -  "17.argstest"
+
+## Args and vmArgs
+1. Open `17.argstest` in vscode.
+2. Change the launch.json as following:
+```
+ "mainClass": "test.ArgsTest",
+ "args": ["a b", "foo \\\"bar"],
+ "vmArgs": ["-Xms64M",  "-Xmx128M",  "-Dfoo= \\bar"]
+```
+3. Add the following statement to get the properties:
+```
+ String foo = (String) System.getProperties().get("foo");
+```
+4. Press F5 to verify the variables should be like this:
+
+    ![args](images/args.PNG)
