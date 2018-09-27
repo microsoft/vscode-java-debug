@@ -11,7 +11,7 @@ export enum Type {
     ACTIVATEEXTENSION = "activateExtension", // TODO: Activation belongs to usage data, remove this category.
 }
 
-class Logger {
+class Logger implements vscode.Disposable {
     private reporter: TelemetryReporter = null;
 
     public initialize(context: vscode.ExtensionContext): void {
@@ -42,6 +42,12 @@ class Logger {
 
     public logMessage(type: Type, message: string): void {
         this.log(type, { message });
+    }
+
+    public dispose() {
+        if (this.reporter) {
+            this.reporter.dispose();
+        }
     }
 }
 
