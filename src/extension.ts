@@ -44,6 +44,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
         });
     });
 
+    context.subscriptions.push(logger);
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(instrumentAndRegisterCommand("JavaDebug.SpecifyProgramArgs", async () => {
         return specifyProgramArguments(context);
