@@ -9,29 +9,16 @@ import { JAVA_LANGID } from "./constants";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
 
-const onDidChange: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 const JAVA_RUN_COMMAND = "vscode.java.run";
 const JAVA_DEBUG_COMMAND = "vscode.java.debug";
 
 export function initializeCodeLensProvider(context: vscode.ExtensionContext): void {
-    const watcher = vscode.workspace.createFileSystemWatcher("**/*.{[jJ][aA][vV][aA]}");
-    context.subscriptions.push(watcher);
-    watcher.onDidChange((uri) => {
-        onDidChange.fire();
-    });
-
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider(onDidChange)));
+    context.subscriptions.push(vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider()));
     context.subscriptions.push(vscode.commands.registerCommand(JAVA_RUN_COMMAND, runJavaProgram));
     context.subscriptions.push(vscode.commands.registerCommand(JAVA_DEBUG_COMMAND, debugJavaProgram));
 }
 
 class DebugCodeLensProvider implements vscode.CodeLensProvider {
-    constructor(private _onDidChange: vscode.EventEmitter<void>) {
-    }
-
-    get onDidChangeCodeLenses(): vscode.Event<void> {
-        return this._onDidChange.event;
-    }
 
     public async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
         const mainMethods: IMainMethod[] = await resolveMainMethod(document);
