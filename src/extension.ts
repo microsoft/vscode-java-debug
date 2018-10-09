@@ -3,7 +3,7 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
-import { initializeFromJsonFile, instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
@@ -67,6 +67,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+    disposeTelemetryWrapper();
 }
 
 function handleUserNotification(customEvent) {
