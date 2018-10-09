@@ -66,8 +66,8 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
-    disposeTelemetryWrapper();
+export async function deactivate() {
+    await disposeTelemetryWrapper();
 }
 
 function handleUserNotification(customEvent) {
