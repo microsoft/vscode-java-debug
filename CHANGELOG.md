@@ -4,6 +4,14 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 - 2018-10-10
+### Fixed
+- Fix: Code Lenses for Run/Debug links on main methods don't show up immediately. [#438](https://github.com/Microsoft/vscode-java-debug/issues/438).
+- Fix: It throws "ConfigError: 'mymodule/App' is not a valid class name." for java 9 program. [#437](https://github.com/Microsoft/vscode-java-debug/issues/437).
+- Fix: Cannot run from src/test anymore. [#413](https://github.com/Microsoft/vscode-java-debug/issues/413).
+- Fix: It throws InvalidStackFrameException during evaluating on conditional breakpoint. [#369](https://github.com/Microsoft/vscode-java-debug/issues/369).
+- Fix: The launch command for internalConsole is different from integratedTerminal. [#440](https://github.com/Microsoft/vscode-java-debug/issues/440).
+
 ## 0.13.0 - 2018-9-19
 ### Added
 - Use code lens to run java program in a much simpler way. [#375](https://github.com/Microsoft/vscode-java-debug/issues/375).
