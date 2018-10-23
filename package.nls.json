@@ -1,0 +1,9 @@
+{
+    "java.debugger.configuration.title": "Java: Debugger Configuration",
+    "java.debugger.configuration.logLevel.description": "Minimum level of debugger logs that are sent to VS Code.",
+    "java.debugger.configuration.showHex.description": "Show numbers in hex format in \"Variables\" viewlet.",
+    "java.debugger.configuration.showStaticVariables.description": "Show static variables in \"Variables\" viewlet.",
+    "java.debugger.configuration.showQualifiedNames.description": "Show fully qualified class names in \"Variables\" viewlet.",
+    "java.debugger.configuration.maxStringLength.description": "The maximum length of strings displayed in \"Variables\" or \"Debug Console\" viewlet, strings longer than this length will be trimmed, if 0 no trim is performed.",
+    "java.debugger.configuration.enableHotCodeReplace.description": "Enable hot code replace for Java code."
+}
