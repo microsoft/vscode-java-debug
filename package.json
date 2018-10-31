@@ -364,6 +364,11 @@
           "type": "boolean",
           "description": "%java.debugger.configuration.enableHotCodeReplace.description%",
           "default": true
+        },
+        "java.debug.settings.enableRunDebugCodeLens": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.enableRunDebugCodeLens.description%",
+          "default": true
         }
       }
     }

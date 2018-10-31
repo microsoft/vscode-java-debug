@@ -11,11 +11,53 @@ import * as utility from "./utility";
 
 const JAVA_RUN_COMMAND = "vscode.java.run";
 const JAVA_DEBUG_COMMAND = "vscode.java.debug";
+const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
+const ENABLE_CODE_LENS_VARIABLE = "enableRunDebugCodeLens";
 
 export function initializeCodeLensProvider(context: vscode.ExtensionContext): void {
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider()));
-    context.subscriptions.push(vscode.commands.registerCommand(JAVA_RUN_COMMAND, runJavaProgram));
-    context.subscriptions.push(vscode.commands.registerCommand(JAVA_DEBUG_COMMAND, debugJavaProgram));
+    context.subscriptions.push(new DebugCodeLensContainer());
+}
+
+class DebugCodeLensContainer implements vscode.Disposable {
+    private runCommand: vscode.Disposable;
+    private debugCommand: vscode.Disposable;
+    private lensProvider: vscode.Disposable | undefined;
+    private configurationEvent: vscode.Disposable;
+
+    constructor() {
+        this.runCommand = vscode.commands.registerCommand(JAVA_RUN_COMMAND, runJavaProgram);
+        this.debugCommand = vscode.commands.registerCommand(JAVA_DEBUG_COMMAND, debugJavaProgram);
+
+        const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION)
+        const isCodeLensEnabled = configuration.get<boolean>(ENABLE_CODE_LENS_VARIABLE);
+
+        if (isCodeLensEnabled) {
+            this.lensProvider = vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider());
+        }
+
+        this.configurationEvent = vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) =>  {
+            if (event.affectsConfiguration(JAVA_DEBUG_CONFIGURATION)) {
+                const newConfiguration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION);
+                const newEnabled = newConfiguration.get<boolean>(ENABLE_CODE_LENS_VARIABLE);
+                if (newEnabled && this.lensProvider === undefined) {
+                    this.lensProvider = vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider());
+                } else if (!newEnabled && this.lensProvider !== undefined) {
+                    this.lensProvider.dispose();
+                    this.lensProvider = undefined;
+                }
+            }
+        }, this);
+    }
+
+    public dispose() {
+        if (this.lensProvider !== undefined) {
+            this.lensProvider.dispose();
+        }
+        this.runCommand.dispose();
+        this.debugCommand.dispose();
+        this.configurationEvent.dispose();
+    }
+
 }
 
 class DebugCodeLensProvider implements vscode.CodeLensProvider {
