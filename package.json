@@ -367,7 +367,7 @@
         },
         "java.debug.settings.enableRunDebugCodeLens": {
           "type": "boolean",
-          "description": "Enable the run and debug code lens providers over main methods",
+          "description": "%java.debugger.configuration.enableRunDebugCodeLens.description%",
           "default": true
         }
       }
