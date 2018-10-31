@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.15.0 - 2018-11-01
+### Added
+- Contribution from [Thad House](https://github.com/ThadHouse): Add new user settings `java.debug.settings.enableRunDebugCodeLens` to disable run/debug buttons on main methods. [#464](https://github.com/Microsoft/vscode-java-debug/issues/464).
+- Contribution from [Julien Russo](https://github.com/Dotpys): Add italian translation for extension configuration. [PR#463](https://github.com/Microsoft/vscode-java-debug/pull/463).
+
+Thank [Thad House](https://github.com/ThadHouse) and [Julien Russo](https://github.com/Dotpys) for contribution.
+
 ## 0.14.0 - 2018-10-10
 ### Fixed
 - Fix: Code Lenses for Run/Debug links on main methods don't show up immediately. [#438](https://github.com/Microsoft/vscode-java-debug/issues/438).
