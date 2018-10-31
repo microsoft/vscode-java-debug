@@ -35,7 +35,7 @@ class DebugCodeLensContainer implements vscode.Disposable {
             this.lensProvider = vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider());
         }
 
-        this.configurationEvent = vscode.workspace.onDidChangeConfiguration((event) =>  {
+        this.configurationEvent = vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) =>  {
             if (event.affectsConfiguration(JAVA_DEBUG_CONFIGURATION)) {
                 const newConfiguration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION);
                 const newEnabled = newConfiguration.get<boolean>(ENABLE_CODE_LENS_VARIABLE);
