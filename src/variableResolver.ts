@@ -110,7 +110,6 @@ export class VariableResolver {
 
                     // common error handling for all variables that require an open file
                     switch (variable) {
-                        case "file":
                         case "relativeFile":
                         case "fileDirname":
                         case "fileExtname":
@@ -153,7 +152,7 @@ export class VariableResolver {
                                 ` Make sure to have some text selected in the active editor.`);
 
                         case "file":
-                            return filePath;
+                            return filePath || "";
 
                         case "relativeFile":
                             if (folderUri) {

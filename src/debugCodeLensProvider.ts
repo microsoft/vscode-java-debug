@@ -4,10 +4,9 @@
 import * as _ from "lodash";
 import * as vscode from "vscode";
 
-import * as commands from "./commands";
 import { JAVA_LANGID } from "./constants";
+import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
-import * as utility from "./utility";
 
 const JAVA_RUN_COMMAND = "vscode.java.run";
 const JAVA_DEBUG_COMMAND = "vscode.java.debug";
@@ -63,7 +62,7 @@ class DebugCodeLensContainer implements vscode.Disposable {
 class DebugCodeLensProvider implements vscode.CodeLensProvider {
 
     public async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
-        const mainMethods: IMainMethod[] = await resolveMainMethod(document);
+        const mainMethods: IMainMethod[] = await resolveMainMethod(document.uri);
         return _.flatten(mainMethods.map((method) => {
             return [
                 new vscode.CodeLens(method.range, {
@@ -127,9 +126,7 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
             name: `CodeLens (Launch) - ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
             request: "launch",
             // tslint:disable-next-line
-            cwd: workspace ? "${workspaceFolder}" : undefined,
             console: "internalConsole",
-            stopOnEntry: false,
             mainClass,
             args: "",
             projectName,
@@ -144,19 +141,4 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
     }
 
     return _.cloneDeep(debugConfig);
-}
-
-async function resolveMainMethod(document: vscode.TextDocument): Promise<IMainMethod[]> {
-    try {
-        return <IMainMethod[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINMETHOD, document.uri.toString());
-    } catch (ex) {
-        logger.log(Type.EXCEPTION, utility.formatErrorProperties(ex));
-        return [];
-    }
-}
-
-interface IMainMethod {
-    range: vscode.Range;
-    mainClass: string;
-    projectName: string;
 }

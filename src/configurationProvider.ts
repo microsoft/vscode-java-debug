@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+import * as fs from "fs";
 import * as _ from "lodash";
 import * as os from "os";
 import * as path from "path";
@@ -8,6 +9,7 @@ import * as vscode from "vscode";
 import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import * as commands from "./commands";
+import * as lsPlugin from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
 import { VariableResolver } from "./variableResolver";
@@ -41,8 +43,15 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
         const resolveDebugConfigurationHandler = instrumentOperation("resolveDebugConfiguration", (operationId: string) => {
-            this.resolveVariables(folder, config);
-            return this.heuristicallyResolveDebugConfiguration(folder, config);
+            try {
+                this.resolveVariables(folder, config);
+                return this.heuristicallyResolveDebugConfiguration(folder, config);
+            } catch (ex) {
+                utility.showErrorMessage({
+                    message: String((ex && ex.message) || ex),
+                });
+                return undefined;
+            }
         });
         return resolveDebugConfigurationHandler();
     }
@@ -51,18 +60,16 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (p) => {
             return new Promise((resolve, reject) => {
                 p.report({ message: "Auto generating configuration..." });
-                resolveMainClass(folder ? folder.uri : undefined).then((res: IMainClassOption[]) => {
+                lsPlugin.resolveMainClass(folder ? folder.uri : undefined).then((res: lsPlugin.IMainClassOption[]) => {
                     let cache;
                     cache = {};
                     const defaultLaunchConfig = {
                         type: "java",
-                        name: "Debug (Launch)",
+                        name: "Debug (Launch) - Current File",
                         request: "launch",
-                        // tslint:disable-next-line
-                        cwd: "${workspaceFolder}",
                         console: "internalConsole",
-                        stopOnEntry: false,
-                        mainClass: "",
+                        // tslint:disable-next-line
+                        mainClass: "${file}",
                         args: "",
                     };
                     const launchConfigs = res.map((item) => {
@@ -172,7 +179,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.projectName = mainClassOption.projectName;
 
                 if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
-                    const result = <any[]>(await resolveClasspath(config.mainClass, config.projectName));
+                    const result = <any[]>(await lsPlugin.resolveClasspath(config.mainClass, config.projectName));
                     config.modulePaths = result[0];
                     config.classPaths = result[1];
                 }
@@ -182,6 +189,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         type: Type.USAGEERROR,
                     });
                 }
+
+                // Add the default launch options to the config.
+                config.cwd = config.cwd || _.get(folder, "uri.fsPath");
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
                     throw new utility.UserError({
@@ -206,7 +216,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.vmArgs = this.concatArgs(config.vmArgs);
             }
 
-            const debugServerPort = await startDebugSession();
+            const debugServerPort = await lsPlugin.startDebugSession();
             if (debugServerPort) {
                 config.debugServer = debugServerPort;
                 return config;
@@ -255,13 +265,27 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return Object.keys(config).filter((key: string) => key !== "noDebug").length === 0;
     }
 
-    private async resolveLaunchConfig(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration): Promise<IMainClassOption> {
-        if (!config.mainClass) {
-            return await this.promptMainClass(folder);
+    private async resolveLaunchConfig(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration): Promise<lsPlugin.IMainClassOption> {
+        if (!config.mainClass || this.isFile(config.mainClass)) {
+            const currentFile = config.mainClass ||  _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
+            if (currentFile) {
+                const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
+                if (mainEntries.length === 1) {
+                    return mainEntries[0];
+                } else if (mainEntries.length > 1) {
+                    return await this.showMainClassQuickPick(this.formatMainClassOptions(mainEntries),
+                        `Multiple main classes found in the file '${path.basename(currentFile)}', please select one first.`);
+                }
+            }
+
+            const hintMessage = currentFile ?
+                `No main class found in the file '${path.basename(currentFile)}', please select main class<project name> again.` :
+                "Please select main class<project name>.";
+            return await this.promptMainClass(folder, hintMessage);
         }
 
         const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
-        const validationResponse = await validateLaunchConfig(folder, config.mainClass, config.projectName, containsExternalClasspaths);
+        const validationResponse = await lsPlugin.validateLaunchConfig(folder, config.mainClass, config.projectName, containsExternalClasspaths);
         if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
             return await this.fixMainClass(folder, config, validationResponse);
         }
@@ -272,8 +296,17 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         };
     }
 
-    private async fixMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration, validationResponse: ILaunchValidationResponse):
-        Promise<IMainClassOption | undefined> {
+    private isFile(filePath: string): boolean {
+        try {
+            return fs.lstatSync(filePath).isFile();
+        } catch (error) {
+            // do nothing
+            return false;
+        }
+    }
+
+    private async fixMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
+                               validationResponse: lsPlugin.ILaunchValidationResponse): Promise<lsPlugin.IMainClassOption | undefined> {
         const errors: string[] = [];
         if (!validationResponse.mainClass.isValid) {
             errors.push(String(validationResponse.mainClass.message));
@@ -291,7 +324,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }, "Fix");
             if (answer === "Fix") {
                 const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(validationResponse.proposals);
-                const selectedFix: IMainClassOption = await this.showMainClassQuickPick(pickItems, "Please select main class<project name>", false);
+                const selectedFix: lsPlugin.IMainClassOption =
+                    await this.showMainClassQuickPick(pickItems, "Please select main class<project name>.", false);
                 if (selectedFix) {
                     logger.log(Type.USAGEDATA, {
                         fix: "yes",
@@ -313,7 +347,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         });
     }
 
-    private async persistMainClassOption(folder: vscode.Uri | undefined, oldConfig: vscode.DebugConfiguration, change: IMainClassOption):
+    private async persistMainClassOption(folder: vscode.Uri | undefined, oldConfig: vscode.DebugConfiguration, change: lsPlugin.IMainClassOption):
         Promise<void> {
         const newConfig: vscode.DebugConfiguration = _.cloneDeep(oldConfig);
         newConfig.mainClass = change.mainClass;
@@ -333,8 +367,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private async promptMainClass(folder: vscode.Uri | undefined): Promise<IMainClassOption | undefined> {
-        const res = await resolveMainClass(folder);
+    private async promptMainClass(folder: vscode.Uri | undefined, hintMessage?: string): Promise<lsPlugin.IMainClassOption | undefined> {
+        const res = await lsPlugin.resolveMainClass(folder);
         if (res.length === 0) {
             throw new utility.UserError({
                 message: "Cannot find a class with the main method.",
@@ -344,7 +378,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
 
         const pickItems: IMainClassQuickPickItem[] = this.formatRecentlyUsedMainClassOptions(res);
-        const selected = await this.showMainClassQuickPick(pickItems, "Select main class<project name>");
+        const selected = await this.showMainClassQuickPick(pickItems, hintMessage || "Select main class<project name>");
         if (selected) {
             this.debugHistory.updateMRUTimestamp(selected);
         }
@@ -353,7 +387,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 
     private async showMainClassQuickPick(pickItems: IMainClassQuickPickItem[], quickPickHintMessage: string, autoPick: boolean = true):
-        Promise<IMainClassOption | undefined> {
+        Promise<lsPlugin.IMainClassOption | undefined> {
         // return undefined when the user cancels QuickPick by pressing ESC.
         const selected = (pickItems.length === 1 && autoPick) ?
             pickItems[0] : await vscode.window.showQuickPick(pickItems, { placeHolder: quickPickHintMessage });
@@ -361,37 +395,37 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return selected && selected.item;
     }
 
-    private formatRecentlyUsedMainClassOptions(options: IMainClassOption[]): IMainClassQuickPickItem[] {
+    private formatRecentlyUsedMainClassOptions(options: lsPlugin.IMainClassOption[]): IMainClassQuickPickItem[] {
         // Sort the Main Class options with the recently used timestamp.
-        options.sort((a: IMainClassOption, b: IMainClassOption) => {
+        options.sort((a: lsPlugin.IMainClassOption, b: lsPlugin.IMainClassOption) => {
             return this.debugHistory.getMRUTimestamp(b) - this.debugHistory.getMRUTimestamp(a);
         });
 
-        const mostRecentlyUsedOption: IMainClassOption = (options.length && this.debugHistory.contains(options[0])) ? options[0] : undefined;
-        const isMostRecentlyUsed = (option: IMainClassOption): boolean => {
+        const mostRecentlyUsedOption: lsPlugin.IMainClassOption = (options.length && this.debugHistory.contains(options[0])) ? options[0] : undefined;
+        const isMostRecentlyUsed = (option: lsPlugin.IMainClassOption): boolean => {
             return mostRecentlyUsedOption
                 && mostRecentlyUsedOption.mainClass === option.mainClass
                 && mostRecentlyUsedOption.projectName === option.projectName;
         };
-        const isFromActiveEditor = (option: IMainClassOption): boolean => {
+        const isFromActiveEditor = (option: lsPlugin.IMainClassOption): boolean => {
             const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
             const currentActiveFile: string = _.get(activeEditor, "document.uri.fsPath");
             return option.filePath && currentActiveFile && path.relative(option.filePath, currentActiveFile) === "";
         };
-        const isPrivileged = (option: IMainClassOption): boolean => {
+        const isPrivileged = (option: lsPlugin.IMainClassOption): boolean => {
             return isMostRecentlyUsed(option) || isFromActiveEditor(option);
         };
 
         // Show the most recently used Main Class as the first one,
         // then the Main Class from Active Editor as second,
         // finally other Main Class.
-        const adjustedOptions: IMainClassOption[] = [];
-        options.forEach((option: IMainClassOption) => {
+        const adjustedOptions: lsPlugin.IMainClassOption[] = [];
+        options.forEach((option: lsPlugin.IMainClassOption) => {
             if (isPrivileged(option)) {
                 adjustedOptions.push(option);
             }
         });
-        options.forEach((option: IMainClassOption) => {
+        options.forEach((option: lsPlugin.IMainClassOption) => {
             if (!isPrivileged(option)) {
                 adjustedOptions.push(option);
             }
@@ -414,13 +448,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return pickItems;
     }
 
-    private formatMainClassOptions(options: IMainClassOption[]): IMainClassQuickPickItem[] {
+    private formatMainClassOptions(options: lsPlugin.IMainClassOption[]): IMainClassQuickPickItem[] {
         return options.map((item) => {
             let label = item.mainClass;
-            let description = `main class: ${item.mainClass}`;
+            const description = item.filePath ? path.basename(item.filePath) : "";
             if (item.projectName) {
                 label += `<${item.projectName}>`;
-                description += ` | project name: ${item.projectName}`;
             }
 
             return {
@@ -431,27 +464,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             };
         });
     }
-}
-
-function startDebugSession() {
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_START_DEBUGSESSION);
-}
-
-function resolveClasspath(mainClass, projectName) {
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
-}
-
-function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]> {
-    if (workspaceUri) {
-        return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
-    }
-    return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
-}
-
-function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string, projectName: string, containsExternalClasspaths: boolean):
-    Promise<ILaunchValidationResponse> {
-    return <Promise<ILaunchValidationResponse>>commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
-        workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName, containsExternalClasspaths);
 }
 
 async function updateDebugSettings() {
@@ -488,43 +500,26 @@ function convertLogLevel(commonLogLevel: string) {
     }
 }
 
-interface IMainClassOption {
-    readonly mainClass: string;
-    readonly projectName?: string;
-    readonly filePath?: string;
-}
-
-interface IMainClassQuickPickItem extends vscode.QuickPickItem {
-    item: IMainClassOption;
-}
-
-interface IValidationResult {
-    readonly isValid: boolean;
-    readonly message?: string;
-}
-
-interface ILaunchValidationResponse {
-    readonly mainClass: IValidationResult;
-    readonly projectName: IValidationResult;
-    readonly proposals?: IMainClassOption[];
+export interface IMainClassQuickPickItem extends vscode.QuickPickItem {
+    item: lsPlugin.IMainClassOption;
 }
 
 class MostRecentlyUsedHistory {
     private cache: { [key: string]: number } = {};
 
-    public getMRUTimestamp(mainClassOption: IMainClassOption): number {
+    public getMRUTimestamp(mainClassOption: lsPlugin.IMainClassOption): number {
         return this.cache[this.getKey(mainClassOption)] || 0;
     }
 
-    public updateMRUTimestamp(mainClassOption: IMainClassOption): void {
+    public updateMRUTimestamp(mainClassOption: lsPlugin.IMainClassOption): void {
         this.cache[this.getKey(mainClassOption)] = Date.now();
     }
 
-    public contains(mainClassOption: IMainClassOption): boolean {
+    public contains(mainClassOption: lsPlugin.IMainClassOption): boolean {
         return Boolean(this.cache[this.getKey(mainClassOption)]);
     }
 
-    private getKey(mainClassOption: IMainClassOption): string {
+    private getKey(mainClassOption: lsPlugin.IMainClassOption): string {
         return mainClassOption.mainClass + "|" + mainClassOption.projectName;
     }
 }

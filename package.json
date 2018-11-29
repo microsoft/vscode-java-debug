@@ -68,7 +68,7 @@
               },
               "mainClass": {
                 "type": "string",
-                "description": "The main class of the program (fully qualified name, e.g. [mymodule/]com.xyz.MainClass).",
+                "description": "The fully qualified class name (e.g. [java module name/]com.xyz.MainApp) or the java file path of the program entry.",
                 "default": ""
               },
               "args": {
@@ -118,7 +118,7 @@
               },
               "cwd": {
                 "type": "string",
-                "description": "The working directory of the program.",
+                "description": "The working directory of the program. Defaults to current workspace root.",
                 "default": "${workspaceFolder}"
               },
               "env": {
@@ -290,10 +290,20 @@
               "type": "java",
               "name": "Debug (Launch)",
               "request": "launch",
-              "cwd": "^\"\\${workspaceFolder}\"",
               "console": "internalConsole",
-              "stopOnEntry": false,
               "mainClass": "",
+              "args": ""
+            }
+          },
+          {
+            "label": "Java: Launch Program in Current File",
+            "description": "Add a new configuration for launching current java file.",
+            "body": {
+              "type": "java",
+              "name": "Debug (Launch) - Current File",
+              "request": "launch",
+              "console": "internalConsole",
+              "mainClass": "^\"\\${file}\"",
               "args": ""
             }
           },
@@ -304,9 +314,7 @@
               "type": "java",
               "name": "Debug (Launch) with Arguments Prompt",
               "request": "launch",
-              "cwd": "^\"\\${workspaceFolder}\"",
               "console": "internalConsole",
-              "stopOnEntry": false,
               "mainClass": "",
               "args": "^\"\\${command:SpecifyProgramArgs}\""
             }
