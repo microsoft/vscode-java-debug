@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as opn from "opn";
 import * as vscode from "vscode";
 import { logger, Type } from "./logger";
 
@@ -73,13 +72,9 @@ export async function showErrorMessageWithTroubleshooting(message: ITroubleshoot
     return handleTroubleshooting(choice, message.message, message.anchor);
 }
 
-function openLink(url: string): void {
-    opn(url);
-}
-
 function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
     if (choice === LEARN_MORE) {
-        openLink(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK);
+        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK));
         logger.log(Type.USAGEDATA, {
             troubleshooting: "yes",
             troubleshootingMessage: message,
