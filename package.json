@@ -118,7 +118,7 @@
               },
               "cwd": {
                 "type": "string",
-                "description": "The working directory of the program. Defaults to current workspace root.",
+                "description": "The working directory of the program. Defaults to the current workspace root.",
                 "default": "${workspaceFolder}"
               },
               "env": {
