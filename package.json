@@ -63,12 +63,12 @@
             "properties": {
               "projectName": {
                 "type": "string",
-                "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required for expression evaluation.",
+                "description": "%java.debugger.launch.projectName.description%",
                 "default": ""
               },
               "mainClass": {
                 "type": "string",
-                "description": "The fully qualified class name (e.g. [java module name/]com.xyz.MainApp) or the java file path of the program entry.",
+                "description": "%java.debugger.launch.mainClass.description%",
                 "default": ""
               },
               "args": {
@@ -76,7 +76,7 @@
                   "array",
                   "string"
                 ],
-                "description": "The command line arguments passed to the program.",
+                "description": "%java.debugger.launch.args.description%",
                 "default": ""
               },
               "vmArgs": {
@@ -84,7 +84,7 @@
                   "array",
                   "string"
                 ],
-                "description": "The extra options and system properties for the JVM (e.g. -Xms<size> -Xmx<size> -D<name>=<value>).",
+                "description": "%java.debugger.launch.vmArgs.description%",
                 "default": ""
               },
               "modulePaths": {
@@ -92,7 +92,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.",
+                "description": "%java.debugger.launch.modulePaths.description%",
                 "default": []
               },
               "classPaths": {
@@ -100,7 +100,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.",
+                "description": "%java.debugger.launch.classPaths.description%",
                 "default": []
               },
               "sourcePaths": {
@@ -108,27 +108,27 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.",
+                "description": "%java.debugger.launch.sourcePaths.description%",
                 "default": []
               },
               "encoding": {
                 "type": "string",
-                "description": "The file.encoding setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
+                "description": "%java.debugger.launch.encoding.description%",
                 "default": "UTF-8"
               },
               "cwd": {
                 "type": "string",
-                "description": "The working directory of the program. Defaults to the current workspace root.",
+                "description": "%java.debugger.launch.cwd.description%",
                 "default": "${workspaceFolder}"
               },
               "env": {
                 "type": "object",
-                "description": "The extra environment variables for the program.",
+                "description": "%java.debugger.launch.env.description%",
                 "default": {}
               },
               "stopOnEntry": {
                 "type": "boolean",
-                "description": "Automatically pause the program after launching.",
+                "description": "%java.debugger.launch.stopOnEntry.description%",
                 "default": true
               },
               "console": {
@@ -139,16 +139,16 @@
                   "externalTerminal"
                 ],
                 "enumDescriptions": [
-                  "VS Code debug console (input stream not supported).",
-                  "VS Code integrated terminal.",
-                  "External terminal that can be configured in user settings."
+                  "%java.debugger.launch.internalConsole.description%",
+                  "%java.debugger.launch.integratedTerminal.description%",
+                  "%java.debugger.launch.externalTerminal.description%"
                 ],
-                "description": "The specified console to launch the program.",
+                "description": "%java.debugger.launch.console.description%",
                 "default": "internalConsole"
               },
               "stepFilters": {
                 "type": "object",
-                "description": "Skip specified classes or methods when stepping.",
+                "description": "%java.debugger.launch.stepFilters.description%",
                 "default": {
                   "classNameFilters": [
                     "java.*",
@@ -165,7 +165,7 @@
                 "properties": {
                   "classNameFilters": {
                     "type": "array",
-                    "description": "Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.",
+                    "description": "%java.debugger.launch.classNameFilters.description%",
                     "item": {
                       "type": "string"
                     },
@@ -180,17 +180,17 @@
                   },
                   "skipSynthetics": {
                     "type": "boolean",
-                    "description": "Skip synthetic methods when stepping.",
+                    "description": "%java.debugger.launch.skipSynthetics.description%",
                     "default": true
                   },
                   "skipStaticInitializers": {
                     "type": "boolean",
-                    "description": "Skip static initializer methods when stepping.",
+                    "description": "%java.debugger.launch.skipStaticInitializers.description%",
                     "default": true
                   },
                   "skipConstructors": {
                     "type": "boolean",
-                    "description": "Skip constructor methods when stepping.",
+                    "description": "%java.debugger.launch.skipConstructors.description%",
                     "default": true
                   }
                 }
@@ -206,16 +206,16 @@
               "hostName": {
                 "type": "string",
                 "default": "localhost",
-                "description": "The host name or ip address of remote debuggee."
+                "description": "%java.debugger.attach.hostName.description%"
               },
               "port": {
                 "type": "number",
-                "description": "The debug port of remote debuggee."
+                "description": "%java.debugger.attach.port.description%"
               },
               "timeout": {
                 "type": "number",
                 "default": 30000,
-                "description": "Timeout value before reconnecting, in milliseconds (default to 30000ms)."
+                "description": "%java.debugger.attach.timeout.description%"
               },
               "sourcePaths": {
                 "type": "array",
@@ -223,16 +223,16 @@
                   "type": "string"
                 },
                 "default": [],
-                "description": "The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories."
+                "description": "%java.debugger.launch.sourcePaths.description%"
               },
               "projectName": {
                 "type": "string",
-                "description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects.",
+                "description": "%java.debugger.attach.projectName.description%",
                 "default": ""
               },
               "stepFilters": {
                 "type": "object",
-                "description": "Skip specified classes or methods when stepping.",
+                "description": "%java.debugger.launch.stepFilters.description%",
                 "default": {
                   "classNameFilters": [
                     "java.*",
@@ -249,7 +249,7 @@
                 "properties": {
                   "classNameFilters": {
                     "type": "array",
-                    "description": "Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.",
+                    "description": "%java.debugger.launch.classNameFilters.description%",
                     "item": {
                       "type": "string"
                     },
@@ -264,17 +264,17 @@
                   },
                   "skipSynthetics": {
                     "type": "boolean",
-                    "description": "Skip synthetic methods when stepping.",
+                    "description": "%java.debugger.launch.skipSynthetics.description%",
                     "default": false
                   },
                   "skipStaticInitializers": {
                     "type": "boolean",
-                    "description": "Skip static initializer methods when stepping.",
+                    "description": "%java.debugger.launch.skipStaticInitializers.description%",
                     "default": false
                   },
                   "skipConstructors": {
                     "type": "boolean",
-                    "description": "Skip constructor methods when stepping.",
+                    "description": "%java.debugger.launch.skipConstructors.description%",
                     "default": false
                   }
                 }
@@ -285,7 +285,7 @@
         "configurationSnippets": [
           {
             "label": "Java: Launch Program",
-            "description": "Add a new configuration for launching a java program.",
+            "description": "%java.debugger.snippet.launch.description%",
             "body": {
               "type": "java",
               "name": "Debug (Launch)",
@@ -295,7 +295,7 @@
           },
           {
             "label": "Java: Launch Program in External Terminal",
-            "description": "Add a new configuration for launching a java program in the external terminal.",
+            "description": "%java.debugger.snippet.launchInExternalTerminal.description%",
             "body": {
               "type": "java",
               "name": "Debug (Launch) - External Terminal",
@@ -306,7 +306,7 @@
           },
           {
             "label": "Java: Launch Program in Current File",
-            "description": "Add a new configuration for launching current java file.",
+            "description": "%java.debugger.snippet.launchCurrentFile.description%",
             "body": {
               "type": "java",
               "name": "Debug (Launch) - Current File",
@@ -316,7 +316,7 @@
           },
           {
             "label": "Java: Launch Program with Arguments Prompt",
-            "description": "Add a new configuration for launching a java program with arguments prompt.",
+            "description": "%java.debugger.snippet.launchWithArgumentsPrompt.description%",
             "body": {
               "type": "java",
               "name": "Debug (Launch) with Arguments Prompt",
@@ -327,7 +327,7 @@
           },
           {
             "label": "Java: Attach",
-            "description": "Add a new configuration for attaching to a running java program.",
+            "description": "%java.debugger.snippet.attach.description%",
             "body": {
               "type": "java",
               "name": "Debug (Attach)",
@@ -338,7 +338,7 @@
           },
           {
             "label": "Java: Attach to Remote Program",
-            "description": "Add a new configuration for attaching to a remote java program.",
+            "description": "%java.debugger.snippet.attachRemote.description%",
             "body": {
               "type": "java",
               "name": "Debug (Attach) - Remote",
