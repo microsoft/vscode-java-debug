@@ -1,5 +1,5 @@
 {
-    "java.debugger.configuration.title": "Java: Configurazione Debugger",
+    "java.debugger.configuration.title": "Java Debugger",
     "java.debugger.configuration.logLevel.description": "Livello dei log di debug minimo inviato a VS Code.",
     "java.debugger.configuration.showHex.description": "Mostra numeri in formato esadecimale nella scheda \"variabili\".",
     "java.debugger.configuration.showStaticVariables.description": "Mostra variabili statiche nella scheda \"variabili\".",
