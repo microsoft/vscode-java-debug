@@ -147,16 +147,18 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             if (config.request === "launch") {
-                try {
-                    const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
-                } catch (err) {
-                    const ans = await utility.showErrorMessageWithTroubleshooting({
-                        message: "Build failed, do you want to continue?",
-                        type: Type.USAGEERROR,
-                        anchor: anchor.BUILD_FAILED,
-                    }, "Proceed", "Abort");
-                    if (ans !== "Proceed") {
-                        return undefined;
+                if (needsBuildWorkspace()) {
+                    try {
+                        const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
+                    } catch (err) {
+                        const ans = await utility.showErrorMessageWithTroubleshooting({
+                            message: "Build failed, do you want to continue?",
+                            type: Type.USAGEERROR,
+                            anchor: anchor.BUILD_FAILED,
+                        }, "Proceed", "Abort");
+                        if (ans !== "Proceed") {
+                            return undefined;
+                        }
                     }
                 }
 
@@ -473,6 +475,11 @@ async function updateDebugSettings() {
             console.log("Cannot update debug settings.", err)
         }
     }
+}
+
+function needsBuildWorkspace(): boolean {
+    const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+    return debugSettingsRoot ? debugSettingsRoot.forceBuildBeforeLaunch : true;
 }
 
 function convertLogLevel(commonLogLevel: string) {
