@@ -67,10 +67,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         type: "java",
                         name: "Debug (Launch) - Current File",
                         request: "launch",
-                        console: "internalConsole",
                         // tslint:disable-next-line
                         mainClass: "${file}",
-                        args: "",
                     };
                     const launchConfigs = res.map((item) => {
                         return {
@@ -80,14 +78,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             projectName: item.projectName,
                         };
                     });
-                    const defaultAttachConfig = {
-                        type: "java",
-                        name: "Debug (Attach)",
-                        request: "attach",
-                        hostName: "localhost",
-                        port: "<debug port of remote debuggee>",
-                    };
-                    resolve([defaultLaunchConfig, ...launchConfigs, defaultAttachConfig]);
+                    resolve([defaultLaunchConfig, ...launchConfigs]);
                 }, (ex) => {
                     p.report({ message: `failed to generate configuration. ${ex}` });
                     reject(ex);

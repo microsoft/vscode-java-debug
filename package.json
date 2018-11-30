@@ -290,9 +290,18 @@
               "type": "java",
               "name": "Debug (Launch)",
               "request": "launch",
-              "console": "internalConsole",
-              "mainClass": "",
-              "args": ""
+              "mainClass": ""
+            }
+          },
+          {
+            "label": "Java: Launch Program in External Terminal",
+            "description": "Add a new configuration for launching a java program in the external terminal.",
+            "body": {
+              "type": "java",
+              "name": "Debug (Launch) - External Terminal",
+              "request": "launch",
+              "console": "externalTerminal",
+              "mainClass": ""
             }
           },
           {
@@ -302,9 +311,7 @@
               "type": "java",
               "name": "Debug (Launch) - Current File",
               "request": "launch",
-              "console": "internalConsole",
-              "mainClass": "^\"\\${file}\"",
-              "args": ""
+              "mainClass": "^\"\\${file}\""
             }
           },
           {
@@ -314,20 +321,30 @@
               "type": "java",
               "name": "Debug (Launch) with Arguments Prompt",
               "request": "launch",
-              "console": "internalConsole",
               "mainClass": "",
               "args": "^\"\\${command:SpecifyProgramArgs}\""
             }
           },
           {
-            "label": "Java: Attach to Remote Program",
+            "label": "Java: Attach",
             "description": "Add a new configuration for attaching to a running java program.",
             "body": {
               "type": "java",
               "name": "Debug (Attach)",
               "request": "attach",
               "hostName": "localhost",
-              "port": 0
+              "port": "<debug port of the debuggee>"
+            }
+          },
+          {
+            "label": "Java: Attach to Remote Program",
+            "description": "Add a new configuration for attaching to a remote java program.",
+            "body": {
+              "type": "java",
+              "name": "Debug (Attach) - Remote",
+              "request": "attach",
+              "hostName": "<The host name or ip address of remote debuggee>",
+              "port": "<debug port of remote debuggee>"
             }
           }
         ]
