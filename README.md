@@ -91,7 +91,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 - `java.debug.settings.enableHotCodeReplace`: enable hot code replace for Java code. Make sure the auto build is not disabled for [VSCode Java](https://github.com/redhat-developer/vscode-java). See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
 - `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
-- `java.debug.settings.forceBuildBeforeLaunch`: force the language server to build the workspace before launching java program, defaults to `true`.
+- `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`.
 
 ## Troubleshooting
 Reference the [troubleshooting guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for common errors.

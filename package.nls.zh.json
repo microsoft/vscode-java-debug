@@ -36,5 +36,6 @@
     "java.debugger.configuration.showQualifiedNames.description": "在“变量”视图中显示类的全名。",
     "java.debugger.configuration.maxStringLength.description": "设定“变量”或“调试控制台”视图中显示的字符串最大长度，长度超过部分将被剪掉。如果值为0，则不执行修剪。",
     "java.debugger.configuration.enableHotCodeReplace.description": "为Java代码启用热代码替换。",
-    "java.debugger.configuration.enableRunDebugCodeLens.description": "在main方法上启用CodeLens标记。"
+    "java.debugger.configuration.enableRunDebugCodeLens.description": "在main方法上启用CodeLens标记。",
+    "java.debugger.configuration.forceBuildBeforeLaunch": "在启动java程序之前强制编译整个工作空间。"
 }
