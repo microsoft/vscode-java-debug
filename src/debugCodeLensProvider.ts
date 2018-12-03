@@ -66,13 +66,13 @@ class DebugCodeLensProvider implements vscode.CodeLensProvider {
         return _.flatten(mainMethods.map((method) => {
             return [
                 new vscode.CodeLens(method.range, {
-                    title: "▶ Run",
+                    title: "Run",
                     command: JAVA_RUN_COMMAND,
                     tooltip: "Run Java Program",
                     arguments: [ method.mainClass, method.projectName, document.uri ],
                 }),
                 new vscode.CodeLens(method.range, {
-                    title: "🐞 Debug",
+                    title: "Debug",
                     command: JAVA_DEBUG_COMMAND,
                     tooltip: "Debug Java Program",
                     arguments: [ method.mainClass, method.projectName, document.uri ],
