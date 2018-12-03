@@ -394,6 +394,11 @@
           "type": "boolean",
           "description": "%java.debugger.configuration.enableRunDebugCodeLens.description%",
           "default": true
+        },
+        "java.debug.settings.forceBuildBeforeLaunch": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.forceBuildBeforeLaunch%",
+          "default": true
         }
       }
     }
