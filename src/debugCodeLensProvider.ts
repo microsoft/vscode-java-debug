@@ -125,10 +125,7 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
             type: "java",
             name: `CodeLens (Launch) - ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
             request: "launch",
-            // tslint:disable-next-line
-            console: "internalConsole",
             mainClass,
-            args: "",
             projectName,
         };
 
