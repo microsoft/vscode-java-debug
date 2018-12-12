@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Provide Chinese localized settings page for Java debugger, including launch.json configuration and user settings. [#472](https://github.com/Microsoft/vscode-java-debug/issues/472), [#477](https://github.com/Microsoft/vscode-java-debug/issues/477).
 - Add new user settings `java.debug.settings.forceBuildBeforeLaunch` to control whether to build the workspace before Run/Debug. [#462](https://github.com/Microsoft/vscode-java-debug/issues/462).
-- Provide F5 shortcut to launch the current Java file. Require `mainClass` is set to `${file}`. [#431](https://github.com/Microsoft/vscode-java-debug/issues/431)
+- F5 will auto launch the current Java file if `mainClass` in launch.json is set to the variable `${file}`. [#431](https://github.com/Microsoft/vscode-java-debug/issues/431)
 
 ### Changed
 - Simplify generated launch.json. [#476](https://github.com/Microsoft/vscode-java-debug/issues/476).
-- Remove the emoji before Run/Debug codelens. [#475](https://github.com/Microsoft/vscode-java-debug/issues/475).
-- Use vscode.open api instead of openurl library. [#479](https://github.com/Microsoft/vscode-java-debug/issues/479).
+- Remove the emoji before Run/Debug CodeLens. [#475](https://github.com/Microsoft/vscode-java-debug/issues/475).
+- Use `vscode.open` api instead of `opn` library. [#479](https://github.com/Microsoft/vscode-java-debug/issues/479).
 
 ### Fixed
 - Fixed the main class isn't unique issue. [#420](https://github.com/Microsoft/vscode-java-debug/issues/420).
