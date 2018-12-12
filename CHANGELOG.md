@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use `vscode.open` api instead of `opn` library. [#479](https://github.com/Microsoft/vscode-java-debug/issues/479).
 
 ### Fixed
-- Fixed the main class isn't unique issue. [#420](https://github.com/Microsoft/vscode-java-debug/issues/420).
+- Fix the main class isn't unique issue. [#420](https://github.com/Microsoft/vscode-java-debug/issues/420).
 
 ## 0.15.0 - 2018-11-01
 ### Added
