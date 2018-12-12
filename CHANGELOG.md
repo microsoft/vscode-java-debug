@@ -4,6 +4,20 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.16.0 - 2018-12-12
+### Added
+- Provide Chinese localized settings page for Java debugger, including launch.json configuration and user settings. [#472](https://github.com/Microsoft/vscode-java-debug/issues/472), [#477](https://github.com/Microsoft/vscode-java-debug/issues/477).
+- Add new user settings `java.debug.settings.forceBuildBeforeLaunch` to control whether to build the workspace before Run/Debug. [#462](https://github.com/Microsoft/vscode-java-debug/issues/462).
+- F5 will auto launch the current Java file if `mainClass` in launch.json is set to the variable `${file}`. [#431](https://github.com/Microsoft/vscode-java-debug/issues/431)
+
+### Changed
+- Simplify generated launch.json. [#476](https://github.com/Microsoft/vscode-java-debug/issues/476).
+- Remove the emoji before Run/Debug CodeLens. [#475](https://github.com/Microsoft/vscode-java-debug/issues/475).
+- Use `vscode.open` api instead of `opn` library. [#479](https://github.com/Microsoft/vscode-java-debug/issues/479).
+
+### Fixed
+- Fix the main class isn't unique issue. [#420](https://github.com/Microsoft/vscode-java-debug/issues/420).
+
 ## 0.15.0 - 2018-11-01
 ### Added
 - Contribution from [Thad House](https://github.com/ThadHouse): Add new user settings `java.debug.settings.enableRunDebugCodeLens` to enable/disable Run|Debug Code Lenses on main methods. [#464](https://github.com/Microsoft/vscode-java-debug/issues/464).
