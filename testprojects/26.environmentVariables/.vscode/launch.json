@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "java",
+            "name": "Debug (Launch)-EnvrionmentVariable<26.environmentVariables>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "mainClass": "EnvrionmentVariable",
+            "args": "",
+            "projectName": "26.environmentVariables",
+            "env": {
+                "CUSTOM_ENV_FOR_TEST_PLAN": "This env is for test plan."
+            }
+        }
+    ]
+}

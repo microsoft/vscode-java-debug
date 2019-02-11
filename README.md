@@ -4,10 +4,10 @@
 [![Travis CI](https://travis-ci.org/Microsoft/vscode-java-debug.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-java-debug)
 
 ## Overview
-A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users debugging Java code using Visual Studio Code (VS Code). Here's a list of features:
+A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users to debug Java code using Visual Studio Code (VS Code). Here's a list of features:
 
 - Launch/Attach
-- Breakpoints
+- Breakpoints/Conditional Breakpoints/Logpoints
 - Exceptions
 - Pause & Continue
 - Step In/Out/Over
@@ -15,6 +15,8 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Callstacks
 - Threads
 - Debug console
+- Evaluation
+- Hot Code Replace
 
 ## Requirements
 - JDK (version 1.8.0 or later)
@@ -46,15 +48,15 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 
 ### Launch
 
-- `mainClass` (required) - The main class of the program (fully qualified name, e.g. [mymodule/]com.xyz.MainClass).
-- `args` - The command line arguments passed to the program. Use `"${command:SpecifyProgramArgs}"` to prompt for program arguments.
+- `mainClass` (required) - The fully qualified class name (e.g. [java module name/]com.xyz.MainApp) or the java file path of the program entry.
+- `args` - The command line arguments passed to the program. Use `"${command:SpecifyProgramArgs}"` to prompt for program arguments. It accepts a string or an array of string.
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `modulePaths` - The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
 - `classPaths` - The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
 - `encoding` - The `file.encoding` setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.
-- `vmArgs` - The extra options and system properties for the JVM (e.g. -Xms\<size\> -Xmx\<size\> -D\<name\>=\<value\>).
+- `vmArgs` - The extra options and system properties for the JVM (e.g. -Xms\<size\> -Xmx\<size\> -D\<name\>=\<value\>), it accepts a string or an array of string.
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required when the workspace has multiple java projects, otherwise the expression evaluation and conditional breakpoint may not work.
-- `cwd` - The working directory of the program.
+- `cwd` - The working directory of the program. Defaults to `${workspaceFolder}`.
 - `env` - The extra environment variables for the program.
 - `stopOnEntry` - Automatically pause the program after launching.
 - `console` - The specified console to launch the program. Defaults to `internalConsole`.
@@ -88,6 +90,11 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.showQualifiedNames`: show fully qualified class names in "Variables" viewlet, defaults to `false`.
 - `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 - `java.debug.settings.enableHotCodeReplace`: enable hot code replace for Java code. Make sure the auto build is not disabled for [VSCode Java](https://github.com/redhat-developer/vscode-java). See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
+- `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
+- `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`.
+
+## Troubleshooting
+Reference the [troubleshooting guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for common errors.
 
 ## Feedback and Questions
 You can find the full list of issues at [Issue Tracker](https://github.com/Microsoft/vscode-java-debug/issues). You can submit a [bug or feature suggestion](https://github.com/Microsoft/vscode-java-debug/issues/new), and participate community driven [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)

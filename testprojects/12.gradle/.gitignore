@@ -1,0 +1,6 @@
+# Language server somehow recognizes build.gradle and compile this project.
+# Ignore following generated files to keep SCM clean.
+.gradle/
+.settings/
+.project
+.classpath
