@@ -23,7 +23,7 @@ module.exports = function (env, argv) {
         },
         output: {
           filename: '[name].js',
-          path: path.resolve(__dirname, 'out'),
+          path: path.resolve(__dirname, 'dist'),
           libraryTarget: "commonjs2",
           publicPath: '/',
           devtoolModuleFilenameTemplate: "../[resource-path]"

@@ -5,3 +5,4 @@ node_modules
 .vscode-test/
 vscode-java-debug-*.vsix
 packages/
+dist

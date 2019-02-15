@@ -36,7 +36,7 @@
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs"
   ],
-  "main": "./out/extension",
+  "main": "./dist/extension",
   "contributes": {
     "javaExtensions": [
       "./server/com.microsoft.java.debug.plugin-0.16.0.jar"
@@ -407,7 +407,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "compile": "webpack --config webpack.config.js",
+    "compile": "tsc -p . && webpack --config webpack.config.js",
     "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
     "build": "webpack --config webpack.config.js --mode=\"production\"",
     "postinstall": "node ./node_modules/vscode/bin/install",

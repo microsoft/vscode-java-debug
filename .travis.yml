@@ -23,4 +23,5 @@ install:
 script:
 - gulp tslint
 - vsce package
+- npm run compile
 - npm test --silent
