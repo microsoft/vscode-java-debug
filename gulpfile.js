@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
 const gulp = require("gulp");
 const cp = require('child_process');
 const tslint = require("gulp-tslint");
