@@ -57,3 +57,7 @@ export function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string
     return <Promise<ILaunchValidationResponse>>commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
         workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName, containsExternalClasspaths);
 }
+
+export function inferLaunchCommandLength(config: vscode.DebugConfiguration): Promise<number> {
+    return <Promise<number>>commands.executeJavaLanguageServerCommand(commands.JAVA_INFER_LAUNCH_COMMAND_LENGTH, JSON.stringify(config));
+}

@@ -14,6 +14,7 @@
     "java.debugger.launch.integratedTerminal.description": "VS Code integrated terminal.",
     "java.debugger.launch.externalTerminal.description": "External terminal that can be configured in user settings.",
     "java.debugger.launch.console.description": "The specified console to launch the program.",
+    "java.debugger.launch.shortenCommandLine.auto": "Auto detect the command line length and determine whether to shorten the command line via the appropriate approach.",
     "java.debugger.launch.shortenCommandLine.none": "Launch the program with the standard command line 'java [options] classname [args]'.",
     "java.debugger.launch.shortenCommandLine.jarmanifest": "Generate the classpath parameters to a temporary classpath.jar file, and launch the program with the command line 'java -cp classpath.jar classname [args]'.",
     "java.debugger.launch.shortenCommandLine.argfile": "Generate the classpath parameters to a temporary argument file, and launch the program with the command line 'java @argfile [args]'. This value only applies to Java 9 and higher.",

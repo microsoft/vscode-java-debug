@@ -151,17 +151,19 @@
               "shortenCommandLine": {
                 "type": "string",
                 "enum": [
+                  "auto",
                   "none",
                   "jarmanifest",
                   "argfile"
                 ],
                 "enumDescriptions": [
+                  "%java.debugger.launch.shortenCommandLine.auto%",
                   "%java.debugger.launch.shortenCommandLine.none%",
                   "%java.debugger.launch.shortenCommandLine.jarmanifest%",
                   "%java.debugger.launch.shortenCommandLine.argfile%"
                 ],
                 "description": "%java.debugger.launch.shortenCommandLine.description%",
-                "default": "none"
+                "default": "auto"
               },
               "stepFilters": {
                 "type": "object",

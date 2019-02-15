@@ -63,7 +63,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
-- `shortenCommandLine` - The specified command line style to launch the program. Defaults to `none`.
+- `shortenCommandLine` - The specified command line style to launch the program. Defaults to `auto`.
+  - `auto` - Auto detect the command line length and determine whether to shorten the command line via the appropriate approach.
   - `none` - Launch the program with the standard command line 'java [options] classname [args]'.
   - `jarmanifest` - Generate the classpath parameters to a temporary classpath.jar file, and launch the program with the command line 'java -cp classpath.jar classname [args]'.
   - `argfile` - Generate the classpath parameters to a temporary argument file, and launch the program with the command line 'java @argfile [args]'. This value only applies to Java 9 and higher.

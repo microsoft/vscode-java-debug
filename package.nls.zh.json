@@ -14,6 +14,7 @@
     "java.debugger.launch.integratedTerminal.description": "VS Code集成终端。",
     "java.debugger.launch.externalTerminal.description": "外部终端（可在用户设置中修改）。",
     "java.debugger.launch.console.description": "用于启动应用程序的控制台。",
+    "java.debugger.launch.shortenCommandLine.auto": "自动检测命令行长度并决定是否通过适当的方法缩短命令行。",
     "java.debugger.launch.shortenCommandLine.none": "使用标准命令行 'java [options] classname [args]' 启动应用程序。",
     "java.debugger.launch.shortenCommandLine.jarmanifest": "将类路径参数生成到临时 classpath.jar 文件中，并使用命令行 'java -cp classpath.jar classname [args]' 启动应用程序。",
     "java.debugger.launch.shortenCommandLine.argfile": "将类路径参数生成到临时 argument 文件中, 并使用命令行 'java @argfile [args]' 启动应用程序。该值仅适用于 Java 9 及以上版本。",
