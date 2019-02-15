@@ -66,7 +66,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `shortenCommandLine` - The specified command line style to launch the program. Defaults to `none`.
   - `none` - Launch the program with the standard command line 'java [options] classname [args]'.
   - `jarmanifest` - Generate the classpath parameters to a temporary classpath.jar file, and launch the program with the command line 'java -cp classpath.jar classname [args]'.
-  - `argfile` - Generate the classpath parameters to a temporary argument file, and launch the program with the command line 'java @argfile [args]'. This value only applies to java 9 and higher.
+  - `argfile` - Generate the classpath parameters to a temporary argument file, and launch the program with the command line 'java @argfile [args]'. This value only applies to Java 9 and higher.
 - `stepFilters` - Skip specified classes or methods when stepping.
   - `classNameFilters` - Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
   - `skipSynthetics` - Skip synthetic methods when stepping.
