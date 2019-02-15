@@ -36,7 +36,7 @@
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/extension",
   "contributes": {
     "javaExtensions": [
       "./server/com.microsoft.java.debug.plugin-0.16.0.jar"
@@ -406,8 +406,10 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run build",
+    "compile": "webpack --config webpack.config.js",
+    "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
+    "build": "webpack --config webpack.config.js --mode=\"production\"",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "node ./scripts/download-vscode-for-system-tests && node ./scripts/install-vsix-dependencies redhat.java && node ./scripts/install-vsix-dependencies vscode-java-debug-0.16.0.vsix && node ./scripts/run-vscode-tests"
   },
@@ -423,13 +425,16 @@
     "gulp-tslint": "^8.1.2",
     "mocha": "^5.2.0",
     "shelljs": "^0.8.2",
+    "ts-loader": "^5.3.3",
     "tslint": "^5.7.0",
     "typescript": "^3.0.1",
-    "vscode": "^1.1.21"
+    "vscode": "^1.1.21",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3"
   },
   "dependencies": {
     "lodash": "^4.17.10",
     "vscode-extension-telemetry": "0.1.0",
-    "vscode-extension-telemetry-wrapper": "0.3.5"
+    "vscode-extension-telemetry-wrapper": "0.3.8"
   }
 }
