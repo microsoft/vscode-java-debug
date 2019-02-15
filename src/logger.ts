@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as fs from "fs";
 import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 
@@ -19,7 +20,7 @@ class Logger implements vscode.Disposable {
             return;
         }
 
-        const extensionPackage = require(context.asAbsolutePath("./package.json"));
+        const extensionPackage = JSON.parse(fs.readFileSync(context.asAbsolutePath("./package.json"), "utf-8"));
         if (extensionPackage) {
             const packageInfo = {
                 name: extensionPackage.name,

@@ -1,6 +1,6 @@
 .vscode/**
 .vscode-test/**
-out/test/**
+out/**
 test/**
 src/**
 **/*.map
@@ -11,3 +11,10 @@ images/**
 testprojects/**
 TestPlan.md
 .github/**
+.travis.yml
+tsconfig.json
+tslint.json
+packages
+package-lock.json
+node_modules
+webpack.config.js
