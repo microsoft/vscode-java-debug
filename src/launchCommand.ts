@@ -12,27 +12,24 @@ enum shortenApproach {
     argfile = "argfile",
 }
 
-export async function populateShortenCommandLineField(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
-    if (config.request === "launch" && (!config.shortenCommandLine || config.shortenCommandLine === "auto")) {
-        config.shortenCommandLine = await detectLaunchCommandStyle(config);
-    }
-
-    return config;
-}
-
 export async function detectLaunchCommandStyle(config: vscode.DebugConfiguration): Promise<shortenApproach> {
     const cliLength = await inferLaunchCommandLength(config);
     const javaHome = await getJavaHome();
     const javaVersion = await checkJavaVersion(javaHome);
     const recommendedApproach = javaVersion <= 8 ? shortenApproach.jarmanifest : shortenApproach.argfile;
-    if (config.console === "internalConsole") {
-        // In windows, the max process commmand line length is 32k (32678) characters.
-        // TODO Differentiate the limit for other platforms OSX and linux.
-        return cliLength < 32678 ? shortenApproach.none : recommendedApproach;
+    if (process.platform === "win32") {
+        if (!config.console || config.console === "internalConsole") {
+            // https://blogs.msdn.microsoft.com/oldnewthing/20031210-00/?p=41553/
+            // In windows, the max process commmand line length is 32k (32678) characters.
+            return cliLength < 32678 ? shortenApproach.none : recommendedApproach;
+        } else {
+            // https://support.microsoft.com/en-us/help/830473/command-prompt-cmd--exe-command-line-string-limitation
+            // In windows, the max command line length for cmd terminal is 8192 characters.
+            return cliLength < 8192 ? shortenApproach.none : recommendedApproach;
+        }
     } else {
-        // In windows, the max command line length for cmd terminal is 8191 characters.
-        // TODO Differentiate the limit for other platforms OSX and linux.
-        return cliLength < 8191 ? shortenApproach.none : recommendedApproach;
+        // TODO Apply the limit to other platforms, such as OSX and linux.
+        return shortenApproach.none;
     }
 }
 

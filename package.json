@@ -151,16 +151,16 @@
               "shortenCommandLine": {
                 "type": "string",
                 "enum": [
-                  "auto",
                   "none",
                   "jarmanifest",
-                  "argfile"
+                  "argfile",
+                  "auto"
                 ],
                 "enumDescriptions": [
-                  "%java.debugger.launch.shortenCommandLine.auto%",
                   "%java.debugger.launch.shortenCommandLine.none%",
                   "%java.debugger.launch.shortenCommandLine.jarmanifest%",
-                  "%java.debugger.launch.shortenCommandLine.argfile%"
+                  "%java.debugger.launch.shortenCommandLine.argfile%",
+                  "%java.debugger.launch.shortenCommandLine.auto%"
                 ],
                 "description": "%java.debugger.launch.shortenCommandLine.description%",
                 "default": "auto"
