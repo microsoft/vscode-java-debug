@@ -148,6 +148,23 @@
                 "description": "%java.debugger.launch.console.description%",
                 "default": "internalConsole"
               },
+              "shortenCommandLine": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "jarmanifest",
+                  "argfile",
+                  "auto"
+                ],
+                "enumDescriptions": [
+                  "%java.debugger.launch.shortenCommandLine.none%",
+                  "%java.debugger.launch.shortenCommandLine.jarmanifest%",
+                  "%java.debugger.launch.shortenCommandLine.argfile%",
+                  "%java.debugger.launch.shortenCommandLine.auto%"
+                ],
+                "description": "%java.debugger.launch.shortenCommandLine.description%",
+                "default": "auto"
+              },
               "stepFilters": {
                 "type": "object",
                 "description": "%java.debugger.launch.stepFilters.description%",

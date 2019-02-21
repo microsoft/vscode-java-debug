@@ -10,6 +10,7 @@ import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
+import { detectLaunchCommandStyle } from "./launchCommand";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
 import { VariableResolver } from "./variableResolver";
@@ -207,6 +208,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
             if (Array.isArray(config.vmArgs)) {
                 config.vmArgs = this.concatArgs(config.vmArgs);
+            }
+
+            if (config.request === "launch" && (!config.shortenCommandLine || config.shortenCommandLine === "auto")) {
+                config.shortenCommandLine = await detectLaunchCommandStyle(config);
             }
 
             const debugServerPort = await lsPlugin.startDebugSession();
