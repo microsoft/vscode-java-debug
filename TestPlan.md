@@ -473,3 +473,19 @@ Exception in thread "main" java.lang.IllegalStateException
 4. Press F5 to verify the variables should be like this:
 
     ![args](images/args.PNG)
+
+## Classpath shortener for long classpath project
+1. Open `longclasspath` project in VS Code.
+2. Append the following config to the launch.json:
+```
+  "shortenCommandLine": "none"
+```
+3. Click Run or Debug CodeLens.
+  - On Windows, it should pop up an error box saying "CreateProcess error"=206, The filename or extension is too long".
+  - On Linux and Macos, it may succeed.
+4. On Windows/Linux/Macos, modify the launch.json with the following combinations. Click Run/Debug both should succeed.
+```
+  "shortenCommandLine": ""/"auto"/"jarmanifest"/"argfile", // argfile requires your Java version is 9 and higher.
+  "console": ""/"internalConsole"/"integratedTerminal"/"externalTerminal"
+
+```
