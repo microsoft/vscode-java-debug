@@ -4,6 +4,16 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.17.0 - 2019-03-06
+### Added
+- Popup the Exception details via an UI widget when an Exception breakpoint is hit. [#522](https://github.com/Microsoft/vscode-java-debug/issues/522).
+
+### Changed
+- Improve the extension load time by using webpack. [#492](https://github.com/Microsoft/vscode-java-debug/issues/492), [#517](https://github.com/Microsoft/vscode-java-debug/issues/517).
+
+### Fixed
+- Add a new debug configuration `shortenCommandLine` to fix the issue "CreateProcess error=206, The filename or extension is too long". [#110](https://github.com/Microsoft/vscode-java-debug/issues/110).
+
 ## 0.16.0 - 2018-12-12
 ### Added
 - Provide Chinese localized settings page for Java debugger, including launch.json configuration and user settings. [#472](https://github.com/Microsoft/vscode-java-debug/issues/472), [#477](https://github.com/Microsoft/vscode-java-debug/issues/477).
