@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.17.0 - 2019-03-06
 ### Added
-- Popup the Exception details via an UI widget when an Exception breakpoint is hit. [#522](https://github.com/Microsoft/vscode-java-debug/issues/522).
+- Popup the exception details via a UI widget when an exception breakpoint is hit. [#522](https://github.com/Microsoft/vscode-java-debug/issues/522).
 
 ### Changed
-- Improve the extension load time by using webpack. [#492](https://github.com/Microsoft/vscode-java-debug/issues/492), [#517](https://github.com/Microsoft/vscode-java-debug/issues/517).
+- Reduce the extension load time by using webpack. [#492](https://github.com/Microsoft/vscode-java-debug/issues/492), [#517](https://github.com/Microsoft/vscode-java-debug/issues/517).
 
 ### Fixed
 - Add a new debug configuration `shortenCommandLine` to fix the issue "CreateProcess error=206, The filename or extension is too long". [#110](https://github.com/Microsoft/vscode-java-debug/issues/110).
