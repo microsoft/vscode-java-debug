@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "publisher": "vscjava",
   "preview": true,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -39,7 +39,7 @@
   "main": "./dist/extension",
   "contributes": {
     "javaExtensions": [
-      "./server/com.microsoft.java.debug.plugin-0.16.0.jar"
+      "./server/com.microsoft.java.debug.plugin-0.17.0.jar"
     ],
     "commands": [],
     "debuggers": [
@@ -428,7 +428,7 @@
     "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
     "build": "webpack --config webpack.config.js --mode=\"production\"",
     "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "node ./scripts/download-vscode-for-system-tests && node ./scripts/install-vsix-dependencies redhat.java && node ./scripts/install-vsix-dependencies vscode-java-debug-0.16.0.vsix && node ./scripts/run-vscode-tests"
+    "test": "node ./scripts/download-vscode-for-system-tests && node ./scripts/install-vsix-dependencies redhat.java && node ./scripts/install-vsix-dependencies vscode-java-debug-0.17.0.vsix && node ./scripts/run-vscode-tests"
   },
   "extensionDependencies": [
     "redhat.java"
