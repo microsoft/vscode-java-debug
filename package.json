@@ -392,12 +392,17 @@
         "java.debug.settings.showStaticVariables": {
           "type": "boolean",
           "description": "%java.debugger.configuration.showStaticVariables.description%",
-          "default": true
+          "default": false
         },
         "java.debug.settings.showQualifiedNames": {
           "type": "boolean",
           "description": "%java.debugger.configuration.showQualifiedNames.description%",
           "default": false
+        },
+        "java.debug.settings.showLogicalStructure": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.showLogicalStructure.description%",
+          "default": true
         },
         "java.debug.settings.maxStringLength": {
           "type": "number",

@@ -91,8 +91,9 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 
 - `java.debug.logLevel`: minimum level of debugger logs that are sent to VS Code, defaults to `warn`.
 - `java.debug.settings.showHex`: show numbers in hex format in "Variables" viewlet, defaults to `false`.
-- `java.debug.settings.showStaticVariables`: show static variables in "Variables" viewlet, defaults to `true`.
+- `java.debug.settings.showStaticVariables`: show static variables in "Variables" viewlet, defaults to `false`.
 - `java.debug.settings.showQualifiedNames`: show fully qualified class names in "Variables" viewlet, defaults to `false`.
+- `java.debug.settings.showLogicalStructure`: show the logical structure for the Collection and Map classes in "Variables" viewlet, defaults to `true`.
 - `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 - `java.debug.settings.enableHotCodeReplace`: enable hot code replace for Java code. Make sure the auto build is not disabled for [VSCode Java](https://github.com/redhat-developer/vscode-java). See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
 - `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
