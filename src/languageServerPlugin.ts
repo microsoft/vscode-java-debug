@@ -61,3 +61,7 @@ export function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string
 export function inferLaunchCommandLength(config: vscode.DebugConfiguration): Promise<number> {
     return <Promise<number>>commands.executeJavaLanguageServerCommand(commands.JAVA_INFER_LAUNCH_COMMAND_LENGTH, JSON.stringify(config));
 }
+
+export function detectPreviewFlag(mainClass: string, projectName?: string): Promise<boolean> {
+    return <Promise<boolean>>commands.executeJavaLanguageServerCommand(commands.JAVA_DETECT_PREVIEW_FLAG, mainClass, projectName);
+}

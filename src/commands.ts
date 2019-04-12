@@ -27,6 +27,8 @@ export const JAVA_RESOLVE_MAINMETHOD = "vscode.java.resolveMainMethod";
 
 export const JAVA_INFER_LAUNCH_COMMAND_LENGTH = "vscode.java.inferLaunchCommandLength";
 
+export const JAVA_DETECT_PREVIEW_FLAG = "vscode.java.detectEnablePreviewFeaturesFlag";
+
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
     return vscode.commands.executeCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
