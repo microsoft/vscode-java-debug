@@ -489,3 +489,33 @@ Exception in thread "main" java.lang.IllegalStateException
   "console": ""/"internalConsole"/"integratedTerminal"/"externalTerminal"
 
 ```
+
+## Jump to source code when clicking stack trace in DEBUG CONSOLE
+1. Open `28.debugfeatures` project in VS Code.
+2. Open `StackTrace.java` file.
+3. Click Run or Debug CodeLens, check the DEBUG CONSOLE. It's expected to render the source link for each stack trace line, and clicking the link should open the associated Java file in the editor.
+
+![image](https://user-images.githubusercontent.com/14052197/56104487-7ecc4880-5f6a-11e9-89aa-b9c66b6f318b.png)
+
+## Show the logical structure view for the Map and List variables
+1. Open `28.debugfeatures` project in VS Code.
+2. Open `LogicalStructure.java` file, and add a breakpoint at line 30.
+3. Click Debug CodeLens, check the Variable viewlet.
+- emptyMap - non-expandable
+- bookset - Show two children (0: LinkedHashMap$Entry, 1: LinkedHashMap$Entry)
+- bigStore - Lazy loading the children and show the index range first `[0..9999]` ...
+- emptyList - non-expandable
+- list - Show two children (0: LogicalStructure$Foo, 1: LogicalStructure$Foo).
+- bigList - Lazy loading the children and show the index range first `[0..9999]` ...
+
+![image](https://user-images.githubusercontent.com/14052197/56104630-1e89d680-5f6b-11e9-87a5-8a17a2ed33b5.png)
+
+## Enable Java 12 preview for standalone Java files
+1. Install JDK-12.
+2. Open `28.debugfeatures` project in VS Code, and open `Java12Preview.java` file.
+3. Uncomment `"java.home"` in `./vscode/settings.json`.
+4. Run VS Code commmand `Java: clean Java language server workspace`, and click `Restart and delete` button in the prompted message box to reload VS Code.
+5. Add a breakpoint at line 7 of `Java12Preview.java`, and click Debug CodeLens. The debugger should run successfully.
+6. Open VS Code menu `Help -> Open Process Explorer`, find the Java Debuggger process in the `Process Explorer`. And its command line string should contain `--enable-preview` flag.
+
+![image](https://user-images.githubusercontent.com/14052197/56105328-40d12380-5f6e-11e9-94bc-8f3f3d298750.png)
