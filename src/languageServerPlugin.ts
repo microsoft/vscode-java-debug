@@ -61,3 +61,22 @@ export function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string
 export function inferLaunchCommandLength(config: vscode.DebugConfiguration): Promise<number> {
     return <Promise<number>>commands.executeJavaLanguageServerCommand(commands.JAVA_INFER_LAUNCH_COMMAND_LENGTH, JSON.stringify(config));
 }
+
+export function checkProjectSettings(className: string, projectName: string, inheritedOptions: boolean, expectedOptions: {[key: string]: string}):
+Promise<boolean> {
+    return <Promise<boolean>>commands.executeJavaLanguageServerCommand(
+        commands.JAVA_CHECK_PROJECT_SETTINGS, JSON.stringify({
+            className,
+            projectName,
+            inheritedOptions,
+            expectedOptions,
+        }));
+}
+
+const COMPILER_PB_ENABLE_PREVIEW_FEATURES: string = "org.eclipse.jdt.core.compiler.problem.enablePreviewFeatures";
+export async function detectPreviewFlag(className: string, projectName: string): Promise<boolean> {
+    const expectedOptions = {
+        [COMPILER_PB_ENABLE_PREVIEW_FEATURES]: "enabled",
+    };
+    return await checkProjectSettings(className, projectName, true, expectedOptions);
+}
