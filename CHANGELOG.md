@@ -6,15 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.18.0 - 2019-04-16
 ### Added
-- Support "Logical Structure" for debug variables (e.g. Map and Collection classes). [#227](https://github.com/Microsoft/vscode-java-debug/issues/227).
-- Jump to source code when clicking the stack trace info in Debug Console. [#490](https://github.com/Microsoft/vscode-java-debug/issues/490), [#506](https://github.com/Microsoft/vscode-java-debug/issues/506).
+- Enable "Logical Structure" view for Map and Collection variables. [#227](https://github.com/Microsoft/vscode-java-debug/issues/227).
+- Add the stacktrace source link support in Debug Console output. [#490](https://github.com/Microsoft/vscode-java-debug/issues/490), [#506](https://github.com/Microsoft/vscode-java-debug/issues/506).
 - Automatically add `--enable-preview` to vmArgs when necessary. [#553](https://github.com/Microsoft/vscode-java-debug/issues/553).
 
 ### Changed
-- Disable `java.debug.settings.showStaticVariables` by default to not show the static fields for debug variables.
+- Disable `java.debug.settings.showStaticVariables` by default to not show the static fields.
 
 ### Fixed
-- Fix: Debug Console does not autocomplete when a .class file is open. [#535](https://github.com/Microsoft/vscode-java-debug/issues/535).
+- Fix: Debug Console does not support autocomplete when a .class file is open. [#535](https://github.com/Microsoft/vscode-java-debug/issues/535).
 
 ## 0.17.0 - 2019-03-06
 ### Added
