@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.18.0 - 2019-04-16
 ### Added
 - Enable "Logical Structure" view for Map and Collection variables. [#227](https://github.com/Microsoft/vscode-java-debug/issues/227).
-- Add the stacktrace source link support in Debug Console output. [#490](https://github.com/Microsoft/vscode-java-debug/issues/490), [#506](https://github.com/Microsoft/vscode-java-debug/issues/506).
+- Add the source hyperlinks for the stack traces in the Debug Console output. [#490](https://github.com/Microsoft/vscode-java-debug/issues/490), [#506](https://github.com/Microsoft/vscode-java-debug/issues/506).
 - Automatically add `--enable-preview` to vmArgs when necessary. [#553](https://github.com/Microsoft/vscode-java-debug/issues/553).
 
 ### Changed
