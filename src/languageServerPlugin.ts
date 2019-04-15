@@ -62,23 +62,20 @@ export function inferLaunchCommandLength(config: vscode.DebugConfiguration): Pro
     return <Promise<number>>commands.executeJavaLanguageServerCommand(commands.JAVA_INFER_LAUNCH_COMMAND_LENGTH, JSON.stringify(config));
 }
 
-export function getProjectSettings(projectName: string, inheritOptions?: boolean): Promise<{[key: string]: string}> {
-    return <Promise<{[key: string]: string}>>commands.executeJavaLanguageServerCommand(
-        commands.JAVA_GET_PROJECT_SETTINGS, projectName, inheritOptions);
-}
-
-export function getProjectSettingsFromType(className: string, inheritOptions?: boolean): Promise<{[key: string]: string}> {
-    return <Promise<{[key: string]: string}>>commands.executeJavaLanguageServerCommand(
-        commands.JAVA_GET_PROJECT_SETTINGS_FROM_TYPE, className, inheritOptions);
+export function checkProjectSettings(className: string, projectName: string, inheritedOptions: boolean, expectedOptions: {[key: string]: string}): Promise<boolean> {
+    return <Promise<boolean>>commands.executeJavaLanguageServerCommand(
+        commands.JAVA_CHECK_PROJECT_SETTINGS, JSON.stringify({
+            className,
+            projectName,
+            inheritedOptions,
+            expectedOptions
+        }));
 }
 
 const COMPILER_PB_ENABLE_PREVIEW_FEATURES: string = "org.eclipse.jdt.core.compiler.problem.enablePreviewFeatures";
 export async function detectPreviewFlag(className: string, projectName: string): Promise<boolean> {
-    if (projectName) {
-        const settings = (await getProjectSettings(projectName, false)) || {};
-        return settings[COMPILER_PB_ENABLE_PREVIEW_FEATURES] === "enabled";
-    } else {
-        const settings = (await getProjectSettingsFromType(className, false)) || {};
-        return settings[COMPILER_PB_ENABLE_PREVIEW_FEATURES] === "enabled";
-    }
+    const expectedOptions = {
+        [COMPILER_PB_ENABLE_PREVIEW_FEATURES]: "enabled"
+    };
+    return await checkProjectSettings(className, projectName, true, expectedOptions);
 }
