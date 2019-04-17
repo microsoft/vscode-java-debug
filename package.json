@@ -450,13 +450,13 @@
     "ts-loader": "^5.3.3",
     "tslint": "^5.7.0",
     "typescript": "^3.0.1",
-    "vscode": "^1.1.30",
+    "vscode": "^1.1.33",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
     "lodash": "^4.17.11",
-    "vscode-extension-telemetry": "0.1.0",
-    "vscode-extension-telemetry-wrapper": "0.3.8"
+    "vscode-extension-telemetry": "0.1.1",
+    "vscode-extension-telemetry-wrapper": "0.4.0"
   }
 }
