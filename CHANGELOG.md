@@ -4,7 +4,7 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 0.18.0 - 2019-04-16
+## 0.18.0 - 2019-04-23
 ### Added
 - Enable "Logical Structure" view for Map and Collection variables. [#227](https://github.com/Microsoft/vscode-java-debug/issues/227).
 - Add the source hyperlinks for the stack traces in the Debug Console output. [#490](https://github.com/Microsoft/vscode-java-debug/issues/490), [#506](https://github.com/Microsoft/vscode-java-debug/issues/506).
