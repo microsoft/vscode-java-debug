@@ -56,9 +56,9 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
                 "Yes", "No");
             if (ans === "Yes") {
                 await autobuildConfig.update("enabled", true);
+            } else {
+                return;
             }
-
-            return;
         }
 
         const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
