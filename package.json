@@ -41,7 +41,31 @@
     "javaExtensions": [
       "./server/com.microsoft.java.debug.plugin-0.18.0.jar"
     ],
-    "commands": [],
+    "commands": [
+      {
+        "command": "java.debug.hotCodeReplace",
+        "title": "Hot Code Replace",
+        "icon": {
+          "dark": "images/commands/hot_code_replace_inverse.svg",
+          "light": "images/commands/hot_code_replace.svg"
+        }
+      }
+    ],
+    "menus": {
+      "debug/toolBar": [
+        {
+          "command": "java.debug.hotCodeReplace",
+          "group": "navigation@100",
+          "when": "inDebugMode && debugType == java && javaHotReload == 'manual'"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "java.debug.hotCodeReplace",
+          "when": "false"
+        }
+      ]
+    },
     "debuggers": [
       {
         "type": "java",
@@ -409,10 +433,15 @@
           "description": "%java.debugger.configuration.maxStringLength.description%",
           "default": 0
         },
-        "java.debug.settings.enableHotCodeReplace": {
-          "type": "boolean",
-          "description": "%java.debugger.configuration.enableHotCodeReplace.description%",
-          "default": true
+        "java.debug.settings.hotCodeReplace": {
+          "type": "string",
+          "default": "manual",
+          "description": "%java.debugger.configuration.hotCodeReplace.description%",
+          "enum": [
+            "auto",
+            "manual",
+            "never"
+          ]
         },
         "java.debug.settings.enableRunDebugCodeLens": {
           "type": "boolean",

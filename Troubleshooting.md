@@ -45,7 +45,7 @@ This error indicates you are doing `Hot Code Replace`. The `Hot Code Replace` fe
 
 ### Try:
 1. Restart your application to apply the new changes. Or ignore the message, and continue to debug.
-2. You can disable the hot code replace feature by changing the user setting `"java.debug.settings.enableHotCodeReplace": false`.
+2. You can disable the hot code replace feature by changing the user setting `"java.debug.settings.hotCodeReplace": "never"`.
 
 ## Please specify the host name and the port of the remote debuggee in the launch.json.
 ### Reason:

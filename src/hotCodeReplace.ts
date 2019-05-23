@@ -4,7 +4,7 @@
 import * as vscode from "vscode";
 
 import * as anchor from "./anchor";
-import { HCR_EVENT, JAVA_LANGID } from "./constants";
+import { JAVA_LANGID } from "./constants";
 import * as utility from "./utility";
 
 const suppressedReasons: Set<string> = new Set();
@@ -24,6 +24,12 @@ enum HcrChangeType {
 }
 
 export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
+    vscode.commands.executeCommand("setContext", "javaHotReload", getHotReloadFlag());
+    vscode.workspace.onDidChangeConfiguration(event => {
+        if (event.affectsConfiguration("java.debug.settings.hotCodeReplace")) {
+            vscode.commands.executeCommand("setContext", "javaHotReload", getHotReloadFlag());
+        }
+    });
     context.subscriptions.push(vscode.debug.onDidTerminateDebugSession((session) => {
         const t = session ? session.type : undefined;
         if (t === JAVA_LANGID) {
@@ -34,10 +40,12 @@ export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
 
 export function handleHotCodeReplaceCustomEvent(hcrEvent) {
     if (hcrEvent.body.changeType === HcrChangeType.BUILD_COMPLETE) {
-        return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
-            progress.report({ message: "Applying code changes..." });
-            return hcrEvent.session.customRequest("redefineClasses");
-        });
+        if (getHotReloadFlag() === "auto") {
+            return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
+                progress.report({ message: "Applying code changes..." });
+                return hcrEvent.session.customRequest("redefineClasses");
+            });
+        }
     }
 
     if (hcrEvent.body.changeType === HcrChangeType.ERROR || hcrEvent.body.changeType === HcrChangeType.WARNING) {
@@ -54,4 +62,8 @@ export function handleHotCodeReplaceCustomEvent(hcrEvent) {
             });
         }
     }
+}
+
+function getHotReloadFlag(): String {
+    return vscode.workspace.getConfiguration("java.debug.settings").get("hotCodeReplace") || "manual";
 }
