@@ -49,6 +49,18 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
         return specifyProgramArguments(context);
     }));
     context.subscriptions.push(instrumentAndRegisterCommand("java.debug.hotCodeReplace", async (args: any) => {
+        const autobuildConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.autobuild");
+        if (!autobuildConfig.enabled) {
+            const ans = await vscode.window.showWarningMessage(
+                "The hot code replace feature requires you to enable the autobuild flag, do you want to enable it?",
+                "Yes", "No");
+            if (ans === "Yes") {
+                await autobuildConfig.update("enabled", true);
+            }
+
+            return;
+        }
+
         const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
         if (!debugSession) {
             return;

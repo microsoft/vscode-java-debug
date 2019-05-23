@@ -14,7 +14,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.32.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -46,7 +46,7 @@
         "command": "java.debug.hotCodeReplace",
         "title": "Hot Code Replace",
         "icon": {
-          "dark": "images/commands/hot_code_replace_inverse.svg",
+          "dark": "images/commands/hot_code_replace.svg",
           "light": "images/commands/hot_code_replace.svg"
         }
       }
