@@ -49,7 +49,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
         return specifyProgramArguments(context);
     }));
     context.subscriptions.push(instrumentAndRegisterCommand("java.debug.hotCodeReplace", async (args: any) => {
-        let debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
+        const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
         if (!debugSession) {
             return;
         }

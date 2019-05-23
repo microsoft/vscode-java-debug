@@ -25,7 +25,7 @@ enum HcrChangeType {
 
 export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand("setContext", "javaHotReload", getHotReloadFlag());
-    vscode.workspace.onDidChangeConfiguration(event => {
+    vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("java.debug.settings.hotCodeReplace")) {
             vscode.commands.executeCommand("setContext", "javaHotReload", getHotReloadFlag());
         }
@@ -64,6 +64,6 @@ export function handleHotCodeReplaceCustomEvent(hcrEvent) {
     }
 }
 
-function getHotReloadFlag(): String {
+function getHotReloadFlag(): string {
     return vscode.workspace.getConfiguration("java.debug.settings").get("hotCodeReplace") || "manual";
 }
