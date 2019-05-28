@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as path from "path";
 import * as vscode from "vscode";
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
@@ -48,6 +47,29 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(instrumentAndRegisterCommand("JavaDebug.SpecifyProgramArgs", async () => {
         return specifyProgramArguments(context);
+    }));
+    context.subscriptions.push(instrumentAndRegisterCommand("java.debug.hotCodeReplace", async (args: any) => {
+        const autobuildConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.autobuild");
+        if (!autobuildConfig.enabled) {
+            const ans = await vscode.window.showWarningMessage(
+                "The hot code replace feature requires you to enable the autobuild flag, do you want to enable it?",
+                "Yes", "No");
+            if (ans === "Yes") {
+                await autobuildConfig.update("enabled", true);
+            } else {
+                return;
+            }
+        }
+
+        const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
+        if (!debugSession) {
+            return;
+        }
+
+        return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
+            progress.report({ message: "Applying code changes..." });
+            return await debugSession.customRequest("redefineClasses");
+        });
     }));
     initializeHotCodeReplace(context);
     context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent((customEvent) => {

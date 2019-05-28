@@ -299,20 +299,33 @@ anonymous
 
 1. Open project `19.java9-app` in vscode.
 2. Follow gif to verify step filters feature.
-![stepfilter](images/33868694-673f14b0-df3f-11e7-9983-b3cff5842020.gif)
+![stepfilter](images/docs/33868694-673f14b0-df3f-11e7-9983-b3cff5842020.gif)
 
 The new gif:
-![stepfilters](images/34507770-69597114-f074-11e7-8f32-027ad1d7a4fd.gif)
+![stepfilters](images/docs/34507770-69597114-f074-11e7-8f32-027ad1d7a4fd.gif)
 
 ## Hot Code Replace
-
+- Manually trigger hot code replace
 1. Open project `24.hotCodeReplace` in vscode.
-2. Set breakpoints:  NameProvider.java line 12; Person.java line 13
+2. Set breakpoints:  NameProvider.java line 12; Person.java line 13.
 3. Press `F5`  to start debug.
-4. The program stopped at the Person.java line 13
-5. Change the value of the line "old" to "new"
-5. Save the document to trigger HCR. Check the breakpoint will stop at line 12 
-6. Click F10 to step over, check the value of `res` on the debug view of local variable which should be `new`
+4. The program stopped at the Person.java line 13.
+5. Change the value of the line "old" to "new", and save the document.
+6. Click the "Hot Code Replace" icon in the debug toolbar to trigger HCR. Check the breakpoint will stop at line 12 .
+7. Click F10 to step over, check the value of `res` on the debug view of local variable which should be `new`.
+
+- Automatically trigger hot code replace
+1. Repeat step 1 ~ 4 above.
+2. Change `java.debug.settings.hotCodeReplace` to `auto`.
+3. Change the value of the line "old" to "new", and save the document.
+4. HCR will be automatically triggered. Check the breakpoint will stop at line 12 .
+5. Click F10 to step over, check the value of `res` on the debug view of local variable which should be `new`.
+
+- Disable hot code replace
+1. Repeat step 1 ~ 4 above.
+2. Change `java.debug.settings.hotCodeReplace` to `never`.
+3. Change the value of the line "old" to "new", and save the document.
+4. Click F10 to step over, check the value of `res` on the debug view of local variable which should be `old`.
 
 ## Conditional Breakpoints
 
@@ -342,7 +355,7 @@ public class App
 
 2. set conditional breakpoint on line 13  with condition `i ==1000`, F5 and wait the breakpoint to be hit
 
-![java-conditional-bp-demo](images/37269785-0ffef8e6-2607-11e8-955f-93548ad5a0ad.gif)
+![java-conditional-bp-demo](images/docs/37269785-0ffef8e6-2607-11e8-955f-93548ad5a0ad.gif)
 
 3. verify i equals 1000 in variable window.
 4. F5 and wait for program to exit.
@@ -406,7 +419,7 @@ Exception in thread "main" java.lang.IllegalStateException
 2.  Launch java debugger and continue your program.
 3. When the logpoint code branch is hit, it just log the message to the console and doesn't stop your program.
 
-![logpoint](images/41949312-77627a40-79f3-11e8-9fd2-def4fa06e28d.gif)
+![logpoint](images/docs/41949312-77627a40-79f3-11e8-9fd2-def4fa06e28d.gif)
 
 
 ## Start without debugging
@@ -472,7 +485,7 @@ Exception in thread "main" java.lang.IllegalStateException
 ```
 4. Press F5 to verify the variables should be like this:
 
-    ![args](images/args.PNG)
+    ![args](images/docs/args.PNG)
 
 ## Classpath shortener for long classpath project
 1. Open `longclasspath` project in VS Code.
