@@ -68,7 +68,11 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
 
         return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
             progress.report({ message: "Applying code changes..." });
-            return await debugSession.customRequest("redefineClasses");
+
+            const response = await debugSession.customRequest("redefineClasses");
+            if (!response || !response.changedClasses || !response.changedClasses.length) {
+                vscode.window.showWarningMessage("No changed classes need to be hot replaced! Please save the modified Java files first.");
+            }
         });
     }));
     initializeHotCodeReplace(context);
