@@ -428,6 +428,11 @@
           "description": "%java.debugger.configuration.showLogicalStructure.description%",
           "default": true
         },
+        "java.debug.settings.showToString": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.showToString.description%",
+          "default": true
+        },
         "java.debug.settings.maxStringLength": {
           "type": "number",
           "description": "%java.debugger.configuration.maxStringLength.description%",
