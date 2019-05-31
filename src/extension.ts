@@ -72,7 +72,11 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
 
         return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
             progress.report({ message: "Applying code changes..." });
-            return await debugSession.customRequest("redefineClasses");
+
+            const response = await debugSession.customRequest("redefineClasses");
+            if (!response || !response.changedClasses || !response.changedClasses.length) {
+                vscode.window.showWarningMessage("Cannot find any changed classes for hot replace!");
+            }
         });
     }));
     initializeHotCodeReplace(context);
