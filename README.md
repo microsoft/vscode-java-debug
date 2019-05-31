@@ -59,7 +59,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `cwd` - The working directory of the program. Defaults to `${workspaceFolder}`.
 - `env` - The extra environment variables for the program.
 - `stopOnEntry` - Automatically pause the program after launching.
-- `console` - The specified console to launch the program. If undefined, use the console specified by the `java.debug.settings.console` user settings.
+- `console` - The specified console to launch the program. If not specified, use the console specified by the `java.debug.settings.console` user setting.
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
