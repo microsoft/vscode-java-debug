@@ -523,6 +523,13 @@ Exception in thread "main" java.lang.IllegalStateException
 
 ![image](https://user-images.githubusercontent.com/14052197/56104630-1e89d680-5f6b-11e9-87a5-8a17a2ed33b5.png)
 
+## Show toString object view
+1. Open `28.debugfeatures` project in VS Code.
+2. Open `Variables.java` file, and add a breakpoint at line 39.
+3. Click Debug CodeLens, check the Variable viewlet.
+4. Verify the highlight value in the screenshot below.
+![image](https://user-images.githubusercontent.com/14052197/58676978-c9741980-838c-11e9-9f0e-48658fa06bd7.png)
+
 ## Enable Java 12 preview for standalone Java files
 1. Install JDK-12.
 2. Open `28.debugfeatures` project in VS Code, and open `Java12Preview.java` file.
