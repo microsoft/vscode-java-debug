@@ -148,6 +148,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             if (config.request === "launch") {
+                // If the user doesn't specify 'console' in launch.json, use the global setting to get the launch console.
+                if (!config.console) {
+                    const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+                    config.console = debugSettings.console;
+                }
+
                 if (needsBuildWorkspace()) {
                     try {
                         const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);

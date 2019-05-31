@@ -457,6 +457,21 @@
           "type": "boolean",
           "description": "%java.debugger.configuration.forceBuildBeforeLaunch%",
           "default": true
+        },
+        "java.debug.settings.console": {
+          "type": "string",
+          "enum": [
+            "internalConsole",
+            "integratedTerminal",
+            "externalTerminal"
+          ],
+          "enumDescriptions": [
+            "%java.debugger.launch.internalConsole.description%",
+            "%java.debugger.launch.integratedTerminal.description%",
+            "%java.debugger.launch.externalTerminal.description%"
+          ],
+          "description": "%java.debugger.configuration.console%",
+          "default": "internalConsole"
         }
       }
     }
