@@ -153,6 +153,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
                     config.console = debugSettings.console;
                 }
+                // If the console is integratedTerminal, don't auto switch the focus to DEBUG CONSOLE.
+                if (config.console === "integratedTerminal" && !config.internalConsoleOptions) {
+                    config.internalConsoleOptions = "neverOpen";
+                }
 
                 if (needsBuildWorkspace()) {
                     try {
