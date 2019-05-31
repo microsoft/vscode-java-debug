@@ -4,6 +4,15 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.19.0 - 2019-05-31
+### Added
+- Add a debug toolbar button to apply the changed classes to the running application. [#559](https://github.com/microsoft/vscode-java-debug/issues/559). 
+- Show toString() values in Variable window and hover tooltip. [#315](https://github.com/microsoft/vscode-java-debug/issues/315), [#364](https://github.com/microsoft/vscode-java-debug/issues/364).
+
+### Fixed:
+- Fix: The debug toolbar doesn't close after the program running in external terminal exits. [#582](https://github.com/microsoft/vscode-java-debug/issues/582).
+- Fix: Cannot stop the debugging process automatically in attach mode. [java-debug#273](https://github.com/microsoft/java-debug/issues/273).
+
 ## 0.18.0 - 2019-04-23
 ### Added
 - Enable "Logical Structure" view for Map and Collection variables. [#227](https://github.com/Microsoft/vscode-java-debug/issues/227).
