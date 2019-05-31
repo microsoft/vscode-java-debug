@@ -71,7 +71,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
 
             const response = await debugSession.customRequest("redefineClasses");
             if (!response || !response.changedClasses || !response.changedClasses.length) {
-                vscode.window.showWarningMessage("Don't find any changed classes for hot replace! Please save the modified Java files first.");
+                vscode.window.showWarningMessage("Cannot find any changed classes for hot replace!");
             }
         });
     }));
