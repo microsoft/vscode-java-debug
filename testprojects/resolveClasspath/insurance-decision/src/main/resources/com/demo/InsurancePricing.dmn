@@ -1,0 +1,237 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dmn11:definitions xmlns:dmn11="http://www.omg.org/spec/DMN/20180521/MODEL/" xmlns="http://www.trisotech.com/definitions/_bb8b9304-b29f-462e-9f88-03d0d868aec5" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:kie="http://www.drools.org/kie/dmn/1.2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:feel="http://www.omg.org/spec/DMN/20180521/FEEL/" xmlns:tc="http://www.omg.org/spec/DMN/20160719/testcase" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:trisofeed="http://trisotech.com/feed" xmlns:dmndi="http://www.omg.org/spec/DMN/20180521/DMNDI/" xmlns:triso="http://www.trisotech.com/2015/triso/modeling" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="_bb8b9304-b29f-462e-9f88-03d0d868aec5" name="Insurance Pricing" expressionLanguage="http://www.omg.org/spec/DMN/20180521/FEEL/" typeLanguage="http://www.omg.org/spec/DMN/20180521/FEEL/" namespace="http://www.trisotech.com/definitions/_bb8b9304-b29f-462e-9f88-03d0d868aec5">
+  <dmn11:extensionElements/>
+  <dmn11:inputData id="_5e4d4ad2-97a3-4f51-a364-d8e8700d55fc" name="PreviousIncidents">
+    <dmn11:description>previous Incidents</dmn11:description>
+    <dmn11:variable id="_c87e768d-fd66-4eea-b5c1-8cf83b71fca3" name="PreviousIncidents" typeRef="boolean"/>
+  </dmn11:inputData>
+  <dmn11:inputData id="_97a2b7b9-613c-441f-b9c2-2bf04c3a63b8" name="CarAge">
+    <dmn11:description>car age</dmn11:description>
+    <dmn11:variable id="_b031a587-a061-44bc-94aa-1958ac80426c" name="CarAge" typeRef="number"/>
+  </dmn11:inputData>
+  <dmn11:inputData id="_921a00ec-6199-4073-b139-494835a422ce" name="Age">
+    <dmn11:variable id="_a29a877b-cc11-4486-8631-055693d2600b" name="Age" typeRef="number"/>
+  </dmn11:inputData>
+  <dmn11:decision id="_7c68efef-3b20-4807-8d15-7f55995cc8fd" name="Insurance Base Price">
+    <dmn11:variable id="_288cd944-5c0e-46be-9c66-ef018afad7c6" name="Insurance Base Price" typeRef="number"/>
+    <dmn11:informationRequirement id="_D65EA838-489E-4980-A7FE-55C9BD3A5341">
+      <dmn11:requiredInput href="#_921a00ec-6199-4073-b139-494835a422ce"/>
+    </dmn11:informationRequirement>
+    <dmn11:informationRequirement id="_031E2962-C864-4553-99B6-3708734D62B3">
+      <dmn11:requiredInput href="#_5e4d4ad2-97a3-4f51-a364-d8e8700d55fc"/>
+    </dmn11:informationRequirement>
+    <dmn11:decisionTable id="_c521212f-52c8-4295-bf23-b277a7f42c23" typeRef="number" hitPolicy="UNIQUE" preferredOrientation="Rule-as-Row" outputLabel="Insurance Base Price">
+      <dmn11:input id="_bb911948-1f55-411a-891d-52ddcd9afe47">
+        <dmn11:inputExpression id="_0AF4BB00-6E2F-4BB4-95AA-AFF887DD0F49" typeRef="number">
+          <dmn11:text>Age</dmn11:text>
+        </dmn11:inputExpression>
+      </dmn11:input>
+      <dmn11:input id="_3f6b06ca-092e-4f2e-a33b-ad405c401089">
+        <dmn11:inputExpression id="_F36E1FAC-23B3-424A-BB39-60C4ABB14459" typeRef="boolean">
+          <dmn11:text>PreviousIncidents</dmn11:text>
+        </dmn11:inputExpression>
+      </dmn11:input>
+      <dmn11:output id="_0e4b7ecc-c788-4b17-8bf0-65ea8c24b583" typeRef="Any"/>
+      <dmn11:rule id="_437a79a9-a040-4c8b-aa9c-e537b8e853bb">
+        <dmn11:inputEntry id="_b7ba74e6-a379-40c1-8877-f228ace47840">
+          <dmn11:text>&gt;25</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:inputEntry id="_e1259729-4991-408c-842a-bba208269e8f">
+          <dmn11:text>false</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:outputEntry id="_7bfcb62c-a39c-457e-9816-04038f77f757" typeRef="Any">
+          <dmn11:text>1000</dmn11:text>
+        </dmn11:outputEntry>
+      </dmn11:rule>
+      <dmn11:rule id="_ae3a1342-e901-492f-b613-c0e0f3a94a9c">
+        <dmn11:inputEntry id="_60501a55-262f-4aa0-a107-63d4e16a16e8">
+          <dmn11:text>&gt;25</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:inputEntry id="_d322a6d4-8d8a-4d12-9883-14df20e60555">
+          <dmn11:text>true</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:outputEntry id="_6f863f74-2a35-42f2-8f1d-e92c50bb0542" typeRef="Any">
+          <dmn11:text>1250</dmn11:text>
+        </dmn11:outputEntry>
+      </dmn11:rule>
+      <dmn11:rule id="_f1f82aec-347d-4ab4-9636-d6237d4d97ad">
+        <dmn11:inputEntry id="_ba6ac537-28de-4680-985a-24fa59832e0e">
+          <dmn11:text>[18..25]</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:inputEntry id="_0c2d6c9b-4d8e-46a6-a878-385f50e71889">
+          <dmn11:text>false</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:outputEntry id="_27e13d7d-e948-4ec4-b3cc-c93436eedbe2" typeRef="Any">
+          <dmn11:text>1500</dmn11:text>
+        </dmn11:outputEntry>
+      </dmn11:rule>
+      <dmn11:rule id="_62586e68-ffff-413a-94fa-8e27897aa7b2">
+        <dmn11:inputEntry id="_9fd7d847-2b4b-4e61-8b46-4b158e680ec8">
+          <dmn11:text>[18..25]</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:inputEntry id="_6683e298-aca8-4206-8b02-cc17e449f6d9">
+          <dmn11:text>true</dmn11:text>
+        </dmn11:inputEntry>
+        <dmn11:outputEntry id="_0233b414-5e0d-4aa2-95e5-2d97c9f01cfd" typeRef="Any">
+          <dmn11:text>2000</dmn11:text>
+        </dmn11:outputEntry>
+      </dmn11:rule>
+    </dmn11:decisionTable>
+  </dmn11:decision>
+  <dmn11:decision id="_75adccac-8a37-4312-94b7-48ec3236afde" name="FinalPrice">
+    <dmn11:description>Insurance Final Price</dmn11:description>
+    <dmn11:variable id="_9276fece-b6a9-46de-910f-92ddcb0c431e" name="FinalPrice" typeRef="number"/>
+    <dmn11:informationRequirement id="_15B63923-EDF6-49AC-A90D-79B069768163">
+      <dmn11:requiredDecision href="#_7c68efef-3b20-4807-8d15-7f55995cc8fd"/>
+    </dmn11:informationRequirement>
+    <dmn11:informationRequirement id="_350A88C6-41A1-4B41-B553-7E01CB21FDA1">
+      <dmn11:requiredInput href="#_97a2b7b9-613c-441f-b9c2-2bf04c3a63b8"/>
+    </dmn11:informationRequirement>
+    <dmn11:knowledgeRequirement id="_D949A453-E8EB-4913-A64F-D9158364ECE0">
+      <dmn11:requiredKnowledge href="#_c54f8fc4-0ca2-4771-891e-e5fff0bfaaf8"/>
+    </dmn11:knowledgeRequirement>
+    <dmn11:literalExpression id="_8e051de9-da52-41fe-a819-5bf6682a0e00" typeRef="Any">
+      <dmn11:text>
+Insurance Base Price * Car reliability factor(CarAge)</dmn11:text>
+    </dmn11:literalExpression>
+  </dmn11:decision>
+  <dmn11:businessKnowledgeModel id="_c54f8fc4-0ca2-4771-891e-e5fff0bfaaf8" name="Car reliability factor">
+    <dmn11:variable id="_60897f4d-feda-47ab-814d-b9884af49ce2" name="Car reliability factor" typeRef="number"/>
+    <dmn11:encapsulatedLogic id="_7BC1719B-25FA-4A06-835D-098D3F951DEF" typeRef="number" kind="FEEL">
+      <dmn11:formalParameter id="_546C41F7-FE92-44F2-999B-74EFC0444FF8" name="car age" typeRef="number"/>
+      <dmn11:decisionTable id="_72e3f63d-28c2-4f55-9452-029ff871e8bb" typeRef="Any" hitPolicy="UNIQUE" preferredOrientation="Rule-as-Row" outputLabel="Car reliability factor">
+        <dmn11:input id="_c01d4e43-42c0-4986-a6a2-dbe506e662e3">
+          <dmn11:inputExpression id="_A0B9BCE2-4FEC-46C0-B55F-0F10652918CE" typeRef="number">
+            <dmn11:text>car age</dmn11:text>
+          </dmn11:inputExpression>
+        </dmn11:input>
+        <dmn11:output id="_765805a6-5297-4032-a724-c57174a440b6" typeRef="Any"/>
+        <dmn11:rule id="_2d3b5632-9768-4707-b29e-32748852e00c">
+          <dmn11:inputEntry id="_052b19fd-1784-494d-89e8-24eabec1a1fd">
+            <dmn11:text>&lt;=2</dmn11:text>
+          </dmn11:inputEntry>
+          <dmn11:outputEntry id="_f50d08d8-fad8-4153-a43a-dc75962ce967" typeRef="Any">
+            <dmn11:text>1</dmn11:text>
+          </dmn11:outputEntry>
+        </dmn11:rule>
+        <dmn11:rule id="_46b1e521-4d16-4d81-a883-7477ddebb64a">
+          <dmn11:inputEntry id="_8cdd9c2a-32c8-4ea7-83bb-54cc4fd3c104">
+            <dmn11:text>[3, 4]</dmn11:text>
+          </dmn11:inputEntry>
+          <dmn11:outputEntry id="_ba41d52b-ae8c-4282-817f-b28b6daf10f1" typeRef="Any">
+            <dmn11:text>1.1</dmn11:text>
+          </dmn11:outputEntry>
+        </dmn11:rule>
+        <dmn11:rule id="_c4d19400-534a-4645-bf6f-d5d82cc51f49">
+          <dmn11:inputEntry id="_4d046c3b-c331-474b-b9bb-dca64203b8fc">
+            <dmn11:text>[5,7]</dmn11:text>
+          </dmn11:inputEntry>
+          <dmn11:outputEntry id="_72e800e9-bfe1-4544-8a47-0f8e808e41f4" typeRef="Any">
+            <dmn11:text>1.2</dmn11:text>
+          </dmn11:outputEntry>
+        </dmn11:rule>
+        <dmn11:rule id="_8bd2c30a-cc0a-498f-bfa6-ca63bc9c31c0">
+          <dmn11:inputEntry id="_b5d9697d-a593-4b6e-9e1c-a27839271f6a">
+            <dmn11:text>&gt;=8</dmn11:text>
+          </dmn11:inputEntry>
+          <dmn11:outputEntry id="_edc03b82-768f-49e1-8a0f-b90bf140e0c4" typeRef="Any">
+            <dmn11:text>1.3</dmn11:text>
+          </dmn11:outputEntry>
+        </dmn11:rule>
+      </dmn11:decisionTable>
+    </dmn11:encapsulatedLogic>
+  </dmn11:businessKnowledgeModel>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <di:extension>
+        <kie:ComponentsWidthsExtension>
+          <kie:ComponentWidths dmnElementRef="_c521212f-52c8-4295-bf23-b277a7f42c23">
+            <kie:width>50.0</kie:width>
+            <kie:width>100.0</kie:width>
+            <kie:width>100.0</kie:width>
+            <kie:width>100.0</kie:width>
+            <kie:width>100.0</kie:width>
+          </kie:ComponentWidths>
+          <kie:ComponentWidths dmnElementRef="_8e051de9-da52-41fe-a819-5bf6682a0e00">
+            <kie:width>506.0</kie:width>
+          </kie:ComponentWidths>
+          <kie:ComponentWidths dmnElementRef="_72e3f63d-28c2-4f55-9452-029ff871e8bb"/>
+        </kie:ComponentsWidthsExtension>
+      </di:extension>
+      <dmndi:DMNShape id="dmnshape-_5e4d4ad2-97a3-4f51-a364-d8e8700d55fc" dmnElementRef="_5e4d4ad2-97a3-4f51-a364-d8e8700d55fc" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="79" y="300" width="143" height="50"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dmnshape-_97a2b7b9-613c-441f-b9c2-2bf04c3a63b8" dmnElementRef="_97a2b7b9-613c-441f-b9c2-2bf04c3a63b8" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="367.29906542056074" y="179.3421052631579" width="100" height="50"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dmnshape-_921a00ec-6199-4073-b139-494835a422ce" dmnElementRef="_921a00ec-6199-4073-b139-494835a422ce" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="313" y="300" width="100" height="50"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dmnshape-_7c68efef-3b20-4807-8d15-7f55995cc8fd" dmnElementRef="_7c68efef-3b20-4807-8d15-7f55995cc8fd" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="180" y="179" width="134" height="60"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dmnshape-_75adccac-8a37-4312-94b7-48ec3236afde" dmnElementRef="_75adccac-8a37-4312-94b7-48ec3236afde" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="225" y="50" width="140" height="60"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dmnshape-_c54f8fc4-0ca2-4771-891e-e5fff0bfaaf8" dmnElementRef="_c54f8fc4-0ca2-4771-891e-e5fff0bfaaf8" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="470" y="54" width="100" height="50"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="dmnedge-_D65EA838-489E-4980-A7FE-55C9BD3A5341" dmnElementRef="_D65EA838-489E-4980-A7FE-55C9BD3A5341">
+        <di:waypoint x="363" y="325"/>
+        <di:waypoint x="247" y="209"/>
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dmnedge-_031E2962-C864-4553-99B6-3708734D62B3" dmnElementRef="_031E2962-C864-4553-99B6-3708734D62B3">
+        <di:waypoint x="150.5" y="325"/>
+        <di:waypoint x="247" y="209"/>
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dmnedge-_15B63923-EDF6-49AC-A90D-79B069768163" dmnElementRef="_15B63923-EDF6-49AC-A90D-79B069768163">
+        <di:waypoint x="247" y="209"/>
+        <di:waypoint x="295" y="80"/>
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dmnedge-_350A88C6-41A1-4B41-B553-7E01CB21FDA1" dmnElementRef="_350A88C6-41A1-4B41-B553-7E01CB21FDA1">
+        <di:waypoint x="417.29906542056074" y="204.3421052631579"/>
+        <di:waypoint x="295" y="80"/>
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dmnedge-_D949A453-E8EB-4913-A64F-D9158364ECE0" dmnElementRef="_D949A453-E8EB-4913-A64F-D9158364ECE0">
+        <di:waypoint x="520" y="79"/>
+        <di:waypoint x="295" y="80"/>
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</dmn11:definitions>
