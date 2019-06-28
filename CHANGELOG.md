@@ -4,13 +4,21 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.20.0 - 2019-07-01
+### Fixed
+- Fix: Adding wrong jar version to the classpath. [#566](https://github.com/microsoft/vscode-java-debug/issues/566).
+- Fix: Adding wrong classpath at runtime for multi modules maven projects. [#584](https://github.com/microsoft/vscode-java-debug/issues/584).
+- Contribution from [tom-shan](https://github.com/tom-shan): Should break earlier when destroying temporary launch file. [PR#280](https://github.com/microsoft/java-debug/pull/280).
+
+Thank [tom-shan](https://github.com/tom-shan) for contribution.
+
 ## 0.19.0 - 2019-05-31
 ### Added
 - Add a debug toolbar button to apply the changed classes to the running application. [#559](https://github.com/microsoft/vscode-java-debug/issues/559). 
 - Show toString() values in Variable window and hover tooltip. [#315](https://github.com/microsoft/vscode-java-debug/issues/315), [#364](https://github.com/microsoft/vscode-java-debug/issues/364).
 - Add a global user setting `java.debug.settings.console` to specify the default console to launch your program. [PR#594](https://github.com/microsoft/vscode-java-debug/pull/594).
 
-### Fixed:
+### Fixed
 - Fix: The debug toolbar doesn't close after the program running in external terminal exits. [#582](https://github.com/microsoft/vscode-java-debug/issues/582).
 - Fix: Cannot stop the debugging process automatically in attach mode. [java-debug#273](https://github.com/microsoft/java-debug/issues/273).
 
