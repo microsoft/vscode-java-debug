@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.20.0 - 2019-07-01
 ### Fixed
 - Fix: Adding wrong jar version to the classpath. [#566](https://github.com/microsoft/vscode-java-debug/issues/566).
-- Fix: Add wrong classpath at runtime for multi modules maven projects. [#584](https://github.com/microsoft/vscode-java-debug/issues/584).
-- Contribution from [tom-shan](https://github.com/tom-shan): Should break earlier when destroying temp launch file. [PR#280](https://github.com/microsoft/java-debug/pull/280).
+- Fix: Adding wrong classpath at runtime for multi modules maven projects. [#584](https://github.com/microsoft/vscode-java-debug/issues/584).
+- Contribution from [tom-shan](https://github.com/tom-shan): Should break earlier when destroying temporary launch file. [PR#280](https://github.com/microsoft/java-debug/pull/280).
 
 Thank [tom-shan](https://github.com/tom-shan) for contribution.
 
