@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d [%t] %-5p %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- To override the debug log level from the command line, use the VM option "-Dlogback.level.org.optaplanner=trace" -->
+  <logger name="org.kie" level="debug"/>
+
+  <root level="info">
+    <appender-ref ref="consoleAppender" />
+  </root>
+
+</configuration>

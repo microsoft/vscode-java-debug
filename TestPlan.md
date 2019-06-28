@@ -539,3 +539,8 @@ Exception in thread "main" java.lang.IllegalStateException
 6. Open VS Code menu `Help -> Open Process Explorer`, find the Java Debuggger process in the `Process Explorer`. And its command line string should contain `--enable-preview` flag.
 
 ![image](https://user-images.githubusercontent.com/14052197/56105328-40d12380-5f6e-11e9-94bc-8f3f3d298750.png)
+
+## Auto resolve classpath for maven projects
+1. Open `resolveClasspath` project in VS Code and wait for Java extensions are activated.
+2. Open `kie-client/src/main/java/client/EmbedMain.java` file, and click `Run` or `Debug` CodeLens to launch the application. Check DEBUG CONSOLE view to verify it is launched successfully.
+3. Open `insurance-decision/src/test/java/testscenario/Launch.java` file, and click `Run` or `Debug` CodeLens to launch the application. Check whether the message `Main Class in Test Folder!` is printed in DEBUG CONSOLE view.
