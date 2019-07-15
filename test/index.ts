@@ -1,15 +1,23 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as cp from "child_process";
 import * as path from "path";
-
-import { runTests } from "vscode-test";
+import { downloadAndUnzipVSCode, runTests } from "vscode-test";
 
 async function main(): Promise<void> {
     try {
+        const vscodeExecutablePath = await downloadAndUnzipVSCode();
+        console.log(vscodeExecutablePath);
+        cp.spawnSync(vscodeExecutablePath, ["--install-extension", "redhat.java"], {
+            encoding: "utf-8",
+            stdio: "inherit",
+        });
+        console.log("redhat.java installed");
+
         // The folder containing the Extension Manifest package.json
         // Passed to `--extensionDevelopmentPath`
-        const extensionDevelopmentPath: string = path.resolve(__dirname, "../");
+        const extensionDevelopmentPath: string = path.resolve(__dirname, "../../");
 
         // The path to the extension test script
         // Passed to --extensionTestsPath

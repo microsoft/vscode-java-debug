@@ -481,7 +481,7 @@
     "compile": "tsc -p . && webpack --config webpack.config.js",
     "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
     "build": "webpack --config webpack.config.js --mode=\"production\"",
-    "test": "tsc -p . && node ./out/test/index.js"
+    "test": "npm run compile && node ./out/test/index.js"
   },
   "extensionDependencies": [
     "redhat.java"
