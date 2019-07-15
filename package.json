@@ -481,8 +481,7 @@
     "compile": "tsc -p . && webpack --config webpack.config.js",
     "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
     "build": "webpack --config webpack.config.js --mode=\"production\"",
-    "test": "tsc -p . && node ./out/test/index.js",
-    "test2": "node ./scripts/download-vscode-for-system-tests && node ./scripts/install-vsix-dependencies redhat.java && node ./scripts/install-vsix-dependencies vscode-java-debug-0.20.0.vsix && node ./scripts/run-vscode-tests"
+    "test": "tsc -p . && node ./out/test/index.js"
   },
   "extensionDependencies": [
     "redhat.java"
