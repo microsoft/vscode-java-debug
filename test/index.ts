@@ -13,7 +13,6 @@ async function main(): Promise<void> {
             encoding: "utf-8",
             stdio: "inherit",
         });
-        console.log("redhat.java installed");
 
         // The folder containing the Extension Manifest package.json
         // Passed to `--extensionDevelopmentPath`
@@ -24,7 +23,7 @@ async function main(): Promise<void> {
         const extensionTestsPath: string = path.resolve(__dirname, "./suite/index");
 
         // Download VS Code, unzip it and run the integration test
-        await runTests({ extensionDevelopmentPath, extensionTestsPath });
+        await runTests({ vscodeExecutablePath, extensionDevelopmentPath, extensionTestsPath });
     } catch (err) {
         console.error("Failed to run tests");
         process.exit(1);
