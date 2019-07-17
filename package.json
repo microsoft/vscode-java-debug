@@ -504,7 +504,7 @@
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.13",
     "vscode-extension-telemetry": "0.1.1",
     "vscode-extension-telemetry-wrapper": "0.4.0"
   }
