@@ -471,7 +471,7 @@
             "%java.debugger.launch.externalTerminal.description%"
           ],
           "description": "%java.debugger.configuration.console%",
-          "default": "internalConsole"
+          "default": "integratedTerminal"
         }
       }
     }
