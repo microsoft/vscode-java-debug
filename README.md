@@ -102,7 +102,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - never - Never apply the changes.
 - `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
 - `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`.
-- `java.debug.settings.console`: The specified console to launch Java program, defaults to `internalConsole`. If you want to customize the console for a specific debug session, please modify the 'console' config in launch.json.
+- `java.debug.settings.console`: The specified console to launch Java program, defaults to `integratedTerminal`. If you want to customize the console for a specific debug session, please modify the 'console' config in launch.json.
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
