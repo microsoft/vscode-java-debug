@@ -170,7 +170,7 @@
                   "%java.debugger.launch.externalTerminal.description%"
                 ],
                 "description": "%java.debugger.launch.console.description%",
-                "default": "internalConsole"
+                "default": "integratedTerminal"
               },
               "shortenCommandLine": {
                 "type": "string",
