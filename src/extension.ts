@@ -24,7 +24,10 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
     });
 
     const measureKeys = ["duration"];
-    vscode.debug.onDidTerminateDebugSession(() => {
+    vscode.debug.onDidTerminateDebugSession((e) => {
+        if (e.type !== "java") {
+            return;
+        }
         fetchUsageData().then((ret) => {
             if (Array.isArray(ret) && ret.length) {
                 ret.forEach((entry) => {
