@@ -97,12 +97,11 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
 
 export async function guideToInstallJavaExtension() {
     const MESSAGE = "Language Support for Java is required. Please install and enable it.";
-    const VIEW = "View Details";
+    const VIEW = "Install";
     const choice = await vscode.window.showWarningMessage(MESSAGE, VIEW);
     if (choice === VIEW) {
-        // TODO: Unable to directly open extension page within VS Code.
-        // See: https://github.com/microsoft/vscode/issues/60135
-        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`https://marketplace.visualstudio.com/items?itemName=${JAVA_EXTENSION_ID}`));
+        await vscode.commands.executeCommand("workbench.view.extensions");
+        await vscode.commands.executeCommand("workbench.extensions.installExtension", JAVA_EXTENSION_ID);
     }
 }
 
