@@ -97,11 +97,22 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
 
 export async function guideToInstallJavaExtension() {
     const MESSAGE = "Language Support for Java is required. Please install and enable it.";
-    const VIEW = "Install";
-    const choice = await vscode.window.showWarningMessage(MESSAGE, VIEW);
-    if (choice === VIEW) {
-        await vscode.commands.executeCommand("workbench.view.extensions");
+    const INSTALL = "Install";
+    const choice = await vscode.window.showWarningMessage(MESSAGE, INSTALL);
+    if (choice === INSTALL) {
+        await installJavaExtension();
+    }
+}
+
+async function installJavaExtension() {
+    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification }, async (p) => {
+        p.report({ message: "Installing Language Support for Java ..." });
         await vscode.commands.executeCommand("workbench.extensions.installExtension", JAVA_EXTENSION_ID);
+    });
+    const RELOAD = "Reload Window";
+    const choice = await vscode.window.showInformationMessage("Please reload window to activate Language Support for Java.", RELOAD);
+    if (choice === RELOAD) {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
     }
 }
 
