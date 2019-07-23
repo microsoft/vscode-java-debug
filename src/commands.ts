@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
-import { JavaExtensionNotActivatedError } from "./utility";
+import * as utility from "./utility";
 
 export const VSCODE_STARTDEBUG = "vscode.startDebug";
 
@@ -32,23 +32,16 @@ export const JAVA_CHECK_PROJECT_SETTINGS = "vscode.java.checkProjectSettings";
 
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
-    if (!isJavaExtActivated()) {
-        throw new JavaExtensionNotActivatedError(
+    if (!utility.isJavaExtActivated()) {
+        throw new utility.JavaExtensionNotActivatedError(
             `Cannot execute command ${JAVA_EXECUTE_WORKSPACE_COMMAND}, VS Code Java Extension is not activated.`);
     }
     return vscode.commands.executeCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }
 
 export function executeJavaExtensionCommand(commandName: string, ...rest) {
-    if (!isJavaExtActivated()) {
-        throw new JavaExtensionNotActivatedError(`Cannot execute command ${commandName}, VS Code Java Extension is not activated.`);
+    if (!utility.isJavaExtActivated()) {
+        throw new utility.JavaExtensionNotActivatedError(`Cannot execute command ${commandName}, VS Code Java Extension is not activated.`);
     }
     return vscode.commands.executeCommand(commandName, ...rest);
-}
-
-const JAVA_EXT = "redhat.java";
-
-export function isJavaExtActivated() {
-    const javaExt = vscode.extensions.getExtension(JAVA_EXT);
-    return javaExt && javaExt.isActive;
 }
