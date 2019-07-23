@@ -61,7 +61,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
                 await autobuildConfig.update("enabled", true);
                 // Force an incremental build to avoid auto build is not finishing during HCR.
                 try {
-                    await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false)
+                    await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false)
                 } catch (err) {
                     // do nothing.
                 }

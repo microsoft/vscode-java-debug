@@ -59,19 +59,20 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
         return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (p) => {
-            return new Promise((resolve, reject) => {
+            return new Promise(async (resolve, reject) => {
                 p.report({ message: "Auto generating configuration..." });
-                lsPlugin.resolveMainClass(folder ? folder.uri : undefined).then((res: lsPlugin.IMainClassOption[]) => {
+                const defaultLaunchConfig = {
+                    type: "java",
+                    name: "Debug (Launch) - Current File",
+                    request: "launch",
+                    // tslint:disable-next-line
+                    mainClass: "${file}",
+                };
+                try {
+                    const mainClasses = await lsPlugin.resolveMainClass(folder ? folder.uri : undefined);
                     let cache;
                     cache = {};
-                    const defaultLaunchConfig = {
-                        type: "java",
-                        name: "Debug (Launch) - Current File",
-                        request: "launch",
-                        // tslint:disable-next-line
-                        mainClass: "${file}",
-                    };
-                    const launchConfigs = res.map((item) => {
+                    const launchConfigs = mainClasses.map((item) => {
                         return {
                             ...defaultLaunchConfig,
                             name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
@@ -80,10 +81,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         };
                     });
                     resolve([defaultLaunchConfig, ...launchConfigs]);
-                }, (ex) => {
+                } catch (ex) {
+                    if (ex instanceof utility.JavaExtensionNotActivatedError) {
+                        utility.guideToInstallJavaExtension();
+                    }
                     p.report({ message: `failed to generate configuration. ${ex}` });
-                    reject(ex);
-                });
+                    resolve(defaultLaunchConfig);
+                }
             });
         });
     }
@@ -160,8 +164,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
                 if (needsBuildWorkspace()) {
                     try {
-                        const buildResult = await vscode.commands.executeCommand(commands.JAVA_BUILD_WORKSPACE, false);
+                        const buildResult = await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false);
                     } catch (err) {
+                        if (err instanceof utility.JavaExtensionNotActivatedError) {
+                            utility.guideToInstallJavaExtension();
+                            return undefined;
+                        }
+
                         const ans = await utility.showErrorMessageWithTroubleshooting({
                             message: "Build failed, do you want to continue?",
                             type: Type.USAGEERROR,
@@ -238,6 +247,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 throw new Error("Failed to start debug server.");
             }
         } catch (ex) {
+            if (ex instanceof utility.JavaExtensionNotActivatedError) {
+                utility.guideToInstallJavaExtension();
+                return undefined;
+            }
             if (ex instanceof utility.UserError) {
                 utility.showErrorMessageWithTroubleshooting(ex.context);
                 return undefined;

@@ -2,10 +2,12 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
+import { setUserError } from "vscode-extension-telemetry-wrapper";
 import { logger, Type } from "./logger";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 const LEARN_MORE = "Learn More";
+const JAVA_EXTENSION_ID = "redhat.java";
 
 export class UserError extends Error {
     public context: ITroubleshootingMessage;
@@ -13,6 +15,14 @@ export class UserError extends Error {
     constructor(context: ITroubleshootingMessage) {
         super(context.message);
         this.context = context;
+        setUserError(this);
+    }
+}
+
+export class JavaExtensionNotActivatedError extends Error {
+    constructor(message) {
+        super(message);
+        setUserError(this);
     }
 }
 
@@ -85,6 +95,17 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
     return choice;
 }
 
+export async function guideToInstallJavaExtension() {
+    const MESSAGE = "Language Support for Java is required. Please install and enable it.";
+    const VIEW = "View Details";
+    const choice = await vscode.window.showWarningMessage(MESSAGE, VIEW);
+    if (choice === VIEW) {
+        // TODO: Unable to directly open extension page within VS Code.
+        // See: https://github.com/microsoft/vscode/issues/60135
+        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`https://marketplace.visualstudio.com/items?itemName=${JAVA_EXTENSION_ID}`));
+    }
+}
+
 export function formatErrorProperties(ex: any): IProperties {
     const exception = (ex && ex.data && ex.data.cause)
         || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
@@ -106,7 +127,7 @@ export function formatErrorProperties(ex: any): IProperties {
 }
 
 export async function getJavaHome(): Promise<string> {
-    const extension = vscode.extensions.getExtension("redhat.java");
+    const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     try {
         const extensionApi = await extension.activate();
         if (extensionApi && extensionApi.javaRequirement) {
@@ -116,4 +137,9 @@ export async function getJavaHome(): Promise<string> {
     }
 
     return "";
+}
+
+export function isJavaExtActivated() {
+    const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    return javaExt && javaExt.isActive;
 }
