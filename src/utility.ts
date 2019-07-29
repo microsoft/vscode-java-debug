@@ -149,7 +149,7 @@ export async function getJavaHome(): Promise<string> {
     return "";
 }
 
-export function isJavaExtActivated() {
+export function isJavaExtEnabled() {
     const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
-    return javaExt && javaExt.isActive;
+    return !!javaExt;
 }
