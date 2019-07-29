@@ -138,6 +138,9 @@ export function formatErrorProperties(ex: any): IProperties {
 
 export async function getJavaHome(): Promise<string> {
     const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    if (!extension) {
+        throw new JavaExtensionNotActivatedError("VS Code Java Extension is not enabled.");
+    }
     try {
         const extensionApi = await extension.activate();
         if (extensionApi && extensionApi.javaRequirement) {
