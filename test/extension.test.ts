@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import * as assert from "assert";
-import { before } from "mocha";
 import * as vscode from "vscode";
 
 suite("Extension Tests", () => {
