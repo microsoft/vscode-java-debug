@@ -2,10 +2,12 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
+import { setUserError } from "vscode-extension-telemetry-wrapper";
 import { logger, Type } from "./logger";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 const LEARN_MORE = "Learn More";
+const JAVA_EXTENSION_ID = "redhat.java";
 
 export class UserError extends Error {
     public context: ITroubleshootingMessage;
@@ -13,6 +15,14 @@ export class UserError extends Error {
     constructor(context: ITroubleshootingMessage) {
         super(context.message);
         this.context = context;
+        setUserError(this);
+    }
+}
+
+export class JavaExtensionNotActivatedError extends Error {
+    constructor(message) {
+        super(message);
+        setUserError(this);
     }
 }
 
@@ -85,6 +95,27 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
     return choice;
 }
 
+export async function guideToInstallJavaExtension() {
+    const MESSAGE = "Language Support for Java is required. Please install and enable it.";
+    const INSTALL = "Install";
+    const choice = await vscode.window.showWarningMessage(MESSAGE, INSTALL);
+    if (choice === INSTALL) {
+        await installJavaExtension();
+    }
+}
+
+async function installJavaExtension() {
+    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification }, async (p) => {
+        p.report({ message: "Installing Language Support for Java ..." });
+        await vscode.commands.executeCommand("workbench.extensions.installExtension", JAVA_EXTENSION_ID);
+    });
+    const RELOAD = "Reload Window";
+    const choice = await vscode.window.showInformationMessage("Please reload window to activate Language Support for Java.", RELOAD);
+    if (choice === RELOAD) {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }
+}
+
 export function formatErrorProperties(ex: any): IProperties {
     const exception = (ex && ex.data && ex.data.cause)
         || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
@@ -106,7 +137,10 @@ export function formatErrorProperties(ex: any): IProperties {
 }
 
 export async function getJavaHome(): Promise<string> {
-    const extension = vscode.extensions.getExtension("redhat.java");
+    const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    if (!extension) {
+        throw new JavaExtensionNotActivatedError("VS Code Java Extension is not enabled.");
+    }
     try {
         const extensionApi = await extension.activate();
         if (extensionApi && extensionApi.javaRequirement) {
@@ -116,4 +150,9 @@ export async function getJavaHome(): Promise<string> {
     }
 
     return "";
+}
+
+export function isJavaExtEnabled() {
+    const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    return !!javaExt;
 }

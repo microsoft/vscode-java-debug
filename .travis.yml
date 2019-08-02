@@ -15,6 +15,7 @@ before_install:
       /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
       sleep 3
     fi
+
 install:
 - npm install -g vsce
 - npm install -g typescript

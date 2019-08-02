@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
+import * as utility from "./utility";
 
 export const VSCODE_STARTDEBUG = "vscode.startDebug";
 
@@ -31,5 +32,16 @@ export const JAVA_CHECK_PROJECT_SETTINGS = "vscode.java.checkProjectSettings";
 
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
+    if (!utility.isJavaExtEnabled()) {
+        throw new utility.JavaExtensionNotActivatedError(
+            `Cannot execute command ${JAVA_EXECUTE_WORKSPACE_COMMAND}, VS Code Java Extension is not enabled.`);
+    }
     return vscode.commands.executeCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
+}
+
+export function executeJavaExtensionCommand(commandName: string, ...rest) {
+    if (!utility.isJavaExtEnabled()) {
+        throw new utility.JavaExtensionNotActivatedError(`Cannot execute command ${commandName}, VS Code Java Extension is not enabled.`);
+    }
+    return vscode.commands.executeCommand(commandName, ...rest);
 }
