@@ -481,16 +481,13 @@
     "compile": "tsc -p . && webpack --config webpack.config.js",
     "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
     "build": "webpack --config webpack.config.js --mode=\"production\"",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "node ./scripts/download-vscode-for-system-tests && node ./scripts/install-vsix-dependencies redhat.java && node ./scripts/install-vsix-dependencies vscode-java-debug-0.20.0.vsix && node ./scripts/run-vscode-tests"
+    "test": "npm run compile && node ./out/test/index.js"
   },
-  "extensionDependencies": [
-    "redhat.java"
-  ],
   "devDependencies": {
     "@types/lodash": "^4.14.116",
     "@types/mocha": "^5.2.5",
     "@types/node": "^8.10.22",
+    "@types/vscode": "^1.32.0",
     "cross-env": "^5.2.0",
     "gulp": "^4.0.0",
     "gulp-tslint": "^8.1.2",
@@ -499,7 +496,7 @@
     "ts-loader": "^5.3.3",
     "tslint": "^5.7.0",
     "typescript": "^3.0.1",
-    "vscode": "^1.1.33",
+    "vscode-test": "^1.0.2",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3"
   },
