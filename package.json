@@ -38,6 +38,11 @@
   ],
   "main": "./dist/extension",
   "contributes": {
+    "breakpoints": [
+      {
+        "language": "java"
+      }
+    ],
     "javaExtensions": [
       "./server/com.microsoft.java.debug.plugin-0.20.0.jar"
     ],
@@ -73,11 +78,6 @@
         "languages": [
           "java"
         ],
-        "enableBreakpointsFor": {
-          "languageIds": [
-            "java"
-          ]
-        },
         "variables": {
           "SpecifyProgramArgs": "JavaDebug.SpecifyProgramArgs"
         },
