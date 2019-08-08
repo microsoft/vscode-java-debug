@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as path from "path";
 import * as vscode from "vscode";
 import { setUserError } from "vscode-extension-telemetry-wrapper";
 import { logger, Type } from "./logger";
@@ -8,6 +9,7 @@ import { logger, Type } from "./logger";
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 const LEARN_MORE = "Learn More";
 const JAVA_EXTENSION_ID = "redhat.java";
+const DEBUGGER_EXTENSION_ID = "vscjava.vscode-java-debug";
 
 export class UserError extends Error {
     public context: ITroubleshootingMessage;
@@ -155,4 +157,9 @@ export async function getJavaHome(): Promise<string> {
 export function isJavaExtEnabled() {
     const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     return !!javaExt;
+}
+
+export function getLauncherScriptPath() {
+    const ext = vscode.extensions.getExtension(DEBUGGER_EXTENSION_ID);
+    return path.join(ext.extensionPath, "scripts", "launcher.bat");
 }
