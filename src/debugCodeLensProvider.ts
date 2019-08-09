@@ -7,9 +7,11 @@ import * as vscode from "vscode";
 import { JAVA_LANGID } from "./constants";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
+import * as utility from "./utility";
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
-const JAVA_RUN_COMMAND = "vscode.java.run";
-const JAVA_DEBUG_COMMAND = "vscode.java.debug";
+const JAVA_RUN_CODELENS_COMMAND = "java.debug.runCodeLens";
+const JAVA_DEBUG_CODELENS_COMMAND = "java.debug.debugCodeLens";
 const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
 const ENABLE_CODE_LENS_VARIABLE = "enableRunDebugCodeLens";
 
@@ -24,8 +26,8 @@ class DebugCodeLensContainer implements vscode.Disposable {
     private configurationEvent: vscode.Disposable;
 
     constructor() {
-        this.runCommand = vscode.commands.registerCommand(JAVA_RUN_COMMAND, runJavaProgram);
-        this.debugCommand = vscode.commands.registerCommand(JAVA_DEBUG_COMMAND, debugJavaProgram);
+        this.runCommand = instrumentOperationAsVsCodeCommand(JAVA_RUN_CODELENS_COMMAND, runJavaProgram);
+        this.debugCommand = instrumentOperationAsVsCodeCommand(JAVA_DEBUG_CODELENS_COMMAND, debugJavaProgram);
 
         const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION)
         const isCodeLensEnabled = configuration.get<boolean>(ENABLE_CODE_LENS_VARIABLE);
@@ -62,48 +64,37 @@ class DebugCodeLensContainer implements vscode.Disposable {
 class DebugCodeLensProvider implements vscode.CodeLensProvider {
 
     public async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
-        const mainMethods: IMainMethod[] = await resolveMainMethod(document.uri);
-        return _.flatten(mainMethods.map((method) => {
-            return [
-                new vscode.CodeLens(method.range, {
-                    title: "Run",
-                    command: JAVA_RUN_COMMAND,
-                    tooltip: "Run Java Program",
-                    arguments: [ method.mainClass, method.projectName, document.uri ],
-                }),
-                new vscode.CodeLens(method.range, {
-                    title: "Debug",
-                    command: JAVA_DEBUG_COMMAND,
-                    tooltip: "Debug Java Program",
-                    arguments: [ method.mainClass, method.projectName, document.uri ],
-                }),
-            ];
-        }));
+        try {
+            const mainMethods: IMainMethod[] = await resolveMainMethod(document.uri);
+            return _.flatten(mainMethods.map((method) => {
+                return [
+                    new vscode.CodeLens(method.range, {
+                        title: "Run",
+                        command: JAVA_RUN_CODELENS_COMMAND,
+                        tooltip: "Run Java Program",
+                        arguments: [ method.mainClass, method.projectName, document.uri ],
+                    }),
+                    new vscode.CodeLens(method.range, {
+                        title: "Debug",
+                        command: JAVA_DEBUG_CODELENS_COMMAND,
+                        tooltip: "Debug Java Program",
+                        arguments: [ method.mainClass, method.projectName, document.uri ],
+                    }),
+                ];
+            }));
+        } catch (ex) {
+            // do nothing.
+            return [];
+        }
     }
 }
 
-function runJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): Promise<void> {
-    return runCodeLens(mainClass, projectName, uri, true);
+function runJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): Promise<boolean> {
+    return startDebugging(mainClass, projectName, uri, true);
 }
 
-function debugJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): Promise<void> {
-    return runCodeLens(mainClass, projectName, uri, false);
-}
-
-async function runCodeLens(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<void> {
-    const workspaceFolder: vscode.WorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-    const workspaceUri: vscode.Uri = workspaceFolder ? workspaceFolder.uri : undefined;
-
-    const debugConfig: vscode.DebugConfiguration = await constructDebugConfig(mainClass, projectName, workspaceUri);
-    debugConfig.projectName = projectName;
-    debugConfig.noDebug = noDebug;
-
-    vscode.debug.startDebugging(workspaceFolder, debugConfig);
-
-    logger.log(Type.USAGEDATA, {
-        runCodeLens: "yes",
-        noDebug: String(noDebug),
-    });
+function debugJavaProgram(mainClass: string, projectName: string, uri: vscode.Uri): Promise<boolean> {
+    return startDebugging(mainClass, projectName, uri, false);
 }
 
 async function constructDebugConfig(mainClass: string, projectName: string, workspace: vscode.Uri): Promise<vscode.DebugConfiguration> {
@@ -138,4 +129,15 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
     }
 
     return _.cloneDeep(debugConfig);
+}
+
+export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
+    const workspaceFolder: vscode.WorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+    const workspaceUri: vscode.Uri = workspaceFolder ? workspaceFolder.uri : undefined;
+
+    const debugConfig: vscode.DebugConfiguration = await constructDebugConfig(mainClass, projectName, workspaceUri);
+    debugConfig.projectName = projectName;
+    debugConfig.noDebug = noDebug;
+
+    return vscode.debug.startDebugging(workspaceFolder, debugConfig);
 }

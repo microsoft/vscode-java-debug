@@ -34,7 +34,9 @@
     "onLanguage:java",
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
-    "onCommand:JavaDebug.SpecifyProgramArgs"
+    "onCommand:JavaDebug.SpecifyProgramArgs",
+    "onCommand:java.debug.runJavaFile",
+    "onCommand:java.debug.debugJavaFile"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -54,9 +56,41 @@
           "dark": "images/commands/hot_code_replace.svg",
           "light": "images/commands/hot_code_replace.svg"
         }
+      },
+      {
+        "command": "java.debug.runJavaFile",
+        "title": "Run"
+      },
+      {
+        "command": "java.debug.debugJavaFile",
+        "title": "Debug"
       }
     ],
     "menus": {
+      "explorer/context": [
+        {
+          "command": "java.debug.runJavaFile",
+          "when": "resourceExtname == .java",
+          "group": "javadebug@1"
+        },
+        {
+          "command": "java.debug.debugJavaFile",
+          "when": "resourceExtname == .java",
+          "group": "javadebug@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "java.debug.runJavaFile",
+          "when": "resourceExtname == .java",
+          "group": "javadebug@1"
+        },
+        {
+          "command": "java.debug.debugJavaFile",
+          "when": "resourceExtname == .java",
+          "group": "javadebug@2"
+        }
+      ],
       "debug/toolBar": [
         {
           "command": "java.debug.hotCodeReplace",
@@ -67,6 +101,14 @@
       "commandPalette": [
         {
           "command": "java.debug.hotCodeReplace",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.runJavaFile",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.debugJavaFile",
           "when": "false"
         }
       ]

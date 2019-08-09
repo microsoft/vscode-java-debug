@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
-import { setUserError } from "vscode-extension-telemetry-wrapper";
+import { setUserError, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { logger, Type } from "./logger";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
@@ -137,22 +137,24 @@ export function formatErrorProperties(ex: any): IProperties {
 }
 
 export async function getJavaHome(): Promise<string> {
-    const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
-    if (!extension) {
-        throw new JavaExtensionNotActivatedError("VS Code Java Extension is not enabled.");
-    }
-    try {
-        const extensionApi = await extension.activate();
-        if (extensionApi && extensionApi.javaRequirement) {
-            return extensionApi.javaRequirement.java_home;
-        }
-    } catch (ex) {
+    const extensionApi = await getJavaExtensionAPI();
+    if (extensionApi && extensionApi.javaRequirement) {
+        return extensionApi.javaRequirement.java_home;
     }
 
     return "";
 }
 
-export function isJavaExtEnabled() {
+export async function getJavaExtensionAPI(): Promise<any> {
+    const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    if (!extension) {
+        throw new JavaExtensionNotActivatedError("VS Code Java Extension is not enabled.");
+    }
+
+    return await extension.activate();
+}
+
+export function isJavaExtEnabled(): boolean {
     const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     return !!javaExt;
 }
