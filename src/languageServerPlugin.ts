@@ -29,12 +29,7 @@ export interface ILaunchValidationResponse {
 }
 
 export async function resolveMainMethod(uri: vscode.Uri): Promise<IMainMethod[]> {
-    try {
-        return <IMainMethod[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINMETHOD, uri.toString());
-    } catch (ex) {
-        logger.log(Type.EXCEPTION, utility.formatErrorProperties(ex));
-        return [];
-    }
+    return <IMainMethod[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINMETHOD, uri.toString());
 }
 
 export function startDebugSession() {

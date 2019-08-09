@@ -2,12 +2,14 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
-import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
+    instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
-import { initializeCodeLensProvider } from "./debugCodeLensProvider"
+import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider"
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
+import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
 
@@ -23,8 +25,31 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
         description: "activateExtension",
     });
 
+    registerDebugEventListener(context);
+    context.subscriptions.push(logger);
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("JavaDebug.SpecifyProgramArgs", async () => {
+        return specifyProgramArguments(context);
+    }));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", applyHCR));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.runJavaFile", async (uri: vscode.Uri) => {
+        await runJavaFile(uri, true);
+    }));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.debugJavaFile", async (uri: vscode.Uri) => {
+        await runJavaFile(uri, false);
+    }));
+    initializeHotCodeReplace(context);
+    initializeCodeLensProvider(context);
+}
+
+// this method is called when your extension is deactivated
+export async function deactivate() {
+    await disposeTelemetryWrapper();
+}
+
+function registerDebugEventListener(context: vscode.ExtensionContext) {
     const measureKeys = ["duration"];
-    vscode.debug.onDidTerminateDebugSession((e) => {
+    context.subscriptions.push(vscode.debug.onDidTerminateDebugSession((e) => {
         if (e.type !== "java") {
             return;
         }
@@ -44,45 +69,8 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
                 });
             }
         });
-    });
-
-    context.subscriptions.push(logger);
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
-    context.subscriptions.push(instrumentAndRegisterCommand("JavaDebug.SpecifyProgramArgs", async () => {
-        return specifyProgramArguments(context);
     }));
-    context.subscriptions.push(instrumentAndRegisterCommand("java.debug.hotCodeReplace", async (args: any) => {
-        const autobuildConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.autobuild");
-        if (!autobuildConfig.enabled) {
-            const ans = await vscode.window.showWarningMessage(
-                "The hot code replace feature requires you to enable the autobuild flag, do you want to enable it?",
-                "Yes", "No");
-            if (ans === "Yes") {
-                await autobuildConfig.update("enabled", true);
-                // Force an incremental build to avoid auto build is not finishing during HCR.
-                try {
-                    await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false)
-                } catch (err) {
-                    // do nothing.
-                }
-            }
-        }
 
-        const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
-        if (!debugSession) {
-            return;
-        }
-
-        return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
-            progress.report({ message: "Applying code changes..." });
-
-            const response = await debugSession.customRequest("redefineClasses");
-            if (!response || !response.changedClasses || !response.changedClasses.length) {
-                vscode.window.showWarningMessage("Cannot find any changed classes for hot replace!");
-            }
-        });
-    }));
-    initializeHotCodeReplace(context);
     context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent((customEvent) => {
         const t = customEvent.session ? customEvent.session.type : undefined;
         if (t !== JAVA_LANGID) {
@@ -94,13 +82,6 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
             handleUserNotification(customEvent);
         }
     }));
-
-    initializeCodeLensProvider(context);
-}
-
-// this method is called when your extension is deactivated
-export async function deactivate() {
-    await disposeTelemetryWrapper();
 }
 
 function handleUserNotification(customEvent) {
@@ -144,7 +125,69 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
     });
 }
 
-function instrumentAndRegisterCommand(name: string, cb: (...args: any[]) => any) {
-    const instrumented = instrumentOperation(name, async (_operationId, myargs) => await cb(myargs));
-    return vscode.commands.registerCommand(name, instrumented);
+async function applyHCR() {
+    const autobuildConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.autobuild");
+    if (!autobuildConfig.enabled) {
+        const ans = await vscode.window.showWarningMessage(
+            "The hot code replace feature requires you to enable the autobuild flag, do you want to enable it?",
+            "Yes", "No");
+        if (ans === "Yes") {
+            await autobuildConfig.update("enabled", true);
+            // Force an incremental build to avoid auto build is not finishing during HCR.
+            try {
+                await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false)
+            } catch (err) {
+                // do nothing.
+            }
+        }
+    }
+
+    const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
+    if (!debugSession) {
+        return;
+    }
+
+    return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
+        progress.report({ message: "Applying code changes..." });
+
+        const response = await debugSession.customRequest("redefineClasses");
+        if (!response || !response.changedClasses || !response.changedClasses.length) {
+            vscode.window.showWarningMessage("Cannot find any changed classes for hot replace!");
+        }
+    });
+}
+
+async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
+    try {
+        // Wait for Java Language Support extension being activated.
+        await utility.getJavaExtensionAPI();
+    } catch (ex) {
+        if (ex instanceof utility.JavaExtensionNotActivatedError) {
+            utility.guideToInstallJavaExtension();
+            return;
+        }
+
+        throw ex;
+    }
+
+    const mainMethods: IMainMethod[] = await resolveMainMethod(uri);
+    if (!mainMethods || !mainMethods.length) {
+        vscode.window.showErrorMessage(
+            "Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
+        return;
+    }
+
+    const projectName = mainMethods[0].projectName;
+    let mainClass = mainMethods[0].mainClass;
+    if (mainMethods.length > 1) {
+        mainClass = await vscode.window.showQuickPick(mainMethods.map((mainMethod) => mainMethod.mainClass), {
+            placeHolder: "Select the main class to launch.",
+        });
+    }
+
+    if (!mainClass) {
+        return;
+    }
+
+    await startDebugging(mainClass, projectName, uri, noDebug);
 }
