@@ -2,15 +2,16 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
-import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
+    instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider"
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
+import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
-import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 
 export async function activate(context: vscode.ExtensionContext) {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
@@ -171,14 +172,15 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
 
     const mainMethods: IMainMethod[] = await resolveMainMethod(uri);
     if (!mainMethods || !mainMethods.length) {
-        vscode.window.showErrorMessage("Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
+        vscode.window.showErrorMessage(
+            "Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
         return;
     }
 
     const projectName = mainMethods[0].projectName;
     let mainClass = mainMethods[0].mainClass;
     if (mainMethods.length > 1) {
-        mainClass = await vscode.window.showQuickPick(mainMethods.map(mainMethod => mainMethod.mainClass), {
+        mainClass = await vscode.window.showQuickPick(mainMethods.map((mainMethod) => mainMethod.mainClass), {
             placeHolder: "Select the main class to launch.",
         });
     }

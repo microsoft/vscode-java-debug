@@ -3,12 +3,10 @@
 
 import * as _ from "lodash";
 import * as vscode from "vscode";
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { JAVA_LANGID } from "./constants";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
-import { logger, Type } from "./logger";
-import * as utility from "./utility";
-import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 const JAVA_RUN_CODELENS_COMMAND = "java.debug.runCodeLens";
 const JAVA_DEBUG_CODELENS_COMMAND = "java.debug.debugCodeLens";
