@@ -145,13 +145,13 @@ export async function getJavaHome(): Promise<string> {
     return "";
 }
 
-export async function getJavaExtensionAPI(): Promise<any> {
+export function getJavaExtensionAPI(): Thenable<any> {
     const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     if (!extension) {
         throw new JavaExtensionNotActivatedError("VS Code Java Extension is not enabled.");
     }
 
-    return await extension.activate();
+    return extension.activate();
 }
 
 export function isJavaExtEnabled(): boolean {
