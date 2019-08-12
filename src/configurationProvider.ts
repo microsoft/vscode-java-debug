@@ -237,6 +237,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.shortenCommandLine = await detectLaunchCommandStyle(config);
             }
 
+            if (process.platform === "win32" && config.request === "launch" && config.console !== "internalConsole") {
+                config.launcherScript = utility.getLauncherScriptPath();
+            }
+
             const debugServerPort = await lsPlugin.startDebugSession();
             if (debugServerPort) {
                 config.debugServer = debugServerPort;
