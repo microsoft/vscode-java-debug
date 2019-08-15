@@ -13,7 +13,7 @@ const YES_BUTTON: string = "Yes";
 
 const NO_BUTTON: string = "No";
 
-const NEVER_BUTTON: string = "Not show again";
+const NEVER_BUTTON: string = "Do not show again";
 
 enum HcrChangeType {
     ERROR = "ERROR",
