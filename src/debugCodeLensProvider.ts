@@ -7,6 +7,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import { JAVA_LANGID } from "./constants";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
+import { getJavaExtensionAPI, isJavaExtEnabled } from "./utility";
 
 const JAVA_RUN_CODELENS_COMMAND = "java.debug.runCodeLens";
 const JAVA_DEBUG_CODELENS_COMMAND = "java.debug.debugCodeLens";
@@ -14,7 +15,22 @@ const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
 const ENABLE_CODE_LENS_VARIABLE = "enableRunDebugCodeLens";
 
 export function initializeCodeLensProvider(context: vscode.ExtensionContext): void {
-    context.subscriptions.push(new DebugCodeLensContainer());
+    // delay registering codelens provider until the Java extension is activated.
+    if (isActivatedByJavaFile() && isJavaExtEnabled()) {
+        getJavaExtensionAPI().then(() => {
+            context.subscriptions.push(new DebugCodeLensContainer());
+        });
+    } else {
+        context.subscriptions.push(new DebugCodeLensContainer());
+    }
+}
+
+function isActivatedByJavaFile(): boolean {
+    if (vscode.window.activeTextEditor) {
+        return vscode.window.activeTextEditor.document && vscode.window.activeTextEditor.document.languageId === "java";
+    }
+
+    return false;
 }
 
 class DebugCodeLensContainer implements vscode.Disposable {
