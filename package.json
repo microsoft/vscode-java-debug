@@ -526,24 +526,24 @@
     "test": "npm run compile && node ./out/test/index.js"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.116",
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^8.10.22",
-    "@types/vscode": "^1.32.0",
+    "@types/lodash": "^4.14.137",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^8.10.51",
+    "@types/vscode": "1.32.0",
     "cross-env": "^5.2.0",
-    "gulp": "^4.0.0",
-    "gulp-tslint": "^8.1.2",
+    "gulp": "^4.0.2",
+    "gulp-tslint": "^8.1.4",
     "mocha": "^5.2.0",
-    "shelljs": "^0.8.2",
-    "ts-loader": "^5.3.3",
-    "tslint": "^5.7.0",
-    "typescript": "^3.0.1",
-    "vscode-test": "^1.0.2",
-    "webpack": "^4.29.3",
-    "webpack-cli": "^3.2.3"
+    "shelljs": "^0.8.3",
+    "ts-loader": "^5.4.5",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3",
+    "vscode-test": "^1.2.0",
+    "webpack": "^4.39.2",
+    "webpack-cli": "^3.3.7"
   },
   "dependencies": {
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.15",
     "vscode-extension-telemetry": "0.1.1",
     "vscode-extension-telemetry-wrapper": "0.4.0"
   }
