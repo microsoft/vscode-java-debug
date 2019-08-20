@@ -247,6 +247,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 return config;
             } else {
                 // Information for diagnostic:
+                // tslint:disable-next-line:no-console
                 console.log("Cannot find a port for debugging session");
                 throw new Error("Failed to start debug server.");
             }
@@ -302,7 +303,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 if (mainEntries.length === 1) {
                     return mainEntries[0];
                 } else if (mainEntries.length > 1) {
-                    return await this.showMainClassQuickPick(this.formatMainClassOptions(mainEntries),
+                    return this.showMainClassQuickPick(this.formatMainClassOptions(mainEntries),
                         `Multiple main classes found in the file '${path.basename(currentFile)}', please select one first.`);
                 }
             }
@@ -310,13 +311,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             const hintMessage = currentFile ?
                 `No main class found in the file '${path.basename(currentFile)}', please select main class<project name> again.` :
                 "Please select main class<project name>.";
-            return await this.promptMainClass(folder, hintMessage);
+            return this.promptMainClass(folder, hintMessage);
         }
 
         const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
         const validationResponse = await lsPlugin.validateLaunchConfig(folder, config.mainClass, config.projectName, containsExternalClasspaths);
         if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
-            return await this.fixMainClass(folder, config, validationResponse);
+            return this.fixMainClass(folder, config, validationResponse);
         }
 
         return {
@@ -504,11 +505,13 @@ async function updateDebugSettings() {
     const javaHome = await utility.getJavaHome();
     if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
         try {
+            // tslint:disable-next-line:no-console
             console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
                 { ...debugSettingsRoot.settings, logLevel, javaHome })));
         } catch (err) {
             // log a warning message and continue, since update settings failure should not block debug session
-            console.log("Cannot update debug settings.", err)
+            // tslint:disable-next-line:no-console
+            console.log("Cannot update debug settings.", err);
         }
     }
 }

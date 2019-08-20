@@ -7,7 +7,7 @@ import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentO
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
-import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider"
+import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
@@ -135,7 +135,7 @@ async function applyHCR() {
             await autobuildConfig.update("enabled", true);
             // Force an incremental build to avoid auto build is not finishing during HCR.
             try {
-                await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false)
+                await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false);
             } catch (err) {
                 // do nothing.
             }

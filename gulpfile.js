@@ -9,7 +9,7 @@ const server_dir = '../java-debug';
 
 gulp.task("tslint", () => {
 	return gulp.src(["**/*.ts", "!**/*.d.ts", "!node_modules/**", "!./src/views/node_modules/**"])
-		.pipe(tslint())
+		.pipe(tslint({formatter: "verbose"}))
 		.pipe(tslint.report());
 });
 

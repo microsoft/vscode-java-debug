@@ -56,17 +56,17 @@ function logMessage(message: ILoggingMessage): void {
 
 export async function showInformationMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
     logMessage(message);
-    return await vscode.window.showInformationMessage(message.message, ...items);
+    return vscode.window.showInformationMessage(message.message, ...items);
 }
 
 export async function showWarningMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
     logMessage(message);
-    return await vscode.window.showWarningMessage(message.message, ...items);
+    return vscode.window.showWarningMessage(message.message, ...items);
 }
 
 export async function showErrorMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
     logMessage(message);
-    return await vscode.window.showErrorMessage(message.message, ...items);
+    return vscode.window.showErrorMessage(message.message, ...items);
 }
 
 export async function showInformationMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
