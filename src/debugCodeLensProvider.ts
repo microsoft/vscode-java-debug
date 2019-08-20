@@ -43,7 +43,7 @@ class DebugCodeLensContainer implements vscode.Disposable {
         this.runCommand = instrumentOperationAsVsCodeCommand(JAVA_RUN_CODELENS_COMMAND, runJavaProgram);
         this.debugCommand = instrumentOperationAsVsCodeCommand(JAVA_DEBUG_CODELENS_COMMAND, debugJavaProgram);
 
-        const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION)
+        const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION);
         const isCodeLensEnabled = configuration.get<boolean>(ENABLE_CODE_LENS_VARIABLE);
 
         if (isCodeLensEnabled) {

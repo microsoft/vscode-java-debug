@@ -73,5 +73,5 @@ export async function detectPreviewFlag(className: string, projectName: string):
     const expectedOptions = {
         [COMPILER_PB_ENABLE_PREVIEW_FEATURES]: "enabled",
     };
-    return await checkProjectSettings(className, projectName, true, expectedOptions);
+    return checkProjectSettings(className, projectName, true, expectedOptions);
 }
