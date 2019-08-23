@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Remove hard dependency of redhat.java. [PR#617](https://github.com/microsoft/vscode-java-debug/pull/617).
+- Change the default console to integrated terminal. [#605](https://github.com/microsoft/vscode-java-debug/issues/605).
 
 ### Fixed
 - Java language server is activated by mistake when debugging a non-Java project. [#238](https://github.com/microsoft/vscode-java-debug/issues/238).
