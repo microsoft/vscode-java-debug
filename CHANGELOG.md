@@ -4,6 +4,20 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.21.0 - 2019-08-26
+### Added
+- Add `Run` and `Debug` menu in the context menu of file explorer/editor. [#626](https://github.com/microsoft/vscode-java-debug/issues/626).
+
+### Changed
+- Remove hard dependency of redhat.java. [PR#617](https://github.com/microsoft/vscode-java-debug/pull/617).
+- Change the default console to integrated terminal. [#605](https://github.com/microsoft/vscode-java-debug/issues/605).
+
+### Fixed
+- Java language server is activated by mistake when debugging a non-Java project. [#238](https://github.com/microsoft/vscode-java-debug/issues/238).
+- Contribution from [pi1024e](https://github.com/pi1024e): Fix UI typos. [PR#630](https://github.com/microsoft/vscode-java-debug/pull/630).
+
+Thank [pi1024e](https://github.com/pi1024e) for contribution.
+
 ## 0.20.0 - 2019-07-01
 ### Fixed
 - Fix: Adding wrong jar version to the classpath. [#566](https://github.com/microsoft/vscode-java-debug/issues/566).
