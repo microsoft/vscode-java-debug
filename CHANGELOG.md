@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.21.0 - 2019-08-26
 ### Added
-- Add `Run` and `Debug` menu in the context menu of file explorer/editor. [#626](https://github.com/microsoft/vscode-java-debug/issues/626).
+- Add menus to `Run` and `Debug` a Java application when you right click a Java file in file explorer or opened editor. [#626](https://github.com/microsoft/vscode-java-debug/issues/626).
 
 ### Changed
 - Remove hard dependency of redhat.java. [PR#617](https://github.com/microsoft/vscode-java-debug/pull/617).
@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Java language server is activated by mistake when debugging a non-Java project. [#238](https://github.com/microsoft/vscode-java-debug/issues/238).
+- [Windows] `integratedTerminal` console does not showing unicode characters. [#524](https://github.com/microsoft/vscode-java-debug/issues/524).
 - Contribution from [pi1024e](https://github.com/pi1024e): Fix UI typos. [PR#630](https://github.com/microsoft/vscode-java-debug/pull/630).
 
 Thank [pi1024e](https://github.com/pi1024e) for contribution.
