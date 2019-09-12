@@ -4,8 +4,6 @@
 import * as vscode from "vscode";
 
 import * as commands from "./commands";
-import { logger, Type } from "./logger";
-import * as utility from "./utility";
 
 export interface IMainClassOption {
     readonly mainClass: string;
@@ -74,4 +72,8 @@ export async function detectPreviewFlag(className: string, projectName: string):
         [COMPILER_PB_ENABLE_PREVIEW_FEATURES]: "enabled",
     };
     return checkProjectSettings(className, projectName, true, expectedOptions);
+}
+
+export function resolveElementAtSelection(uri: string, line: number, character: number): Promise<any> {
+    return <Promise<any>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_ELEMENT_AT_SELECTION, uri, line, character);
 }

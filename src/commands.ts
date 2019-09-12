@@ -30,6 +30,8 @@ export const JAVA_INFER_LAUNCH_COMMAND_LENGTH = "vscode.java.inferLaunchCommandL
 
 export const JAVA_CHECK_PROJECT_SETTINGS = "vscode.java.checkProjectSettings";
 
+export const JAVA_RESOLVE_ELEMENT_AT_SELECTION = "vscode.java.resolveElementAtSelection";
+
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
     if (!utility.isJavaExtEnabled()) {

@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { JAVA_LANGID } from "./constants";
+import { initializeHoverProvider } from "./hoverProvider";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { getJavaExtensionAPI, isJavaExtEnabled } from "./utility";
 
@@ -37,6 +38,7 @@ class DebugCodeLensContainer implements vscode.Disposable {
     private runCommand: vscode.Disposable;
     private debugCommand: vscode.Disposable;
     private lensProvider: vscode.Disposable | undefined;
+    private hoverProvider: vscode.Disposable | undefined;
     private configurationEvent: vscode.Disposable;
 
     constructor() {
@@ -48,6 +50,8 @@ class DebugCodeLensContainer implements vscode.Disposable {
 
         if (isCodeLensEnabled) {
             this.lensProvider = vscode.languages.registerCodeLensProvider(JAVA_LANGID, new DebugCodeLensProvider());
+        } else {
+            this.hoverProvider = initializeHoverProvider();
         }
 
         this.configurationEvent = vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) =>  {
@@ -60,6 +64,13 @@ class DebugCodeLensContainer implements vscode.Disposable {
                     this.lensProvider.dispose();
                     this.lensProvider = undefined;
                 }
+
+                if (newEnabled && this.hoverProvider) {
+                    this.hoverProvider.dispose();
+                    this.hoverProvider = undefined;
+                } else if (!newEnabled && !this.hoverProvider) {
+                    this.hoverProvider = initializeHoverProvider();
+                }
             }
         }, this);
     }
@@ -67,6 +78,9 @@ class DebugCodeLensContainer implements vscode.Disposable {
     public dispose() {
         if (this.lensProvider !== undefined) {
             this.lensProvider.dispose();
+        }
+        if (this.hoverProvider) {
+            this.hoverProvider.dispose();
         }
         this.runCommand.dispose();
         this.debugCommand.dispose();
