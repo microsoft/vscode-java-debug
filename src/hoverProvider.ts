@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
 import { CancellationToken, Command, Disposable, Hover, HoverProvider, languages, MarkdownString, Position, ProviderResult, TextDocument,
     Uri, window } from "vscode";
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
