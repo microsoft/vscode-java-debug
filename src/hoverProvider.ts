@@ -22,7 +22,7 @@ class DebugHoverProvider implements Disposable {
             if (element && element.hasMainMethod) {
                 startDebugging(element.declaringType, element.projectName, Uri.parse(uri), noDebug);
             } else {
-                window.showErrorMessage("The hovered element is not main method.");
+                window.showErrorMessage("The hovered element is not a main method.");
             }
         });
         this.hoverProvider = languages.registerHoverProvider(JAVA_LANGID, new InternalDebugHoverProvider());
