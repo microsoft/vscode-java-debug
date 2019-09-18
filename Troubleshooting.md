@@ -97,3 +97,11 @@ The error indicates your workspace has build errors. There are two kinds of buil
 ### Try:
 1. Open VS Code PROBLEMS View, and fix the errors there.
 2. If no errors are found in the PROBLEMS View, reference the [language server troubleshooting](#try) paragraph to update project configuration, and clean workspace cache.
+
+## No delegateCommandHandler for vscode.java.startDebugSession when starting Debugger
+### Reason:
+Cause of error is for now unknown, but something caused vscode java support and debugger to not be configured correctly.
+
+### Try:
+1. Restart VS Code and the issue should disappear 
+2. If it continues to error try restart again, and if still a problem open an issue at [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug)
