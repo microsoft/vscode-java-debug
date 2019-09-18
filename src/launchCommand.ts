@@ -54,12 +54,14 @@ function parseMajorVersion(content: string): number {
 
 async function shouldShortenIfNecessary(config: vscode.DebugConfiguration): Promise<boolean> {
     const cliLength = await inferLaunchCommandLength(config);
-    const classPathLength = (config.classPaths || []).join(path.delimiter).length;
-    const modulePathLength = (config.modulePaths || []).join(path.delimiter).length;
+    const classPaths = config.classPaths || [];
+    const modulePaths = config.modulePaths || [];
+    const classPathLength = classPaths.join(path.delimiter).length;
+    const modulePathLength = modulePaths.join(path.delimiter).length;
     if (!config.console || config.console === "internalConsole") {
         return cliLength >= getMaxProcessCommandLineLength(config) || classPathLength >= getMaxArgLength() || modulePathLength >= getMaxArgLength();
     } else {
-        return cliLength >= getMaxTerminalCommandLineLength(config) || classPathLength >= getMaxArgLength() || modulePathLength >= getMaxArgLength();
+        return classPaths.length > 1 || modulePaths.length > 1;
     }
 }
 
@@ -81,17 +83,6 @@ function getMaxProcessCommandLineLength(config: vscode.DebugConfiguration): numb
     }
 
     return Number.MAX_SAFE_INTEGER;
-}
-
-function getMaxTerminalCommandLineLength(config: vscode.DebugConfiguration): number {
-    const MAX_CMD_WINDOWS = 8192;
-    if (process.platform === "win32") {
-        // https://support.microsoft.com/en-us/help/830473/command-prompt-cmd--exe-command-line-string-limitation
-        // On windows, the max command line length for cmd terminal is 8192 characters.
-        return MAX_CMD_WINDOWS;
-    }
-
-    return getMaxProcessCommandLineLength(config);
 }
 
 function getEnvironmentLength(config: vscode.DebugConfiguration): number {
