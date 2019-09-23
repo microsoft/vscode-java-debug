@@ -8,7 +8,7 @@ import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
-import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace } from "./hotCodeReplace";
+import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
@@ -126,6 +126,22 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
 }
 
 async function applyHCR() {
+    const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
+    if (!debugSession) {
+        return;
+    }
+
+    if (debugSession.configuration.noDebug) {
+        vscode.window.showWarningMessage("Run mode doesn't support Hot Code Replace feature, would you like to restart the program?",
+            YES_BUTTON, NO_BUTTON).then((res) => {
+            if (res === YES_BUTTON) {
+                vscode.commands.executeCommand("workbench.action.debug.restart");
+            }
+        });
+
+        return;
+    }
+
     const autobuildConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.autobuild");
     if (!autobuildConfig.enabled) {
         const ans = await vscode.window.showWarningMessage(
@@ -140,11 +156,6 @@ async function applyHCR() {
                 // do nothing.
             }
         }
-    }
-
-    const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
-    if (!debugSession) {
-        return;
     }
 
     return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {

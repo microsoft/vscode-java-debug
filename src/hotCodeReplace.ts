@@ -9,9 +9,9 @@ import * as utility from "./utility";
 
 const suppressedReasons: Set<string> = new Set();
 
-const YES_BUTTON: string = "Yes";
+export const YES_BUTTON: string = "Yes";
 
-const NO_BUTTON: string = "No";
+export const NO_BUTTON: string = "No";
 
 const NEVER_BUTTON: string = "Do not show again";
 
