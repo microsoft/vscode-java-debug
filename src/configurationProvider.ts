@@ -278,8 +278,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return _.join(_.map(args, (arg: any): string => {
             const str = String(arg);
             // if it has quotes or spaces, use double quotes to wrap it
-            if (/['"\s]/.test(str)) {
-                return "\"" + str.replace(/(['"\\])/g, "\\$1") + "\"";
+            if (/["\s]/.test(str)) {
+                return "\"" + str.replace(/(["\\])/g, "\\$1") + "\"";
             }
             return str;
 
