@@ -4,6 +4,16 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.22.0 - 2019-09-24
+### Added
+- Show Run/Debug buttons when hover on a main method. [#657](https://github.com/microsoft/vscode-java-debug/issues/657).
+
+### Fixed
+- Debugger just broken with git bash as the default shell on Windows. [#642](https://github.com/microsoft/vscode-java-debug/issues/642).
+- [Mac] Failed to launch debuggee in terminal with TimeoutException. [#637](https://github.com/microsoft/vscode-java-debug/issues/637), [#651](https://github.com/microsoft/vscode-java-debug/issues/651).
+- Pop an error message when click ⚡ HCR button in the Run mode. [PR#665](https://github.com/microsoft/vscode-java-debug/pull/665).
+- Don't escape single quote of the program args. [PR#668](https://github.com/microsoft/vscode-java-debug/pull/668).
+
 ## 0.21.0 - 2019-08-26
 ### Added
 - Add menu entries to `Run` and `Debug` a Java application when you right click a Java file in file explorer or opened editor. [#626](https://github.com/microsoft/vscode-java-debug/issues/626).
