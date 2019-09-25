@@ -150,9 +150,15 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
 
         // Persist the default debug configuration only if the workspace exists.
         if (workspace) {
-            // Insert the default debug configuration to the beginning of launch.json.
-            rawConfigs.splice(0, 0, debugConfig);
-            await launchConfigurations.update("configurations", rawConfigs, vscode.ConfigurationTarget.WorkspaceFolder);
+            try {
+                // Insert the default debug configuration to the beginning of launch.json.
+                rawConfigs.splice(0, 0, debugConfig);
+                await launchConfigurations.update("configurations", rawConfigs, vscode.ConfigurationTarget.WorkspaceFolder);
+            } catch (error) {
+                // When launch.json has unsaved changes before invoking the update api, it will throw the error below:
+                // 'Unable to write into launch configuration file because the file is dirty. Please save it first and then try again.'
+                // It's safe to ignore it because the only impact is the configuration is not saved, but you can continue to start the debugger.
+            }
         }
     }
 
