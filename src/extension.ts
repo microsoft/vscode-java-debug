@@ -134,8 +134,8 @@ async function applyHCR() {
     }
 
     if (debugSession.configuration.noDebug) {
-        vscode.window.showWarningMessage("Failed to apply the changes because hot code replace is not supported by run mode, would you like to restart the program?",
-            YES_BUTTON, NO_BUTTON).then((res) => {
+        vscode.window.showWarningMessage("Failed to apply the changes because hot code replace is not supported by run mode, "
+            + "would you like to restart the program?", YES_BUTTON, NO_BUTTON).then((res) => {
             if (res === YES_BUTTON) {
                 vscode.commands.executeCommand("workbench.action.debug.restart");
             }
