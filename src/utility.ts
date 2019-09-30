@@ -161,6 +161,11 @@ export function isJavaExtEnabled(): boolean {
     return !!javaExt;
 }
 
+export function isJavaExtActivated(): boolean {
+    const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    return javaExt && javaExt.isActive;
+}
+
 export function getLauncherScriptPath() {
     const ext = vscode.extensions.getExtension(DEBUGGER_EXTENSION_ID);
     return path.join(ext.extensionPath, "scripts", "launcher.bat");

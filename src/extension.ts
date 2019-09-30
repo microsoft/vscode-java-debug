@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as _ from "lodash";
+import * as path from "path";
 import * as vscode from "vscode";
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
     instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
@@ -132,7 +134,7 @@ async function applyHCR() {
     }
 
     if (debugSession.configuration.noDebug) {
-        vscode.window.showWarningMessage("Run mode doesn't support Hot Code Replace feature, would you like to restart the program?",
+        vscode.window.showWarningMessage("Failed to apply the changes because hot code replace is not supported by run mode, would you like to restart the program?",
             YES_BUTTON, NO_BUTTON).then((res) => {
             if (res === YES_BUTTON) {
                 vscode.commands.executeCommand("workbench.action.debug.restart");
@@ -169,6 +171,7 @@ async function applyHCR() {
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
+    const alreadyActivated: boolean = utility.isJavaExtActivated();
     try {
         // Wait for Java Language Support extension being activated.
         await utility.getJavaExtensionAPI();
@@ -178,10 +181,32 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
             return;
         }
 
+        if (alreadyActivated) {
+            vscode.window.showErrorMessage(String((ex && ex.message) || ex));
+            return;
+        }
+
         throw ex;
     }
 
-    const mainMethods: IMainMethod[] = await resolveMainMethod(uri);
+    const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
+    if (!uri && activeEditor && _.endsWith(path.basename(activeEditor.document.fileName), ".java")) {
+        uri = activeEditor.document.uri;
+    }
+
+    if (!uri) {
+        vscode.window.showErrorMessage(`${noDebug ? "Run" : "Debug"} failed. Please open a Java file with main method first.`);
+        return;
+    }
+
+    let mainMethods: IMainMethod[] = [];
+    try {
+        mainMethods = await resolveMainMethod(uri);
+    } catch (ex) {
+        vscode.window.showErrorMessage(String((ex && ex.message) || ex));
+        throw ex;
+    }
+
     if (!mainMethods || !mainMethods.length) {
         vscode.window.showErrorMessage(
             "Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
