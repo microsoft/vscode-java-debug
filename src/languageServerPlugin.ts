@@ -5,6 +5,13 @@ import * as vscode from "vscode";
 
 import * as commands from "./commands";
 
+export enum CompileWorkspaceStatus {
+    FAILED = 0,
+    SUCCEED = 1,
+    WITHERROR = 2,
+    CANCELLED = 3,
+}
+
 export interface IMainClassOption {
     readonly mainClass: string;
     readonly projectName?: string;
@@ -76,4 +83,8 @@ export async function detectPreviewFlag(className: string, projectName: string):
 
 export function resolveElementAtSelection(uri: string, line: number, character: number): Promise<any> {
     return <Promise<any>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_ELEMENT_AT_SELECTION, uri, line, character);
+}
+
+export function resolveBuildFiles(): Promise<string[]> {
+    return <Promise<string[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_BUILD_FILES);
 }

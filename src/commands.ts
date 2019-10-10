@@ -32,6 +32,8 @@ export const JAVA_CHECK_PROJECT_SETTINGS = "vscode.java.checkProjectSettings";
 
 export const JAVA_RESOLVE_ELEMENT_AT_SELECTION = "vscode.java.resolveElementAtSelection";
 
+export const JAVA_RESOLVE_BUILD_FILES = "vscode.java.resolveBuildFiles";
+
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
     if (!utility.isJavaExtEnabled()) {

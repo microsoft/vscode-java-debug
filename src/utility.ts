@@ -86,15 +86,19 @@ export async function showErrorMessageWithTroubleshooting(message: ITroubleshoot
 
 function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
     if (choice === LEARN_MORE) {
-        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK));
-        logger.log(Type.USAGEDATA, {
-            troubleshooting: "yes",
-            troubleshootingMessage: message,
-        });
+        openTroubleshootingPage(message, anchor);
         return;
     }
 
     return choice;
+}
+
+export function openTroubleshootingPage(message: string, anchor: string) {
+    vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK));
+    logger.log(Type.USAGEDATA, {
+        troubleshooting: "yes",
+        troubleshootingMessage: message,
+    });
 }
 
 export async function guideToInstallJavaExtension() {
