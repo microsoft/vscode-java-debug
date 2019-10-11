@@ -10,34 +10,44 @@ The debugger works with [Language Support for Java(TM) by Red Hat](https://marke
 ### Try:
 1. If you get the error *"The JAVA_HOME environment variable points to a missing folder"* or *"Java runtime could not be located"*, please make sure that the environment variable JAVA_HOME points to a valid JDK. Otherwise, ignore this step.
 2. Open your Maven *pom.xml* file or Gradle *build.gradle* file, then run VS Code command *"Java: Update project configuration"* to force the language server to update the project configuration/classpath.
-3. Try cleaning the stale workspace cache. Quit all VS Code processes and clean the following cache directory:
-- Windows : %APPDATA%\Code\User\workspaceStorage\
-- MacOS : $HOME/Library/Application Support/Code/User/workspaceStorage/
-- Linux : $HOME/.config/Code/User/workspaceStorage/
+3. Run VS Code command *"Java: Clean the Java language server workspace"* to clean the stale workspace cache.
 4. Try more [troubleshooting guide](https://github.com/redhat-developer/vscode-java/wiki/Troubleshooting) from the language server product site.
 
-## Failed to resolve classpath:
+## Build failed, do you want to continue?
 ### Reason:
-Below are the common failure reasons.
-- 'C:\demo\org\microsoft\app\Main.java' is not a valid class name.
-- Main class 'org.microsoft.app.Main' doesn't exist in the workspace.
-- Main class 'org.microsoft.app.Main' isn't unique in the workspace.
-- The project 'demo' is not a valid java project.
-
-In launch mode, the debugger resolves the classpaths automatically based on the given `mainClass` and `projectName`. It looks for the class specified by `mainClass` as the entry point for launching an application. If there are multiple classes with the same name in the current workspace, the debugger uses the one inside the project specified by `projectName`.
+The error indicates your workspace has build errors. There are two kinds of build errors. One is compilation error for source code, the other is project error.
 
 ### Try:
-1. Check whether the class name specified in `mainClass` exists and is in the right form. The debugger only works with fully qualified class names, e.g. `org.microsoft.app.Main`.
-2. Check whether the `projectName` is correct. The actual project name is not always the same to the folder name you see in the File Explorer. Please check the value specified by `projectDescription/name` in the *.project* file, or the `artificatId` in the *pom.xml* for maven project, or the folder name for gradle project.
-3. If the problem persists, please try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
+1. Open VS Code PROBLEMS View, and fix the errors there.
+2. If no errors are found in the PROBLEMS View, reference the [language server troubleshooting](#try) paragraph to update project configuration, and clean workspace cache.
 
-## Request type "xyz" is not supported. Only "launch" and "attach" are supported.
+## x.java isn't on the classpath. Only syntax errors will be reported
 ### Reason:
-The value specified in `request` option of *launch.json* is incorrect.
+This error indicates the Java file you opened isn't on the classpath of any project, and no .class file will be generated because Java language server only auto builds Java source files on the project classpath. If you try to run or debug this Java file, you may get the error "Could not find or load main class".
 
 ### Try:
-1. Reference the VS Code official document [launch configurations](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) about how to configure *launch.json*.
-2. Try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
+1. Go to *File Explorer*, right click the folder containing your Java file, and run the menu *"Add Folder to Java Source Path"* to mark the containing folder as a Java source root.
+2. Run VS Code command *"Java: List all Java source paths"* to check whether the containing folder is added as a Java source root.
+
+## Program Error: Could not find or load main class x
+### Reason:
+You configure the incorrect main class name in `mainClass` of *launch.json*, or your Java file is not on the classpath.
+
+### Try:
+1. Check whether the class name specified in `mainClass` exists and is in the right form.
+2. Run VS Code command *"Java: List all Java source paths"* to show all source paths recognized by the workspace.
+3. Check the Java file you are running is under any source path? If not, go to *File Explorer*, right click the folder containing your Java file, and run the menu *"Add Folder to Java Source Path"* to mark the containing folder as a Java source root.
+4. Run VS Code command *"Java: Force Java compilation"* to rebuild your workspace.
+5. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
+
+## Program throws ClassNotFoundException
+### Reason:
+This error indicates your application attempts to reference some classes which are not found in the entire classpaths.
+
+### Try:
+1. Check whether you configure the required libraries in the dependency settings file (e.g. *pom.xml*).
+2. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
+3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## Failed to complete hot code replace:
 ### Reason:
@@ -65,23 +75,6 @@ There are two possible reasons for this error.
 1. For Reason 1, try to add a breakpoint and stop your program there, then evaluate the expression.
 2. For Reason 2, try to change the `console` option in the *launch.json* to `externalTerminal` or `integratedTerminal`. This is the official solution for program console input.
 
-## The DEBUG CONSOLE throws Error: Could not find or load main class xyz
-### Reason:
-You configure the incorrect main class name in `mainClass` of *launch.json*.
-
-### Try:
-1. Check whether the class name specified in `mainClass` exists and is in the right form.
-2. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
-
-## The DEBUG CONSOLE throws ClassNotFoundException
-### Reason:
-This error indicates your application attempts to reference some classes which are not found in the entire classpaths.
-
-### Try:
-1. Check whether you configure the required libraries in the dependency settings file (e.g. *pom.xml*).
-2. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
-3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
-
 ## Cannot find a class with the main method
 ### Reason:
 When the `mainClass` is unconfigured in the *launch.json*, the debugger will resolve a class with main method automatically. This error indicates the debugger doesn't find any main class in the whole workspace.
@@ -90,14 +83,6 @@ When the `mainClass` is unconfigured in the *launch.json*, the debugger will res
 1. Check at least one main class exists in your workspace.
 2. If no main class exists, please create a main class first. Otherwise, it's probably because the language server fails to start. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
-## Build failed, do you want to continue?
-### Reason:
-The error indicates your workspace has build errors. There are two kinds of build errors. One is compilation error for source code, the other is project error.
-
-### Try:
-1. Open VS Code PROBLEMS View, and fix the errors there.
-2. If no errors are found in the PROBLEMS View, reference the [language server troubleshooting](#try) paragraph to update project configuration, and clean workspace cache.
-
 ## No delegateCommandHandler for vscode.java.startDebugSession when starting Debugger
 ### Reason:
 Cause of error is for now unknown, but something caused vscode java support and debugger to not be configured correctly.
@@ -105,3 +90,26 @@ Cause of error is for now unknown, but something caused vscode java support and 
 ### Try:
 1. Restart VS Code and the issue should disappear 
 2. If it continues to error try restart again, and if still a problem open an issue at [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug)
+
+## Failed to resolve classpath:
+### Reason:
+Below are the common failure reasons.
+- 'C:\demo\org\microsoft\app\Main.java' is not a valid class name.
+- Main class 'org.microsoft.app.Main' doesn't exist in the workspace.
+- Main class 'org.microsoft.app.Main' isn't unique in the workspace.
+- The project 'demo' is not a valid java project.
+
+In launch mode, the debugger resolves the classpaths automatically based on the given `mainClass` and `projectName`. It looks for the class specified by `mainClass` as the entry point for launching an application. If there are multiple classes with the same name in the current workspace, the debugger uses the one inside the project specified by `projectName`.
+
+### Try:
+1. Check whether the class name specified in `mainClass` exists and is in the right form. The debugger only works with fully qualified class names, e.g. `org.microsoft.app.Main`.
+2. Check whether the `projectName` is correct. The actual project name is not always the same to the folder name you see in the File Explorer. Please check the value specified by `projectDescription/name` in the *.project* file, or the `artificatId` in the *pom.xml* for maven project, or the folder name for gradle project.
+3. If the problem persists, please try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
+
+## Request type "xyz" is not supported. Only "launch" and "attach" are supported.
+### Reason:
+The value specified in `request` option of *launch.json* is incorrect.
+
+### Try:
+1. Reference the VS Code official document [launch configurations](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) about how to configure *launch.json*.
+2. Try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
