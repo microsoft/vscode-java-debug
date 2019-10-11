@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 
 import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
+import { buildWorkspace } from "./build";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
 import { detectLaunchCommandStyle } from "./launchCommand";
@@ -163,22 +164,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
 
                 if (needsBuildWorkspace()) {
-                    try {
-                        const buildResult = await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false);
-                    } catch (err) {
-                        if (err instanceof utility.JavaExtensionNotActivatedError) {
-                            utility.guideToInstallJavaExtension();
-                            return undefined;
-                        }
-
-                        const ans = await utility.showErrorMessageWithTroubleshooting({
-                            message: "Build failed, do you want to continue?",
-                            type: Type.USAGEERROR,
-                            anchor: anchor.BUILD_FAILED,
-                        }, "Proceed", "Abort");
-                        if (ans !== "Proceed") {
-                            return undefined;
-                        }
+                    const proceed = await buildWorkspace();
+                    if (!proceed) {
+                        return undefined;
                     }
                 }
 
