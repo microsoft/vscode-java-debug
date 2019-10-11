@@ -95,15 +95,15 @@ Cause of error is for now unknown, but something caused vscode java support and 
 ## Failed to resolve classpath:
 ### Reason:
 Below are the common failure reasons.
-- 'C:\demo\org\microsoft\app\Main.java' is not a valid class name.
-- Main class 'org.microsoft.app.Main' doesn't exist in the workspace.
-- Main class 'org.microsoft.app.Main' isn't unique in the workspace.
+- 'C:\demo\com\microsoft\app\Main.java' is not a valid class name.
+- Main class 'com.microsoft.app.Main' doesn't exist in the workspace.
+- Main class 'com.microsoft.app.Main' isn't unique in the workspace.
 - The project 'demo' is not a valid java project.
 
 In launch mode, the debugger resolves the classpaths automatically based on the given `mainClass` and `projectName`. It looks for the class specified by `mainClass` as the entry point for launching an application. If there are multiple classes with the same name in the current workspace, the debugger uses the one inside the project specified by `projectName`.
 
 ### Try:
-1. Check whether the class name specified in `mainClass` exists and is in the right form. The debugger only works with fully qualified class names, e.g. `org.microsoft.app.Main`.
+1. Check whether the class name specified in `mainClass` exists and is in the right form. The debugger only works with fully qualified class names, e.g. `com.microsoft.app.Main`.
 2. Check whether the `projectName` is correct. The actual project name is not always the same to the folder name you see in the File Explorer. Please check the value specified by `projectDescription/name` in the *.project* file, or the `artificatId` in the *pom.xml* for maven project, or the folder name for gradle project.
 3. If the problem persists, please try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
 
