@@ -54,8 +54,9 @@ This error indicates your application attempts to reference some classes which a
 This error indicates you are doing `Hot Code Replace`. The `Hot Code Replace` feature depends on the underlying JVM implementation. If you get this error, that indicates the new changes cannot be hot replaced by JVM.
 
 ### Try:
-1. Restart your application to apply the new changes. Or ignore the message, and continue to debug.
-2. You can disable the hot code replace feature by changing the user setting `"java.debug.settings.hotCodeReplace": "never"`.
+1. Check the HCR limitation from the [wiki](https://github.com/microsoft/vscode-java-debug/wiki/Hot-Code-Replace).
+2. Restart your application to apply the new changes. Or ignore the message, and continue to debug.
+3. You can disable the hot code replace feature by changing the user setting `"java.debug.settings.hotCodeReplace": "never"`.
 
 ## Please specify the host name and the port of the remote debuggee in the launch.json.
 ### Reason:
