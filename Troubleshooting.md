@@ -19,7 +19,8 @@ The error indicates your workspace has build errors. There are two kinds of buil
 
 ### Try:
 1. Open VS Code PROBLEMS View, and fix the errors there.
-2. If no errors are found in the PROBLEMS View, reference the [language server troubleshooting](#try) paragraph to update project configuration, and clean workspace cache.
+2. Run VS Code command *"Java: Open Java language server log file"* to view more details for the build errors.
+3. If still cannot find out what errors, then reference the [language server troubleshooting](#try) paragraph to [2]update project configuration, and [3]clean workspace cache.
 
 ## x.java isn't on the classpath. Only syntax errors will be reported
 ### Reason:
