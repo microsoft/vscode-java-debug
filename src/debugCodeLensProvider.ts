@@ -193,8 +193,8 @@ async function addToClasspath(uri: vscode.Uri): Promise<boolean> {
     if (parentPath === parentUri.fsPath) {
         parentPath = path.basename(parentFsPath);
     }
-    const ans = await vscode.window.showWarningMessage(`The file ${fileName} isn't on the classpath, the runtime may throw class not found error. Do you want to add the parent folder "${parentPath}" to Java source path?`,
-        "Add to Source Path", "Skip");
+    const ans = await vscode.window.showWarningMessage(`The file ${fileName} isn't on the classpath, the runtime may throw class not found error. `
+        + `Do you want to add the parent folder "${parentPath}" to Java source path?`, "Add to Source Path", "Skip");
     if (ans === "Add to Source Path") {
         vscode.commands.executeCommand("java.project.addToSourcePath", parentUri);
         return false;
