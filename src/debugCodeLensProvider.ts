@@ -169,8 +169,8 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
 export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
     const workspaceFolder: vscode.WorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
     const workspaceUri: vscode.Uri = workspaceFolder ? workspaceFolder.uri : undefined;
-
-    if (workspaceUri && !(await isOnClasspath(uri.toString())) && !(await addToClasspath(uri))) {
+    const onClasspath = await isOnClasspath(uri.toString());
+    if (workspaceUri && onClasspath === false && !(await addToClasspath(uri))) {
         return false;
     }
 
@@ -195,10 +195,11 @@ async function addToClasspath(uri: vscode.Uri): Promise<boolean> {
     }
     const ans = await vscode.window.showWarningMessage(`The file ${fileName} isn't on the classpath, the runtime may throw class not found error. `
         + `Do you want to add the parent folder "${parentPath}" to Java source path?`, "Add to Source Path", "Skip");
-    if (ans === "Add to Source Path") {
+    if (ans === "Skip") {
+        return true;
+    } else if (ans === "Add to Source Path") {
         vscode.commands.executeCommand("java.project.addToSourcePath", parentUri);
-        return false;
     }
 
-    return true;
+    return false;
 }
