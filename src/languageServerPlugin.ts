@@ -88,3 +88,11 @@ export function resolveElementAtSelection(uri: string, line: number, character: 
 export function resolveBuildFiles(): Promise<string[]> {
     return <Promise<string[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_BUILD_FILES);
 }
+
+export async function isOnClasspath(uri: string): Promise<boolean> {
+    try {
+        return <boolean> await commands.executeJavaExtensionCommand(commands.JAVA_IS_ON_CLASSPATH, uri);
+    } catch (error) {
+        return true;
+    }
+}
