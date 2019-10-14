@@ -2,12 +2,13 @@
 // Licensed under the MIT license.
 
 import * as _ from "lodash";
+import * as path from "path";
 import * as vscode from "vscode";
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { JAVA_LANGID } from "./constants";
 import { initializeHoverProvider } from "./hoverProvider";
-import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
+import { IMainMethod, isOnClasspath, resolveMainMethod } from "./languageServerPlugin";
 import { getJavaExtensionAPI, isJavaExtEnabled } from "./utility";
 
 const JAVA_RUN_CODELENS_COMMAND = "java.debug.runCodeLens";
@@ -168,10 +169,37 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
 export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
     const workspaceFolder: vscode.WorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
     const workspaceUri: vscode.Uri = workspaceFolder ? workspaceFolder.uri : undefined;
+    const onClasspath = await isOnClasspath(uri.toString());
+    if (workspaceUri && onClasspath === false && !(await addToClasspath(uri))) {
+        return false;
+    }
 
     const debugConfig: vscode.DebugConfiguration = await constructDebugConfig(mainClass, projectName, workspaceUri);
     debugConfig.projectName = projectName;
     debugConfig.noDebug = noDebug;
 
     return vscode.debug.startDebugging(workspaceFolder, debugConfig);
+}
+
+async function addToClasspath(uri: vscode.Uri): Promise<boolean> {
+    const fileName = path.basename(uri.fsPath || "");
+    const parentFsPath = path.dirname(uri.fsPath || "");
+    if (!parentFsPath) {
+        return true;
+    }
+
+    const parentUri = vscode.Uri.file(parentFsPath);
+    let parentPath = vscode.workspace.asRelativePath(parentUri, true);
+    if (parentPath === parentUri.fsPath) {
+        parentPath = path.basename(parentFsPath);
+    }
+    const ans = await vscode.window.showWarningMessage(`The file ${fileName} isn't on the classpath, the runtime may throw class not found error. `
+        + `Do you want to add the parent folder "${parentPath}" to Java source path?`, "Add to Source Path", "Skip");
+    if (ans === "Skip") {
+        return true;
+    } else if (ans === "Add to Source Path") {
+        vscode.commands.executeCommand("java.project.addToSourcePath", parentUri);
+    }
+
+    return false;
 }
