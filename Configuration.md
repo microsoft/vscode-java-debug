@@ -126,16 +126,16 @@ Before attaching to a debuggee, your debuggee program must be started with debug
 }
 ```
 
-In some cases, you may want to start your program with the external builder and launcher, then you can configure these jobs in [tasks.json](https://code.visualstudio.com/docs/editor/tasks) and then attach to it. For example, launching springboot application via mvn command, and then attach a debugger.
-- Attaching to mvn task
-    - Configure your command in tasks.json - The debug job is background task, you should use *problemMatcher* filter to tell VSCode it's ready.
-    ```json
+In some cases, you may want to start your program with the external builder and launcher, then you can configure these jobs in [tasks.json](https://code.visualstudio.com/docs/editor/tasks) and attach to it. For example, launching springboot application via mvn command, and then attach a debugger.
+#### Attach to mvn task
+1) Configure your command in .vscode/tasks.json - The mvn task is a background task, you should use *problemMatcher* filter to tell VS Code it's ready.  
+   ```json
     {
         "label": "mvnDebug",
         "type": "shell",
         "command": "mvn spring-boot:run -Dspring-boot.run.jvmArguments=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005\"",
         "isBackground": true,
-        "problemMatcher": [{  
+        "problemMatcher": [{
             "pattern": [{
                 "regexp": "\\b\\B",
                 "file": 1,
@@ -150,7 +150,7 @@ In some cases, you may want to start your program with the external builder and 
         }]
     }
     ```
-    - Launch the task before launch and attach to the debug port - You need configure the task label to `preLaunchTask` in launch.json.
+2) Configure `preLaunchTask` and the debug port in .vscode/launch.json.  
     ```json
     {
         "type": "java",
@@ -161,11 +161,90 @@ In some cases, you may want to start your program with the external builder and 
         "preLaunchTask": "mvnDebug"
     }
     ```
-    ![attachToMvn](https://user-images.githubusercontent.com/14052197/67262705-4f2d6880-f4d8-11e9-9e2d-9c35a6613c08.gif)
+3) <b>F5</b> will launch the mvn task, and attach the debugger. See the demo.  
+![attachToMvn](https://user-images.githubusercontent.com/14052197/67262705-4f2d6880-f4d8-11e9-9e2d-9c35a6613c08.gif)
 
-- Use javac as the builder and attach to java process  
-  tasks.json sample:
+#### Attach to embedded maven tomcat server
+  - pom.xml sample for embedded tomcat server.  
+  ```xml
+    ...
+    <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+    </plugin>
+    ...
+  ```
+  - The steps to attach to the embedded maven tomcat server.  
+  1) Use .vscode/tasks.json to configure *run-tomcat* and *stop-tomcat* tasks.  
   ```json
+    {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "run-tomcat",
+                "type": "shell",
+                "command": "MAVEN_OPTS=\"$MAVEN_OPTS -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n\" ./mvnw tomcat7:run",
+                "group": "build",
+                "isBackground": true,
+                "problemMatcher": [{
+                    "pattern": [{
+                        "regexp": "\\b\\B",
+                        "file": 1,
+                        "location": 2,
+                        "message": 3
+                    }],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": "^.*Listening for",
+                        "endsPattern": "^.*transport dt_socket at address.*"
+                    }
+                }]
+            },
+            {
+                "label": "stop-tomcat",
+                "type": "shell",
+                "command": "echo ${input:terminate}}",
+                "problemMatcher": []
+            }
+        ],
+        "inputs": [
+            {
+                "id": "terminate",
+                "type": "command",
+                "command": "workbench.action.tasks.terminate",
+                "args": "run-tomcat"
+            }
+        ]
+    }
+  ```
+  2) Use .vscode/launch.json to configure the attach configuration. Use `preLaunchTask` to run tomcat before the attach, and `postDebugTask` to stop tomcat after the debug ends.  
+  ```json
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "java",
+                "name": "Debug (Attach)",
+                "request": "attach",
+                "hostName": "localhost",
+                "port": 5005,
+                "preLaunchTask": "run-tomcat",
+                "postDebugTask": "stop-tomcat"
+            }
+        ]
+    }
+  ```
+  3) <b>F5</b> will auto start the tomcat server and attach the debugger. The demo below will show how to debug spring mvc in tomcat.  
+  ![attachToEmbeddedTomcat](https://user-images.githubusercontent.com/14052197/67541153-80957680-f71a-11e9-9d59-e9aaa752fe33.gif)
+
+  > If you want to try to debug your Java webapps in a standalone tomcat server, please try VS Code [Tomcat for Java](https://marketplace.visualstudio.com/items?itemName=adashen.vscode-tomcat) extension.
+
+  > If you want to try to debug embedded tomcat server with gradle plugin, see the [gradle sample](https://github.com/microsoft/vscode-java-debug/issues/140#issuecomment-343656398).
+
+#### Use javac as the builder and attach to java process
+1) Configure the javac builder and java runner jobs in .vscode/tasks.json.
+    ```json
     {
         "version": "2.0.0",
         "tasks": [
@@ -180,7 +259,7 @@ In some cases, you may want to start your program with the external builder and 
                 "type": "shell",
                 "command": "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005 -cp bin app.SimpleCalc",
                 "isBackground": true,
-                "problemMatcher": [{  
+                "problemMatcher": [{
                     "pattern": [{
                         "regexp": "\\b\\B",
                         "file": 1,
@@ -196,9 +275,9 @@ In some cases, you may want to start your program with the external builder and 
             }
         ]
     }
-  ```
-  launch.json sample:
-  ```json
+    ```
+2) Configure `preLaunchTask` and the debug port in .vscode/launch.json.  
+    ```json
     {
         "version": "0.2.0",
         "configurations": [
@@ -212,8 +291,9 @@ In some cases, you may want to start your program with the external builder and 
             }
         ]
     }
-  ```
-  ![attachToJava](https://user-images.githubusercontent.com/14052197/67263956-3cb52e00-f4dc-11e9-9c78-6e66cb3d7c2b.gif)
+    ```
+3) <b>F5</b> will run the tasks and attach the debugger. See the demo.  
+![attachToJava](https://user-images.githubusercontent.com/14052197/67263956-3cb52e00-f4dc-11e9-9c78-6e66cb3d7c2b.gif)
 
 ## Modify the settings.json (User Setting)
 - `java.debug.settings.console` - The specified console to launch Java program, defaults to `integratedTerminal`. If you want to customize the console for a specific debug session, please use `console` option in launch.json instead.
