@@ -47,8 +47,9 @@ This error indicates your application attempts to reference some classes which a
 
 ### Try:
 1. Check whether you configure the required libraries in the dependency settings file (e.g. *pom.xml*).
-2. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
-3. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
+2. If you have recently modified the *pom.xml* or *build.gradle* config file, you need right click on *pom.xml* or *build.gradle* file and then run the menu *"Update project configuration"* to force the language server to update the project configuration/classpath.
+3. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
+4. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
 ## Failed to complete hot code replace:
 ### Reason:
