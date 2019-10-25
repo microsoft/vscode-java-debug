@@ -127,7 +127,7 @@ Before attaching to a debuggee, your debuggee program must be started with debug
 ```
 
 In some cases, you may want to start your program with the external builder and launcher, then you can configure these jobs in [tasks.json](https://code.visualstudio.com/docs/editor/tasks) and attach to it. For example, launching springboot application via mvn command, and then attach a debugger.
-- Attach to mvn task
+#### Attach to mvn task
 1) Configure your command in .vscode/tasks.json - The mvn task is a background task, you should use *problemMatcher* filter to tell VS Code it's ready.  
    ```json
     {
@@ -164,7 +164,7 @@ In some cases, you may want to start your program with the external builder and 
 3) <b>F5</b> will launch the mvn task, and attach the debugger. See the demo.  
 ![attachToMvn](https://user-images.githubusercontent.com/14052197/67262705-4f2d6880-f4d8-11e9-9e2d-9c35a6613c08.gif)
 
-- Attach to embedded maven tomcat server
+#### Attach to embedded maven tomcat server
   - pom.xml sample for embedded tomcat server.  
    ```xml
     ...
@@ -242,7 +242,7 @@ In some cases, you may want to start your program with the external builder and 
 
   > If you want to try debug embedded tomcat server with gradle plugin, see the [gradle sample](https://github.com/microsoft/vscode-java-debug/issues/140).
 
-- Use javac as the builder and attach to java process  
+#### Use javac as the builder and attach to java process
 1) Configure the javac builder and java runner jobs in .vscode/tasks.json.
     ```json
     {
