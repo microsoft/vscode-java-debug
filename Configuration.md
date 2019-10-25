@@ -166,7 +166,7 @@ In some cases, you may want to start your program with the external builder and 
 
 #### Attach to embedded maven tomcat server
   - pom.xml sample for embedded tomcat server.  
-   ```xml
+  ```xml
     ...
     <plugin>
         <groupId>org.apache.tomcat.maven</groupId>
@@ -177,7 +177,7 @@ In some cases, you may want to start your program with the external builder and 
   ```
   - The steps to attach to the embedded maven tomcat server.  
   1) Use .vscode/tasks.json to configure *run-tomcat* and *stop-tomcat* tasks.  
-    ```json
+  ```json
     {
         "version": "2.0.0",
         "tasks": [
@@ -217,9 +217,9 @@ In some cases, you may want to start your program with the external builder and 
             }
         ]
     }
-    ```
+  ```
   2) Use .vscode/launch.json to configure the attach configuration. Use `preLaunchTask` to run tomcat before the attach, and `postDebugTask` to stop tomcat after the debug ends.  
-    ```json
+  ```json
     {
         "version": "0.2.0",
         "configurations": [
@@ -234,7 +234,7 @@ In some cases, you may want to start your program with the external builder and 
             }
         ]
     }
-    ```
+  ```
   3) <b>F5</b> will auto start the tomcat server and attach the debugger. The demo below will show how to debug spring mvc in tomcat.  
   ![attachToEmbeddedTomcat](https://user-images.githubusercontent.com/14052197/67541153-80957680-f71a-11e9-9d59-e9aaa752fe33.gif)
 
