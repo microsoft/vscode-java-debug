@@ -240,7 +240,7 @@ In some cases, you may want to start your program with the external builder and 
 
   > If you want to try to debug your Java webapps in a standalone tomcat server, please try VS Code [Tomcat for Java](https://marketplace.visualstudio.com/items?itemName=adashen.vscode-tomcat) extension.
 
-  > If you want to try debug embedded tomcat server with gradle plugin, see the [gradle sample](https://github.com/microsoft/vscode-java-debug/issues/140).
+  > If you want to try to debug embedded tomcat server with gradle plugin, see the [gradle sample](https://github.com/microsoft/vscode-java-debug/issues/140#issuecomment-343656398).
 
 #### Use javac as the builder and attach to java process
 1) Configure the javac builder and java runner jobs in .vscode/tasks.json.
