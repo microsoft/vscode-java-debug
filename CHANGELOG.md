@@ -4,6 +4,21 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.23.0 - 2019-10-29
+### Added
+- Provide "Fix..." suggestions when "Build failed" occurs during launching the application. [#358](https://github.com/microsoft/vscode-java-debug/issues/358).
+- Prompt to add the folder to source path if the running file isn't on classpath. [#470](https://github.com/microsoft/vscode-java-debug/issues/470).
+- Provide samples for the commonly used debug configuration. See the [doc](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md).
+
+### Fixed
+- It's safe to keep running the run/debug codelens if the debug configuration fails to save into the launch.json. [PR#673](https://github.com/microsoft/vscode-java-debug/pull/673).
+- Improve the error handling when running the file via the context "run" or "debug" menu. [PR#679](https://github.com/microsoft/vscode-java-debug/pull/679).
+- Support searching main classes from the workspace invisible project. [PR#305](https://github.com/microsoft/java-debug/pull/305).
+
+### Changed
+- Update troubleshooting doc for class not found error. See the [doc](https://github.com/microsoft/vscode-java-debug/blob/master/Troubleshooting.md#program-error-could-not-find-or-load-main-class-x).
+- Update troubleshooting doc for build failed error. See the [doc](https://github.com/microsoft/vscode-java-debug/blob/master/Troubleshooting.md#build-failed-do-you-want-to-continue).
+
 ## 0.22.0 - 2019-09-24
 ### Added
 - Show Run/Debug buttons when hover on a main method. [#657](https://github.com/microsoft/vscode-java-debug/issues/657).
