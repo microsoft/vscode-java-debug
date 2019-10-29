@@ -4,7 +4,7 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 0.23.0 - 2019-10-28
+## 0.23.0 - 2019-10-29
 ### Added
 - Provide "Fix..." suggestions when "Build failed" occurs during launching the application. [#358](https://github.com/microsoft/vscode-java-debug/issues/358).
 - Prompt to add the folder to source path if the running file isn't on classpath. [#470](https://github.com/microsoft/vscode-java-debug/issues/470).
