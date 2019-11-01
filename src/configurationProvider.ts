@@ -193,10 +193,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
                 // Add the default launch options to the config.
                 config.cwd = config.cwd || _.get(folder, "uri.fsPath");
-                // Auto add '--enable-preview' vmArgs if the java project enables COMPILER_PB_ENABLE_PREVIEW_FEATURES flag.
-                if (await lsPlugin.detectPreviewFlag(config.mainClass, config.projectName)) {
-                    config.vmArgs = (config.vmArgs || "") + " --enable-preview";
-                }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
                     throw new utility.UserError({
@@ -219,6 +215,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
             if (Array.isArray(config.vmArgs)) {
                 config.vmArgs = this.concatArgs(config.vmArgs);
+            }
+
+            // Auto add '--enable-preview' vmArgs if the java project enables COMPILER_PB_ENABLE_PREVIEW_FEATURES flag.
+            if (await lsPlugin.detectPreviewFlag(config.mainClass, config.projectName)) {
+                config.vmArgs = (config.vmArgs || "") + " --enable-preview";
             }
 
             if (config.request === "launch" && (!config.shortenCommandLine || config.shortenCommandLine === "auto")) {
