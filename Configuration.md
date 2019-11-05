@@ -4,14 +4,27 @@
 * [Auto generate the launch.json](#auto-generate-the-launchjson)
 * [Modify the launch.json](#modify-the-launchjson)
   * [Main](#main)
+    * mainClass
+    * projectName
   * [Arguments](#arguments)
+    * args
+    * vmArgs
   * [Environment](#environment)
+    * console
+    * env
   * [Don't step into the specified classes or methods](#dont-step-into-the-specified-classes-or-methods)
+    * stepFilters
   * [Attach to a debuggee](#attach-to-a-debuggee)
+    * hostName
+    * port
     * [Attach to mvn task](#attach-to-mvn-task)
     * [Attach to embedded maven tomcat server](#attach-to-embedded-maven-tomcat-server)
     * [Use javac as the builder and attach to java process](#use-javac-as-the-builder-and-attach-to-java-process)
 * [Modify the settings.json (User Setting)](#modify-the-settingsjson-user-setting)
+  * java.debug.settings.console
+  * java.debug.settings.forceBuildBeforeLaunch
+  * java.debug.settings.hotCodeReplace
+  * java.debug.settings.enableRunDebugCodeLens
 * [FAQ](#faq)
 
 
