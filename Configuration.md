@@ -1,5 +1,33 @@
 # Java Debug Configuration
 
+## Table of Contents
+* [Auto generate the launch.json](#auto-generate-the-launchjson)
+* [Modify the launch.json](#modify-the-launchjson)
+  * [Main](#main)
+    * mainClass
+    * projectName
+  * [Arguments](#arguments)
+    * args
+    * vmArgs
+  * [Environment](#environment)
+    * console
+    * env
+  * [Don't step into the specified classes or methods](#dont-step-into-the-specified-classes-or-methods)
+    * stepFilters
+  * [Attach to a debuggee](#attach-to-a-debuggee)
+    * hostName
+    * port
+    * [Attach to mvn task](#attach-to-mvn-task)
+    * [Attach to embedded maven tomcat server](#attach-to-embedded-maven-tomcat-server)
+    * [Use javac as the builder and attach to java process](#use-javac-as-the-builder-and-attach-to-java-process)
+* [Modify the settings.json (User Setting)](#modify-the-settingsjson-user-setting)
+  * java.debug.settings.console
+  * java.debug.settings.forceBuildBeforeLaunch
+  * java.debug.settings.hotCodeReplace
+  * java.debug.settings.enableRunDebugCodeLens
+* [FAQ](#faq)
+
+
 The debugger provides two kinds of configuration: *launch.json* and *settings.json* (User Settings), see the [README](https://github.com/Microsoft/vscode-java-debug#options) for the supported configuration list. launch.json is used to control the configuration per debug session, and the user setting is shared by the whole workspace or VS Code.
 
 ## Auto generate the launch.json
