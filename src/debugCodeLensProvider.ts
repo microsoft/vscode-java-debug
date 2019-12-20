@@ -150,7 +150,7 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
         };
 
         // Persist the configuration into launch.json only if the launch.json file already exists in the workspace.
-        if (workspace && ((rawConfigs && rawConfigs.length) || await launchJsonExists())) {
+        if ((rawConfigs && rawConfigs.length) || await launchJsonExists(workspace)) {
             try {
                 // Insert the default debug configuration to the beginning of launch.json.
                 rawConfigs.splice(0, 0, debugConfig);
@@ -166,9 +166,14 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
     return _.cloneDeep(debugConfig);
 }
 
-async function launchJsonExists(): Promise<boolean> {
-    const results: vscode.Uri[] = await vscode.workspace.findFiles(".vscode/launch.json", null, 1);
-    return !!results.length;
+async function launchJsonExists(workspace: vscode.Uri): Promise<boolean> {
+    if (!workspace) {
+        return false;
+    }
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(workspace);
+    const results: vscode.Uri[] = await vscode.workspace.findFiles(".vscode/launch.json");
+    return !!results.find((launchJson => vscode.workspace.getWorkspaceFolder(launchJson) == workspaceFolder));
 }
 
 export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
