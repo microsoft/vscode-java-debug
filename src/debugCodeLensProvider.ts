@@ -173,7 +173,7 @@ async function launchJsonExists(workspace: vscode.Uri): Promise<boolean> {
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(workspace);
     const results: vscode.Uri[] = await vscode.workspace.findFiles(".vscode/launch.json");
-    return !!results.find((launchJson => vscode.workspace.getWorkspaceFolder(launchJson) == workspaceFolder));
+    return !!results.find((launchJson) => vscode.workspace.getWorkspaceFolder(launchJson) === workspaceFolder);
 }
 
 export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
