@@ -135,18 +135,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 await updateDebugSettings();
             }
 
-            /**
-             * If no launch.json exists in the current workspace folder
-             * delegate to provideDebugConfigurations api to generate the initial launch.json configurations
-             */
-            if (this.isEmptyConfig(config) && folder) {
-                // Follow the feature request https://github.com/Microsoft/vscode/issues/54213#issuecomment-420965778,
-                // in order to generate launch.json, the resolveDebugConfiguration api must return null explicitly.
-                return null;
-            }
-
-            // If it's the single file case that no workspace folder is opened, generate debug config in memory
-            if (this.isEmptyConfig(config) && !folder) {
+            // If no debug configuration is provided, then generate one in memory.
+            if (this.isEmptyConfig(config)) {
                 config.type = "java";
                 config.name = "Java Debug";
                 config.request = "launch";
@@ -293,13 +283,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     return mainEntries[0];
                 } else if (mainEntries.length > 1) {
                     return this.showMainClassQuickPick(this.formatMainClassOptions(mainEntries),
-                        `Multiple main classes found in the file '${path.basename(currentFile)}', please select one first.`);
+                        `Please select a main class you want to run.`);
                 }
             }
 
             const hintMessage = currentFile ?
-                `No main class found in the file '${path.basename(currentFile)}', please select main class<project name> again.` :
-                "Please select main class<project name>.";
+                `The file '${path.basename(currentFile)}' is not executable, please select a main class you want to run.` :
+                "Please select a main class you want to run.";
             return this.promptMainClass(folder, hintMessage);
         }
 
@@ -389,8 +379,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async promptMainClass(folder: vscode.Uri | undefined, hintMessage?: string): Promise<lsPlugin.IMainClassOption | undefined> {
         const res = await lsPlugin.resolveMainClass(folder);
         if (res.length === 0) {
+            const workspaceFolder = folder ? vscode.workspace.getWorkspaceFolder(folder) : undefined;
             throw new utility.UserError({
-                message: "Cannot find a class with the main method.",
+                message: `Cannot find a class with the main method${ workspaceFolder ? " in the folder '" + workspaceFolder.name + "'" : ""}.`,
                 type: Type.USAGEERROR,
                 anchor: anchor.CANNOT_FIND_MAIN_CLASS,
             });
