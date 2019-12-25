@@ -4,6 +4,18 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.24.0 - 2019-12-25
+### Added
+- Support breaking when value changes (a.k.a. Data Breakpoints). [#654](https://github.com/microsoft/vscode-java-debug/issues/654).
+
+### Changed
+- Improve "Run Java" experience: `F5` will run the current file without generating launch.json. [#724](https://github.com/microsoft/vscode-java-debug/issues/724).
+
+### Fixed
+- Debug console will hang on Java exception stack trace. [#719](https://github.com/microsoft/vscode-java-debug/issues/719).
+- Debug console won't automatically append `()` if selecting a method in completion list. [#711](https://github.com/microsoft/vscode-java-debug/issues/711), [#691](https://github.com/microsoft/vscode-java-debug/issues/691).
+- Cannot pass `vmArgs` array to Java 13 project. [#703](https://github.com/microsoft/vscode-java-debug/issues/703).
+
 ## 0.23.0 - 2019-10-29
 ### Added
 - Provide "Fix..." suggestions when "Build failed" occurs during launching the application. [#358](https://github.com/microsoft/vscode-java-debug/issues/358).
