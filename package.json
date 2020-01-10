@@ -480,6 +480,11 @@
           "description": "%java.debugger.configuration.maxStringLength.description%",
           "default": 0
         },
+        "java.debug.settings.numericPrecision": {
+          "type": "number",
+          "description": "%java.debugger.configuration.numericPrecision.description%",
+          "default": 0
+        },
         "java.debug.settings.hotCodeReplace": {
           "type": "string",
           "default": "manual",
