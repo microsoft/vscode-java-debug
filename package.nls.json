@@ -42,6 +42,7 @@
     "java.debugger.configuration.showLogicalStructure.description": "Show the logical structure for the Collection and Map classes in \"Variables\" viewlet.",
     "java.debugger.configuration.showToString.description": "Show 'toString()' value for all classes that override 'toString' method in \"Variables\" viewlet.",
     "java.debugger.configuration.maxStringLength.description": "The maximum length of strings displayed in \"Variables\" or \"Debug Console\" viewlet, strings longer than this length will be trimmed, if 0 no trim is performed.",
+    "java.debugger.configuration.numericPrecision.description": "The precision when formatting doubles in \"Variables\" or \"Debug Console\" viewlet.",
     "java.debugger.configuration.hotCodeReplace.description": "Reload the changed Java classes during debugging. Make sure 'java.autobuild.enabled' is not disabled.",
     "java.debugger.configuration.enableRunDebugCodeLens.description": "Enable the run and debug code lens providers over main methods.",
     "java.debugger.configuration.forceBuildBeforeLaunch": "Force building the workspace before launching java program.",
