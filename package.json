@@ -64,6 +64,22 @@
       {
         "command": "java.debug.debugJavaFile",
         "title": "Debug"
+      },
+      {
+        "command": "java.debug.continueAll",
+        "title": "Continue All"
+      },
+      {
+        "command": "java.debug.continueOthers",
+        "title": "Continue Others"
+      },
+      {
+        "command": "java.debug.pauseAll",
+        "title": "Pause All"
+      },
+      {
+        "command": "java.debug.pauseOthers",
+        "title": "Pause Others"
       }
     ],
     "menus": {
@@ -98,6 +114,24 @@
           "when": "inDebugMode && debugType == java && javaHotReload == 'manual'"
         }
       ],
+      "debug/callstack/context": [
+        {
+          "command": "java.debug.continueAll",
+          "when": "inDebugMode && debugType == java && callStackItemType == 'thread'"
+        },
+        {
+          "command": "java.debug.continueOthers",
+          "when": "inDebugMode && debugType == java && callStackItemType == 'thread'"
+        },
+        {
+          "command": "java.debug.pauseAll",
+          "when": "inDebugMode && debugType == java && callStackItemType == 'thread'"
+        },
+        {
+          "command": "java.debug.pauseOthers",
+          "when": "inDebugMode && debugType == java && callStackItemType == 'thread'"
+        }
+      ],
       "commandPalette": [
         {
           "command": "java.debug.hotCodeReplace",
@@ -109,6 +143,22 @@
         },
         {
           "command": "java.debug.debugJavaFile",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.continueAll",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.continueOthers",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.pauseAll",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.pauseOthers",
           "when": "false"
         }
       ]

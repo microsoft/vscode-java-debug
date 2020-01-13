@@ -13,6 +13,7 @@ import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvi
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
+import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -42,6 +43,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
     }));
     initializeHotCodeReplace(context);
     initializeCodeLensProvider(context);
+    initializeThreadOperations(context);
 }
 
 // this method is called when your extension is deactivated
