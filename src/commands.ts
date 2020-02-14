@@ -36,6 +36,8 @@ export const JAVA_RESOLVE_BUILD_FILES = "vscode.java.resolveBuildFiles";
 
 export const JAVA_IS_ON_CLASSPATH = "vscode.java.isOnClasspath";
 
+export const JAVA_RESOLVE_JAVAEXECUTABLE = "vscode.java.resolveJavaExecutable";
+
 export function executeJavaLanguageServerCommand(...rest) {
     // TODO: need to handle error and trace telemetry
     if (!utility.isJavaExtEnabled()) {
