@@ -96,3 +96,7 @@ export async function isOnClasspath(uri: string): Promise<boolean> {
         return true;
     }
 }
+
+export function resolveJavaExecutable(mainClass, projectName) {
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_JAVAEXECUTABLE, mainClass, projectName);
+}
