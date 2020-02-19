@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Use project's Java runtime to launch the application. [#753](https://github.com/microsoft/vscode-java-debug/issues/753).
+- Restart stop but not start the program. [#752](https://github.com/microsoft/vscode-java-debug/issues/752).
 - Contribution from [xiaoyinl](https://github.com/xiaoyinl): Use HTTPS wherever possible. [#732](https://github.com/microsoft/vscode-java-debug/pull/732).
 
 ## 0.24.0 - 2019-12-25
