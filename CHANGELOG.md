@@ -4,7 +4,7 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.25.0 - 2020-02-19
+## 0.25.0 - 2020-02-20
 ### Added
 - Provide context menu to continue/pause all/other threads. [#748](https://github.com/microsoft/vscode-java-debug/pull/748).
 - Contribution from [bhoppeadoy](https://github.com/bhoppeadoy): Add user setting `java.debug.settings.numericPrecision` to set the numeric precision when formatting doubles in "Variables" or "Debug Console" viewlet. [#745](https://github.com/microsoft/vscode-java-debug/issues/745).
