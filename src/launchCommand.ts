@@ -15,15 +15,15 @@ enum shortenApproach {
 }
 
 export async function detectLaunchCommandStyle(config: vscode.DebugConfiguration): Promise<shortenApproach> {
-    const javaHome = await getJavaHome();
-    const javaVersion = await checkJavaVersion(javaHome);
+    const javaExec: string = config.javaExec || path.join(await getJavaHome(), "bin", "java");
+    const javaVersion = await checkJavaVersion(javaExec);
     const recommendedShortenApproach = javaVersion <= 8 ? shortenApproach.jarmanifest : shortenApproach.argfile;
     return (await shouldShortenIfNecessary(config)) ? recommendedShortenApproach : shortenApproach.none;
 }
 
-function checkJavaVersion(javaHome: string): Promise<number> {
+function checkJavaVersion(javaExec: string): Promise<number> {
     return new Promise((resolve, reject) => {
-        cp.execFile(javaHome + "/bin/java", ["-version"], {}, (error, stdout, stderr) => {
+        cp.execFile(javaExec, ["-version"], {}, (error, stdout, stderr) => {
             const javaVersion = parseMajorVersion(stderr);
             resolve(javaVersion);
         });
