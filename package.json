@@ -46,7 +46,7 @@
       }
     ],
     "javaExtensions": [
-      "./server/com.microsoft.java.debug.plugin-0.25.0.jar"
+      "./server/com.microsoft.java.debug.plugin-0.25.1.jar"
     ],
     "commands": [
       {
