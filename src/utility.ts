@@ -160,6 +160,10 @@ export function getJavaExtensionAPI(): Thenable<any> {
     return extension.activate();
 }
 
+export function getJavaExtension(): vscode.Extension<any> {
+    return vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+}
+
 export function isJavaExtEnabled(): boolean {
     const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     return !!javaExt;
