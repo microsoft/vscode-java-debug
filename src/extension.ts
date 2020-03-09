@@ -178,7 +178,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         // Wait for Java Language Support extension being activated.
         await utility.getJavaExtensionAPI();
     } catch (ex) {
-        if (ex instanceof utility.JavaExtensionNotActivatedError) {
+        if (ex instanceof utility.JavaExtensionNotEnabledError) {
             utility.guideToInstallJavaExtension();
             return;
         }

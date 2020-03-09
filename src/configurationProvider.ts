@@ -83,7 +83,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     });
                     resolve([defaultLaunchConfig, ...launchConfigs]);
                 } catch (ex) {
-                    if (ex instanceof utility.JavaExtensionNotActivatedError) {
+                    if (ex instanceof utility.JavaExtensionNotEnabledError) {
                         utility.guideToInstallJavaExtension();
                     }
                     p.report({ message: `failed to generate configuration. ${ex}` });
@@ -232,7 +232,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 throw new Error("Failed to start debug server.");
             }
         } catch (ex) {
-            if (ex instanceof utility.JavaExtensionNotActivatedError) {
+            if (ex instanceof utility.JavaExtensionNotEnabledError) {
                 utility.guideToInstallJavaExtension();
                 return undefined;
             }

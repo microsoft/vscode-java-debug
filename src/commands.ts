@@ -46,7 +46,7 @@ export async function executeJavaExtensionCommand(commandName: string, ...rest) 
     // TODO: need to handle error and trace telemetry
     const javaExtension = utility.getJavaExtension();
     if (!javaExtension) {
-        throw new utility.JavaExtensionNotActivatedError(`Cannot execute command ${commandName}, VS Code Java Extension is not enabled.`);
+        throw new utility.JavaExtensionNotEnabledError(`Cannot execute command ${commandName}, VS Code Java Extension is not enabled.`);
     }
     if (!javaExtension.isActive) {
         await javaExtension.activate();

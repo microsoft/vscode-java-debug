@@ -21,7 +21,7 @@ export class UserError extends Error {
     }
 }
 
-export class JavaExtensionNotActivatedError extends Error {
+export class JavaExtensionNotEnabledError extends Error {
     constructor(message) {
         super(message);
         setUserError(this);
@@ -154,7 +154,7 @@ export async function getJavaHome(): Promise<string> {
 export function getJavaExtensionAPI(): Thenable<any> {
     const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     if (!extension) {
-        throw new JavaExtensionNotActivatedError("VS Code Java Extension is not enabled.");
+        throw new JavaExtensionNotEnabledError("VS Code Java Extension is not enabled.");
     }
 
     return extension.activate();
