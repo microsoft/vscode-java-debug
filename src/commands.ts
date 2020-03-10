@@ -39,17 +39,17 @@ export const JAVA_IS_ON_CLASSPATH = "vscode.java.isOnClasspath";
 export const JAVA_RESOLVE_JAVAEXECUTABLE = "vscode.java.resolveJavaExecutable";
 
 export function executeJavaLanguageServerCommand(...rest) {
-    // TODO: need to handle error and trace telemetry
-    if (!utility.isJavaExtEnabled()) {
-        throw new utility.JavaExtensionNotActivatedError(
-            `Cannot execute command ${JAVA_EXECUTE_WORKSPACE_COMMAND}, VS Code Java Extension is not enabled.`);
-    }
-    return vscode.commands.executeCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
+    return executeJavaExtensionCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }
 
-export function executeJavaExtensionCommand(commandName: string, ...rest) {
-    if (!utility.isJavaExtEnabled()) {
-        throw new utility.JavaExtensionNotActivatedError(`Cannot execute command ${commandName}, VS Code Java Extension is not enabled.`);
+export async function executeJavaExtensionCommand(commandName: string, ...rest) {
+    // TODO: need to handle error and trace telemetry
+    const javaExtension = utility.getJavaExtension();
+    if (!javaExtension) {
+        throw new utility.JavaExtensionNotEnabledError(`Cannot execute command ${commandName}, VS Code Java Extension is not enabled.`);
+    }
+    if (!javaExtension.isActive) {
+        await javaExtension.activate();
     }
     return vscode.commands.executeCommand(commandName, ...rest);
 }

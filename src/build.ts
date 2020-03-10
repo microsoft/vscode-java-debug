@@ -32,7 +32,7 @@ export async function buildWorkspace(): Promise<boolean> {
 }
 
 async function handleBuildFailure(operationId: string, err: any): Promise<boolean> {
-    if (err instanceof utility.JavaExtensionNotActivatedError) {
+    if (err instanceof utility.JavaExtensionNotEnabledError) {
         utility.guideToInstallJavaExtension();
         return false;
     }
