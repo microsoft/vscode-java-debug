@@ -17,9 +17,9 @@ import * as utility from "./utility";
 import { VariableResolver } from "./variableResolver";
 
 const platformNameMappings = {
-    "win32": "windows",
-    "linux": "linux",
-    "darwin": "osx"
+    win32: "windows",
+    linux: "linux",
+    darwin: "osx",
 };
 const platformName = platformNameMappings[process.platform];
 
