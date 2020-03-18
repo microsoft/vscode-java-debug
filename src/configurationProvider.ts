@@ -16,6 +16,13 @@ import { logger, Type } from "./logger";
 import * as utility from "./utility";
 import { VariableResolver } from "./variableResolver";
 
+const platformNameMappings = {
+    "win32": "windows",
+    "linux": "linux",
+    "darwin": "osx"
+};
+const platformName = platformNameMappings[process.platform];
+
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
     private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
@@ -46,6 +53,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         vscode.ProviderResult<vscode.DebugConfiguration> {
         const resolveDebugConfigurationHandler = instrumentOperation("resolveDebugConfiguration", (operationId: string) => {
             try {
+                // See https://github.com/microsoft/vscode-java-debug/issues/778
+                // Merge the platform specific properties to the global config to simplify the subsequent resolving logic.
+                this.mergePlatformProperties(folder, config);
                 this.resolveVariables(folder, config);
                 return this.heuristicallyResolveDebugConfiguration(folder, config);
             } catch (ex) {
@@ -91,6 +101,19 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
             });
         });
+    }
+
+    private mergePlatformProperties(folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration) {
+        if (config && platformName && config[platformName]) {
+            try {
+                for (const key of Object.keys(config[platformName])) {
+                    config[key] = config[platformName][key];
+                }
+                config[platformName] = undefined;
+            } catch {
+                // do nothing
+            }
+        }
     }
 
     private resolveVariables(folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration): void {
