@@ -51,6 +51,18 @@ This error indicates your application attempts to reference some classes which a
 3. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
 4. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
+## Program throws UnsupportedClassVersionError
+### Reason:
+The runtime JDK doesn't support the compiled classes. One possible reason is your runtime JDK is the latest JDK and the extension doesn't catch up the support yet. Below is a sample error message.
+```
+java.lang.UnsupportedClassVersionError: Main (class file version 57.65535) was compiled with preview features that are unsupported. This version of the Java Runtime only recognizes preview features for class file version 58.65535
+```
+
+### Try:
+1. Install a lower version JDK and reopen your VS Code workspace.
+2. Click **F1** -> **Java: Force Java compilation** -> **Full** to rebuild the workspace.
+3. If it still doesn't work, then try **F1** -> **Java: Clean the Java language server workspace** to clean the cache.
+
 ## Failed to complete hot code replace:
 ### Reason:
 This error indicates you are doing `Hot Code Replace`. The `Hot Code Replace` feature depends on the underlying JVM implementation. If you get this error, that indicates the new changes cannot be hot replaced by JVM.
