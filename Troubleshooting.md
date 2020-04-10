@@ -56,10 +56,14 @@ Below is a typical error message.
 
 ![image](https://user-images.githubusercontent.com/14052197/78854443-ed47c780-7a53-11ea-8317-d8b097dfba99.png)
 
-The class file version `57.65535` stands for Java 13 preview, where the major version `57` stands for Java 13, the minor version `65535` stands for preview feature. Similarly `58.65535` stands for Java 14 preview. The error says the runtime JDK only recognizes class file versoin `58.65535`. That's because the preview feature is not backward compatible, i.e. JVM 14 doesn't support 13 preview feature. The [openjdk](https://openjdk.java.net/jeps/12) website has claimed the reason that it would be costly for JDK 14 to support preview features from JDK 13 which were changed or dropped in response to feedback.
-
 ### Reason:
-The compiled classes are not compatible with the runtime JDK. One possible reason is your runtime JDK is the latest JDK and the upstream [Language Support for Java](https://marketplace.visualstudio.com/items?itemName=redhat.java) extension doesn't catch up the support yet.
+The compiled classes are not compatible with the runtime JDK.
+
+The class file version `57.65535` stands for Java 13 preview, where the major version `57` stands for Java 13, the minor version `65535` stands for preview feature. Similarly `58.65535` stands for Java 14 preview.
+
+The error says the compiled class is `57.65535`, but the runtime JDK only recognizes class file versoin `58.65535`. That's because the preview feature is not backward compatible, i.e. JVM 14 doesn't support 13 preview feature. The [openjdk](https://openjdk.java.net/jeps/12) website has claimed the reason that it would be costly for JDK 14 to support preview features from JDK 13 which were changed or dropped in response to feedback.
+
+One possible root cause for this error is your runtime JDK is the latest JDK but the upstream [Language Support for Java](https://marketplace.visualstudio.com/items?itemName=redhat.java) extension doesn't catch up the support yet.
 
 ### Try:
 1. Try to update [Language Support for Java](https://marketplace.visualstudio.com/items?itemName=redhat.java) to the latest, and then try step 3 to rebuild the workspace.
