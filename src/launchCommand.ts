@@ -30,9 +30,7 @@ export async function validateRuntime(config: vscode.DebugConfiguration) {
             const runtimeVersion = await checkJavaVersion(config.javaExec || path.join(await getJavaHome(), "bin", "java"));
             if (latestSupportedVersion < runtimeVersion) {
                 showWarningMessageWithTroubleshooting({
-                    message: `This extension currently only supports JDK ${latestSupportedVersion} and below, `
-                            + `but your application will be running in JDK ${runtimeVersion}, `
-                            + "it may throw UnsupportedClassVersionError. Please install a lower JDK and try again.",
+                    message: "The compiled classes are not compatible with the runtime JDK. To mitigate the issue, please refer to \"Learn More\".",
                     anchor: UNSUPPORTED_CLASS_VERSION_ERROR,
                 });
             }
