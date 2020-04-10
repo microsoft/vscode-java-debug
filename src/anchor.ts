@@ -7,3 +7,4 @@ export const ATTACH_CONFIG_ERROR = "please-specify-the-host-name-and-the-port-of
 export const EVALUATE_ON_RUNNING_THREAD = "failed-to-evaluate-reason-cannot-evaluate-because-the-thread-is-resumed";
 export const CANNOT_FIND_MAIN_CLASS = "cannot-find-a-class-with-the-main-method";
 export const BUILD_FAILED = "build-failed-do-you-want-to-continue";
+export const UNSUPPORTED_CLASS_VERSION_ERROR = "program-throws-unsupportedclassversionerror";

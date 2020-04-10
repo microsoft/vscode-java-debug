@@ -5,8 +5,9 @@ import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { inferLaunchCommandLength } from "./languageServerPlugin";
-import { getJavaHome } from "./utility";
+import { UNSUPPORTED_CLASS_VERSION_ERROR } from "./anchor";
+import { fetchPlatformSettings, inferLaunchCommandLength } from "./languageServerPlugin";
+import { getJavaHome, showWarningMessageWithTroubleshooting } from "./utility";
 
 enum shortenApproach {
     none = "none",
@@ -21,6 +22,24 @@ export async function detectLaunchCommandStyle(config: vscode.DebugConfiguration
     return (await shouldShortenIfNecessary(config)) ? recommendedShortenApproach : shortenApproach.none;
 }
 
+export async function validateRuntime(config: vscode.DebugConfiguration) {
+    try {
+        const platformSettings = await fetchPlatformSettings();
+        if (platformSettings && platformSettings.latestSupportedJavaVersion) {
+            const latestSupportedVersion = flattenMajorVersion(platformSettings.latestSupportedJavaVersion);
+            const runtimeVersion = await checkJavaVersion(config.javaExec || path.join(await getJavaHome(), "bin", "java"));
+            if (latestSupportedVersion < runtimeVersion) {
+                showWarningMessageWithTroubleshooting({
+                    message: "The compiled classes are not compatible with the runtime JDK. To mitigate the issue, please refer to \"Learn More\".",
+                    anchor: UNSUPPORTED_CLASS_VERSION_ERROR,
+                });
+            }
+        }
+    } catch (err) {
+        // do nothing
+    }
+}
+
 function checkJavaVersion(javaExec: string): Promise<number> {
     return new Promise((resolve, reject) => {
         cp.execFile(javaExec, ["-version"], {}, (error, stdout, stderr) => {
@@ -31,24 +50,29 @@ function checkJavaVersion(javaExec: string): Promise<number> {
 }
 
 function parseMajorVersion(content: string): number {
-    let regexp = /version "(.*)"/g;
-    let match = regexp.exec(content);
+    const regexp = /version "(.*)"/g;
+    const match = regexp.exec(content);
     if (!match) {
         return 0;
     }
-    let version = match[1];
+
+    return flattenMajorVersion(match[1]);
+}
+
+function flattenMajorVersion(version: string): number {
     // Ignore '1.' prefix for legacy Java versions
     if (version.startsWith("1.")) {
         version = version.substring(2);
     }
 
     // look into the interesting bits now
-    regexp = /\d+/g;
-    match = regexp.exec(version);
+    const regexp = /\d+/g;
+    const match = regexp.exec(version);
     let javaVersion = 0;
     if (match) {
         javaVersion = parseInt(match[0], 10);
     }
+
     return javaVersion;
 }
 

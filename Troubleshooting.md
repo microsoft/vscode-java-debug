@@ -51,6 +51,26 @@ This error indicates your application attempts to reference some classes which a
 3. Run VS Code command *"Java: Force Java compilation"* to force the language server to rebuild the current project.
 4. If the problem persists, it's probably because the language server doesn't load your project correctly. Please reference the [language server troubleshooting](#try) paragraph for more troubleshooting info.
 
+## Program throws UnsupportedClassVersionError
+Below is a typical error message.
+
+![image](https://user-images.githubusercontent.com/14052197/78854443-ed47c780-7a53-11ea-8317-d8b097dfba99.png)
+
+### Reason:
+The compiled classes are not compatible with the runtime JDK.
+
+The class file version `57.65535` stands for Java 13 preview, where the major version `57` stands for Java 13, the minor version `65535` stands for preview feature. Similarly `58.65535` stands for Java 14 preview.
+
+The error says the compiled class is `57.65535`, but the runtime JDK only recognizes class file versoin `58.65535`. That's because the preview feature is not backward compatible, i.e. JVM 14 doesn't support 13 preview feature. The [openjdk](https://openjdk.java.net/jeps/12) website has claimed the reason that it would be costly for JDK 14 to support preview features from JDK 13 which were changed or dropped in response to feedback.
+
+One possible root cause for this error is your runtime JDK is the latest JDK but the upstream [Language Support for Java](https://marketplace.visualstudio.com/items?itemName=redhat.java) extension doesn't catch up the support yet.
+
+### Try:
+1. Try to update [Language Support for Java](https://marketplace.visualstudio.com/items?itemName=redhat.java) to the latest, and then try step 3 to rebuild the workspace.
+2. If it doesn't work, then try to install an older JDK version, set its installation folder to "java.home" user setting in _.vscode/settings.json_ and reopen your VS Code workspace.
+3. Click **F1** -> **Java: Force Java compilation** -> **Full** to rebuild the workspace.
+4. If it still doesn't work, then try **F1** -> **Java: Clean the Java language server workspace** to clean the cache.
+
 ## Failed to complete hot code replace:
 ### Reason:
 This error indicates you are doing `Hot Code Replace`. The `Hot Code Replace` feature depends on the underlying JVM implementation. If you get this error, that indicates the new changes cannot be hot replaced by JVM.

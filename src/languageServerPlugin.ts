@@ -100,3 +100,7 @@ export async function isOnClasspath(uri: string): Promise<boolean> {
 export function resolveJavaExecutable(mainClass, projectName) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_JAVAEXECUTABLE, mainClass, projectName);
 }
+
+export function fetchPlatformSettings(): any {
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_FETCH_PLATFORM_SETTINGS);
+}

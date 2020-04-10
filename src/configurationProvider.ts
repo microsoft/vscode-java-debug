@@ -11,7 +11,7 @@ import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
-import { detectLaunchCommandStyle } from "./launchCommand";
+import { detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
 import { logger, Type } from "./logger";
 import * as utility from "./utility";
 import { VariableResolver } from "./variableResolver";
@@ -207,6 +207,27 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.javaExec = await lsPlugin.resolveJavaExecutable(config.mainClass, config.projectName);
                 // Add the default launch options to the config.
                 config.cwd = config.cwd || _.get(folder, "uri.fsPath");
+                if (Array.isArray(config.args)) {
+                    config.args = this.concatArgs(config.args);
+                }
+
+                if (Array.isArray(config.vmArgs)) {
+                    config.vmArgs = this.concatArgs(config.vmArgs);
+                }
+
+                // Auto add '--enable-preview' vmArgs if the java project enables COMPILER_PB_ENABLE_PREVIEW_FEATURES flag.
+                if (await lsPlugin.detectPreviewFlag(config.mainClass, config.projectName)) {
+                    config.vmArgs = (config.vmArgs || "") + " --enable-preview";
+                    validateRuntime(config);
+                }
+
+                if (!config.shortenCommandLine || config.shortenCommandLine === "auto") {
+                    config.shortenCommandLine = await detectLaunchCommandStyle(config);
+                }
+
+                if (process.platform === "win32" && config.console !== "internalConsole") {
+                    config.launcherScript = utility.getLauncherScriptPath();
+                }
             } else if (config.request === "attach") {
                 if (!config.hostName || !config.port) {
                     throw new utility.UserError({
@@ -221,27 +242,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     type: Type.USAGEERROR,
                     anchor: anchor.REQUEST_TYPE_NOT_SUPPORTED,
                 });
-            }
-
-            if (Array.isArray(config.args)) {
-                config.args = this.concatArgs(config.args);
-            }
-
-            if (Array.isArray(config.vmArgs)) {
-                config.vmArgs = this.concatArgs(config.vmArgs);
-            }
-
-            // Auto add '--enable-preview' vmArgs if the java project enables COMPILER_PB_ENABLE_PREVIEW_FEATURES flag.
-            if (await lsPlugin.detectPreviewFlag(config.mainClass, config.projectName)) {
-                config.vmArgs = (config.vmArgs || "") + " --enable-preview";
-            }
-
-            if (config.request === "launch" && (!config.shortenCommandLine || config.shortenCommandLine === "auto")) {
-                config.shortenCommandLine = await detectLaunchCommandStyle(config);
-            }
-
-            if (process.platform === "win32" && config.request === "launch" && config.console !== "internalConsole") {
-                config.launcherScript = utility.getLauncherScriptPath();
             }
 
             const debugServerPort = await lsPlugin.startDebugSession();
