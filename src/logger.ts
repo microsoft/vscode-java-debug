@@ -28,11 +28,7 @@ class Logger implements vscode.Disposable {
                 aiKey: extensionPackage.aiKey,
             };
             if (packageInfo.aiKey) {
-                this.reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
-                if (firstParty) {
-                    // @ts-ignore
-                    this.reporter.firstParty = firstParty;
-                }
+                this.reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey, firstParty);
             }
         }
     }
