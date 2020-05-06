@@ -15,7 +15,7 @@ export enum Type {
 class Logger implements vscode.Disposable {
     private reporter: TelemetryReporter = null;
 
-    public initialize(context: vscode.ExtensionContext): void {
+    public initialize(context: vscode.ExtensionContext, firstParty?: boolean): void {
         if (this.reporter) {
             return;
         }
@@ -29,6 +29,10 @@ class Logger implements vscode.Disposable {
             };
             if (packageInfo.aiKey) {
                 this.reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
+                if (firstParty) {
+                    // @ts-ignore
+                    this.reporter.firstParty = firstParty;
+                }
             }
         }
     }
@@ -38,7 +42,11 @@ class Logger implements vscode.Disposable {
             return;
         }
 
-        this.reporter.sendTelemetryEvent(type, properties, measures);
+        if (type === Type.EXCEPTION || type === Type.USAGEERROR) {
+            this.reporter.sendTelemetryErrorEvent(type, properties, measures);
+        } else {
+            this.reporter.sendTelemetryEvent(type, properties, measures);
+        }
     }
 
     public logMessage(type: Type, message: string): void {

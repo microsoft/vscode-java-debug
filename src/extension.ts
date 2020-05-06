@@ -17,12 +17,14 @@ import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
 export async function activate(context: vscode.ExtensionContext) {
-    await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
+    await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
+        firstParty: true,
+    });
     await instrumentOperation("activation", initializeExtension)(context);
 }
 
 function initializeExtension(operationId: string, context: vscode.ExtensionContext) {
-    logger.initialize(context);
+    logger.initialize(context, true);
     logger.log(Type.ACTIVATEEXTENSION, {}); // TODO: Activation belongs to usage data, remove this line.
     logger.log(Type.USAGEDATA, {
         description: "activateExtension",
