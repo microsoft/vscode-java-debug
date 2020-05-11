@@ -333,10 +333,6 @@
             }
           },
           "attach": {
-            "required": [
-              "hostName",
-              "port"
-            ],
             "properties": {
               "hostName": {
                 "type": "string",
@@ -346,6 +342,21 @@
               "port": {
                 "type": "number",
                 "description": "%java.debugger.attach.port.description%"
+              },
+              "processId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                        "${command:PickJavaProcess}"
+                    ],
+                    "description": "%java.debugger.attach.processPicker.description%",
+                    "default": "${command:pickJavaProcess}"
+                  },
+                  {
+                    "type": "integer",
+                    "description": "%java.debugger.attach.processId.description%"
+                  }
+                ]
               },
               "timeout": {
                 "type": "number",
@@ -469,6 +480,16 @@
               "request": "attach",
               "hostName": "localhost",
               "port": "<debug port of the debuggee>"
+            }
+          },
+          {
+            "label": "Java: Attach to Process",
+            "description": "%java.debugger.snippet.attachProcess.description%",
+            "body": {
+              "type": "java",
+              "request": "attach",
+              "name": "Attach by Process ID",
+              "processId": "^\"\\${command:PickJavaProcess}\""
             }
           },
           {

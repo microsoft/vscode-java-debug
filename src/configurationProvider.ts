@@ -13,6 +13,7 @@ import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
 import { detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
 import { logger, Type } from "./logger";
+import { resolveProcessId } from "./processPicker";
 import * as utility from "./utility";
 import { VariableResolver } from "./variableResolver";
 
@@ -229,7 +230,16 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.launcherScript = utility.getLauncherScriptPath();
                 }
             } else if (config.request === "attach") {
-                if (!config.hostName || !config.port) {
+                if (config.processId !== undefined) {
+                    try {
+                        if (!(await resolveProcessId(config))) {
+                            return undefined;
+                        }
+                    } catch (error) {
+                        vscode.window.showErrorMessage(String(error));
+                        return undefined;
+                    }
+                } else if (!config.hostName || !config.port) {
                     throw new utility.UserError({
                         message: "Please specify the host name and the port of the remote debuggee in the launch.json.",
                         type: Type.USAGEERROR,
