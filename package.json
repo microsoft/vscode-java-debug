@@ -599,7 +599,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.15",
-    "vscode-extension-telemetry": "^0.1.4",
-    "vscode-extension-telemetry-wrapper": "^0.7.1"
+    "vscode-extension-telemetry": "^0.1.5",
+    "vscode-extension-telemetry-wrapper": "^0.7.2"
   }
 }
