@@ -4,6 +4,22 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.26.0 - 2020-05-13
+### Added
+- Support picking a Java process to auto attach. [#759](https://github.com/microsoft/vscode-java-debug/issues/759).
+
+### Fixed
+- When running the gradle application, the test scope is not filtered out. [#715](https://github.com/microsoft/vscode-java-debug/issues/715).
+- Conditional breakpoint fails in the multi thread scenario. [#782](https://github.com/microsoft/vscode-java-debug/issues/782).
+- Show a warning message about the Unsupported JDK error. [#789](https://github.com/microsoft/vscode-java-debug/issues/789).
+- vmArgs in launch.json does not accept an array of strings. [#778](https://github.com/microsoft/vscode-java-debug/issues/778).
+- Activate the extension before execute Java extension commands. [#775](https://github.com/microsoft/vscode-java-debug/pull/775).
+
+### Changed
+- Contribution from [Mathias Fußenegger](https://github.com/mfussenegger): Extend readme with basic low level usage instructions. [java-debug#327](https://github.com/microsoft/java-debug/pull/327).
+
+Thank [Mathias Fußenegger](https://github.com/mfussenegger) for contribution.
+
 ## 0.25.1 - 2020-03-06
 ### Fixed
 - Fix the Error: Could not find or load main class @x.y.z.argfile. [#769](https://github.com/microsoft/vscode-java-debug/issues/769).
