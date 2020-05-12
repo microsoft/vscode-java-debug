@@ -347,7 +347,7 @@
                 "anyOf": [
                   {
                     "enum": [
-                        "${command:PickJavaProcess}"
+                      "${command:PickJavaProcess}"
                     ],
                     "description": "%java.debugger.attach.processPicker.description%",
                     "default": "${command:pickJavaProcess}"
@@ -620,7 +620,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.15",
-    "vscode-extension-telemetry": "^0.1.5",
-    "vscode-extension-telemetry-wrapper": "^0.7.2"
+    "vscode-extension-telemetry": "^0.1.6",
+    "vscode-extension-telemetry-wrapper": "^0.8.0"
   }
 }

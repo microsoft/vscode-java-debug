@@ -12,6 +12,8 @@ export enum Type {
     ACTIVATEEXTENSION = "activateExtension", // TODO: Activation belongs to usage data, remove this category.
 }
 
+const SENSITIVE_PROPS = ["message", "stacktrace", "detailmessage"];
+
 class Logger implements vscode.Disposable {
     private reporter: TelemetryReporter = null;
 
@@ -39,7 +41,7 @@ class Logger implements vscode.Disposable {
         }
 
         if (type === Type.EXCEPTION || type === Type.USAGEERROR) {
-            this.reporter.sendTelemetryErrorEvent(type, properties, measures);
+            this.reporter.sendTelemetryErrorEvent(type, properties, measures, SENSITIVE_PROPS);
         } else {
             this.reporter.sendTelemetryEvent(type, properties, measures);
         }
