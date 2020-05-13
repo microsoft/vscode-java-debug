@@ -350,7 +350,7 @@
                       "${command:PickJavaProcess}"
                     ],
                     "description": "%java.debugger.attach.processPicker.description%",
-                    "default": "${command:pickJavaProcess}"
+                    "default": "${command:PickJavaProcess}"
                   },
                   {
                     "type": "integer",
