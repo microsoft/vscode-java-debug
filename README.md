@@ -79,7 +79,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `hostName` (required, unless using `processId`) - The host name or IP address of remote debuggee.
 - `port` (required, unless using `processId`) - The debug port of remote debuggee.
 - `processId` - Use process picker to select a process to attach, or Process ID as integer.
-  - `${command:pickJavaProcess}` - Use process picker to select a process to attach.
+  - `${command:PickJavaProcess}` - Use process picker to select a process to attach.
   - an integer pid - Attach to the specified local process.
 - `timeout` - Timeout value before reconnecting, in milliseconds (default to 30000ms).
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.

@@ -236,7 +236,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                             return undefined;
                         }
                     } catch (error) {
-                        vscode.window.showErrorMessage(String(error));
+                        vscode.window.showErrorMessage(error.message ? error.message : String(error));
                         return undefined;
                     }
                 } else if (!config.hostName || !config.port) {
