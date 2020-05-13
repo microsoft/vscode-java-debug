@@ -82,8 +82,8 @@ async function pickJavaProcess(): Promise<IJavaProcess> {
     }
 
     if (!javaProcesses.length) {
-        throw new Error("Process picker: No debuggable Java process was found. Please make sure turn on debug mode for "
-            + "your application using vmArgs like '-agentlib:jdwp=transport=dt_socket,server=y,address=5005'.");
+        throw new Error("Process picker: No debuggable Java process was found. Please make sure turn on debug "
+            + "mode for your application using vmArgs like '-agentlib:jdwp=transport=dt_socket,server=y,address=5005'.");
     }
 
     const items = javaProcesses.map((process) => {
