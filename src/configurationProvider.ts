@@ -11,7 +11,7 @@ import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
-import { detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
+import { addMoreHelpfulVMArgs, detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
 import { logger, Type } from "./logger";
 import { resolveProcessId } from "./processPicker";
 import * as utility from "./utility";
@@ -221,6 +221,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.vmArgs = (config.vmArgs || "") + " --enable-preview";
                     validateRuntime(config);
                 }
+
+                // Add more helpful vmArgs.
+                await addMoreHelpfulVMArgs(config);
 
                 if (!config.shortenCommandLine || config.shortenCommandLine === "auto") {
                     config.shortenCommandLine = await detectLaunchCommandStyle(config);
