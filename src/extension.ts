@@ -14,6 +14,7 @@ import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, Y
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
+import { pickJavaProcess } from "./processPicker";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
@@ -37,6 +38,17 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("java", new JavaDebugAdapterDescriptorFactory()));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("JavaDebug.SpecifyProgramArgs", async () => {
         return specifyProgramArguments(context);
+    }));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("JavaDebug.PickJavaProcess", async () => {
+        let javaProcess;
+        try {
+            javaProcess = await pickJavaProcess();
+        } catch (error) {
+            vscode.window.showErrorMessage(error.message ? error.message : String(error));
+        }
+
+        // tslint:disable-next-line
+        return javaProcess ? String(javaProcess.pid) : "${command:PickJavaProcess}";
     }));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", applyHCR));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.runJavaFile", async (uri: vscode.Uri) => {
