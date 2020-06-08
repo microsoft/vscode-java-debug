@@ -13,9 +13,8 @@ import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
 import { addMoreHelpfulVMArgs, detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
 import { logger, Type } from "./logger";
-import { resolveProcessId } from "./processPicker";
+import { resolveJavaProcess } from "./processPicker";
 import * as utility from "./utility";
-import { VariableResolver } from "./variableResolver";
 
 const platformNameMappings = {
     win32: "windows",
@@ -27,9 +26,7 @@ const platformName = platformNameMappings[process.platform];
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
     private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
-    private resolver: VariableResolver;
     constructor() {
-        this.resolver = new VariableResolver();
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (vscode.debug.activeDebugSession) {
                 this.isUserSettingsDirty = false;
@@ -52,13 +49,27 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     // Try to add all missing attributes to the debug configuration being launched.
     public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
+        // If no debug configuration is provided, then generate one in memory.
+        if (this.isEmptyConfig(config)) {
+            config.type = "java";
+            config.name = "Java Debug";
+            config.request = "launch";
+        }
+
+        return config;
+    }
+
+    // Try to add all missing attributes to the debug configuration being launched.
+    public resolveDebugConfigurationWithSubstitutedVariables(
+        folder: vscode.WorkspaceFolder | undefined,
+        config: vscode.DebugConfiguration,
+        token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
         const resolveDebugConfigurationHandler = instrumentOperation("resolveDebugConfiguration", (operationId: string) => {
             try {
                 // See https://github.com/microsoft/vscode-java-debug/issues/778
                 // Merge the platform specific properties to the global config to simplify the subsequent resolving logic.
                 this.mergePlatformProperties(folder, config);
-                this.resolveVariables(folder, config);
-                return this.heuristicallyResolveDebugConfiguration(folder, config);
+                return this.resolveAndValidateDebugConfiguration(folder, config);
             } catch (ex) {
                 utility.showErrorMessage({
                     message: String((ex && ex.message) || ex),
@@ -117,26 +128,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private resolveVariables(folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration): void {
-        // all the properties whose values are string or array of string
-        const keys = ["mainClass", "args", "vmArgs", "modulePaths", "classPaths", "projectName",
-            "env", "sourcePaths", "encoding", "cwd", "hostName"];
-        if (!config) {
-            return;
-        }
-        for (const key of keys) {
-            if (config.hasOwnProperty(key)) {
-                const value = config[key];
-                if (_.isString(value)) {
-                    config[key] = this.resolver.resolveString(folder ? folder.uri : undefined, value);
-                } else if (_.isArray(value)) {
-                    config[key] = _.map(value, (item) =>
-                        _.isString(item) ? this.resolver.resolveString(folder ? folder.uri : undefined, item) : item);
-                }
-            }
-        }
-    }
-
     private constructLaunchConfigName(mainClass: string, projectName: string, cache: {}) {
         const prefix = "Debug (Launch)-";
         let name = prefix + mainClass.substr(mainClass.lastIndexOf(".") + 1);
@@ -152,7 +143,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private async heuristicallyResolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
+    private async resolveAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
         try {
             if (this.isUserSettingsDirty) {
                 this.isUserSettingsDirty = false;
@@ -233,18 +224,35 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.launcherScript = utility.getLauncherScriptPath();
                 }
             } else if (config.request === "attach") {
-                if (config.processId !== undefined) {
-                    try {
-                        if (!(await resolveProcessId(config))) {
-                            return undefined;
-                        }
-                    } catch (error) {
-                        vscode.window.showErrorMessage(error.message ? error.message : String(error));
+                if (config.hostName && config.port) {
+                    config.processId = undefined;
+                    // Continue if the hostName and port are configured.
+                } else if (config.processId !== undefined) {
+                    // tslint:disable-next-line
+                    if (config.processId === "${command:PickJavaProcess}") {
                         return undefined;
                     }
-                } else if (!config.hostName || !config.port) {
+
+                    const pid: number = Number(config.processId);
+                    if (Number.isNaN(pid)) {
+                        vscode.window.showErrorMessage(`The processId config '${config.processId}' is not a valid process id.`);
+                        return undefined;
+                    }
+
+                    const javaProcess = await resolveJavaProcess(pid);
+                    if (!javaProcess) {
+                        vscode.window.showErrorMessage(`Attach to process: pid '${config.processId}' is not a debuggable Java process. `
+                            + `Please make sure the process has turned on debug mode using vmArgs like `
+                            + `'-agentlib:jdwp=transport=dt_socket,server=y,address=5005.'`);
+                        return undefined;
+                    }
+
+                    config.processId = undefined;
+                    config.hostName = javaProcess.hostName;
+                    config.port = javaProcess.debugPort;
+                } else {
                     throw new utility.UserError({
-                        message: "Please specify the host name and the port of the remote debuggee in the launch.json.",
+                        message: "Please specify the hostName/port directly, or provide the processId of the remote debuggee in the launch.json.",
                         type: Type.USAGEERROR,
                         anchor: anchor.ATTACH_CONFIG_ERROR,
                     });

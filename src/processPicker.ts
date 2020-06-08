@@ -16,30 +16,6 @@ interface IJavaProcess {
     debugPort: number;
 }
 
-export async function resolveProcessId(config: DebugConfiguration): Promise<boolean> {
-    let javaProcess;
-    const pid: number = Number(config.processId);
-    // tslint:disable-next-line
-    if (!config.processId || Number.isNaN(pid)) {
-        javaProcess = await pickJavaProcess();
-    } else {
-        javaProcess = await resolveJavaProcess(pid);
-        if (!javaProcess) {
-            throw new Error(`Attach to process: pid '${config.processId}' is not a debuggable Java process. `
-                + `Please make sure the process has turned on debug mode using vmArgs like `
-                + `'-agentlib:jdwp=transport=dt_socket,server=y,address=5005.'`);
-        }
-    }
-
-    if (javaProcess) {
-        config.processId = undefined;
-        config.hostName = javaProcess.hostName;
-        config.port = javaProcess.debugPort;
-    }
-
-    return !!javaProcess;
-}
-
 function convertToJavaProcess(pid: number, command: string, args: string): IJavaProcess | undefined {
     if (process.platform === "win32" && command.indexOf("\\??\\") === 0) {
         // remove leading device specifier
@@ -68,7 +44,7 @@ function convertToJavaProcess(pid: number, command: string, args: string): IJava
     }
 }
 
-async function pickJavaProcess(): Promise<IJavaProcess> {
+export async function pickJavaProcess(): Promise<IJavaProcess> {
     const javaProcesses: IJavaProcess[] = [];
     try {
         await getProcesses((pid: number, ppid: number, command: string, args: string, date: number) => {
@@ -82,7 +58,7 @@ async function pickJavaProcess(): Promise<IJavaProcess> {
     }
 
     if (!javaProcesses.length) {
-        throw new Error("Process picker: No debuggable Java process was found. Please make sure to use vmArgs like "
+        throw new Error("Process picker: Cannot find any debuggable Java process. Please make sure to use vmArgs like "
             + "'-agentlib:jdwp=transport=dt_socket,server=y,address=5005' to turn on debug mode when you start your "
             + "program.");
     }
@@ -105,7 +81,7 @@ async function pickJavaProcess(): Promise<IJavaProcess> {
     }
 }
 
-async function resolveJavaProcess(pid: number): Promise<IJavaProcess | undefined> {
+export async function resolveJavaProcess(pid: number): Promise<IJavaProcess | undefined> {
     const processTree = await getProcessTree(pid);
     if (!processTree || processTree.pid !== pid) {
         return undefined;
