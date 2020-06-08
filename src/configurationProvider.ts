@@ -254,16 +254,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 });
             }
 
-            const debugServerPort = await lsPlugin.startDebugSession();
-            if (debugServerPort) {
-                config.debugServer = debugServerPort;
-                return config;
-            } else {
-                // Information for diagnostic:
-                // tslint:disable-next-line:no-console
-                console.log("Cannot find a port for debugging session");
-                throw new Error("Failed to start debug server.");
-            }
+            return config;
         } catch (ex) {
             if (ex instanceof utility.JavaExtensionNotEnabledError) {
                 utility.guideToInstallJavaExtension();
