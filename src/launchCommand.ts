@@ -15,6 +15,8 @@ enum shortenApproach {
     argfile = "argfile",
 }
 
+const HELPFUL_NPE_VMARGS = "-XX:+ShowCodeDetailsInExceptionMessages";
+
 export async function detectLaunchCommandStyle(config: vscode.DebugConfiguration): Promise<shortenApproach> {
     const javaExec: string = config.javaExec || path.join(await getJavaHome(), "bin", "java");
     const javaVersion = await checkJavaVersion(javaExec);
@@ -37,6 +39,23 @@ export async function validateRuntime(config: vscode.DebugConfiguration) {
         }
     } catch (err) {
         // do nothing
+    }
+}
+
+export async function addMoreHelpfulVMArgs(config: vscode.DebugConfiguration) {
+    try {
+        const javaExec = config.javaExec || path.join(await getJavaHome(), "bin", "java");
+        const version = await checkJavaVersion(javaExec);
+        if (version >= 14) {
+            // JEP-358: https://openjdk.java.net/jeps/358
+            if (config.vmArgs && config.vmArgs.indexOf(HELPFUL_NPE_VMARGS) >= 0) {
+                return;
+            }
+
+            config.vmArgs = (config.vmArgs || "") + " " + HELPFUL_NPE_VMARGS;
+        }
+    } catch (error) {
+        // do nothing.
     }
 }
 
