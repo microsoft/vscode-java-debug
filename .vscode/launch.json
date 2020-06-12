@@ -11,7 +11,10 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/out/src/**/*.js" ],
-            "preLaunchTask": "npm: watch"
+            "preLaunchTask": "npm: watch",
+            "env": {
+              "DEBUG_VSCODE_JAVA":"true"
+            }
         },
         {
             "name": "Extension Tests",

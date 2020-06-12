@@ -287,33 +287,45 @@
                 "type": "object",
                 "description": "%java.debugger.launch.stepFilters.description%",
                 "default": {
-                  "classNameFilters": [
-                    "java.*",
-                    "javax.*",
-                    "com.sun.*",
-                    "sun.*",
-                    "sunw.*",
-                    "org.omg.*"
+                  "skipClasses": [
+                    "$JDK",
+                    "junt.*",
+                    "java.lang.ClassLoader"
                   ],
                   "skipSynthetics": false,
                   "skipStaticInitializers": false,
                   "skipConstructors": false
                 },
                 "properties": {
-                  "classNameFilters": {
-                    "type": "array",
-                    "description": "%java.debugger.launch.classNameFilters.description%",
-                    "item": {
-                      "type": "string"
-                    },
-                    "default": [
-                      "java.*",
-                      "javax.*",
-                      "com.sun.*",
-                      "sun.*",
-                      "sunw.*",
-                      "org.omg.*"
-                    ]
+                  "skipClasses": {
+                    "skipClasses": {
+                      "type": "array",
+                      "description": "%java.debugger.launch.skipClasses.description%",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "$JDK",
+                              "$Libraries",
+                              "java.lang.ClassLoader",
+                              ""
+                            ],
+                            "enumDescriptions": [
+                              "%java.debugger.launch.skipClasses.skipJDK%",
+                              "%java.debugger.launch.skipClasses.skipLibraries%",
+                              "%java.debugger.launch.skipClasses.skipClassLoader%",
+                              "%java.debugger.launch.skipClasses.skipClassPattern%"
+                            ]
+                          },
+                          "string"
+                        ]
+                      },
+                      "default": [
+                        "$JDK",
+                        "junt.*",
+                        "java.lang.ClassLoader"
+                      ]
+                    }
                   },
                   "skipSynthetics": {
                     "type": "boolean",
@@ -382,32 +394,42 @@
                 "type": "object",
                 "description": "%java.debugger.launch.stepFilters.description%",
                 "default": {
-                  "classNameFilters": [
-                    "java.*",
-                    "javax.*",
-                    "com.sun.*",
-                    "sun.*",
-                    "sunw.*",
-                    "org.omg.*"
+                  "skipClasses": [
+                    "$JDK",
+                    "junt.*",
+                    "java.lang.ClassLoader"
                   ],
                   "skipSynthetics": false,
                   "skipStaticInitializers": false,
                   "skipConstructors": false
                 },
                 "properties": {
-                  "classNameFilters": {
+                  "skipClasses": {
                     "type": "array",
-                    "description": "%java.debugger.launch.classNameFilters.description%",
-                    "item": {
-                      "type": "string"
+                    "description": "%java.debugger.launch.skipClasses.description%",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "$JDK",
+                            "$Libraries",
+                            "java.lang.ClassLoader",
+                            ""
+                          ],
+                          "enumDescriptions": [
+                            "%java.debugger.launch.skipClasses.skipJDK%",
+                            "%java.debugger.launch.skipClasses.skipLibraries%",
+                            "%java.debugger.launch.skipClasses.skipClassLoader%",
+                            "%java.debugger.launch.skipClasses.skipClassPattern%"
+                          ]
+                        },
+                        "string"
+                      ]
                     },
                     "default": [
-                      "java.*",
-                      "javax.*",
-                      "com.sun.*",
-                      "sun.*",
-                      "sunw.*",
-                      "org.omg.*"
+                      "$JDK",
+                      "junt.*",
+                      "java.lang.ClassLoader"
                     ]
                   },
                   "skipSynthetics": {
@@ -592,6 +614,69 @@
           ],
           "description": "%java.debugger.configuration.console%",
           "default": "integratedTerminal"
+        },
+        "java.debug.settings.exceptionBreakpoint.skipClasses": {
+          "type": "array",
+          "description": "%java.debugger.configuration.exceptionBreakpoint.skipClasses%",
+          "items": {
+            "anyOf": [
+              {
+                "enum": [
+                  "$JDK",
+                  "$Libraries",
+                  "java.lang.ClassLoader",
+                  ""
+                ],
+                "enumDescriptions": [
+                  "%java.debugger.launch.skipClasses.skipJDK%",
+                  "%java.debugger.launch.skipClasses.skipLibraries%",
+                  "%java.debugger.launch.skipClasses.skipClassLoader%",
+                  "%java.debugger.launch.skipClasses.skipClassPattern%"
+                ]
+              },
+              "string"
+            ]
+          },
+          "default": []
+        },
+        "java.debug.settings.stepping.skipClasses": {
+          "type": "array",
+          "description": "%java.debugger.launch.skipClasses.description%",
+          "items": {
+            "anyOf": [
+              {
+                "enum": [
+                  "$JDK",
+                  "$Libraries",
+                  "java.lang.ClassLoader",
+                  ""
+                ],
+                "enumDescriptions": [
+                  "%java.debugger.launch.skipClasses.skipJDK%",
+                  "%java.debugger.launch.skipClasses.skipLibraries%",
+                  "%java.debugger.launch.skipClasses.skipClassLoader%",
+                  "%java.debugger.launch.skipClasses.skipClassPattern%"
+                ]
+              },
+              "string"
+            ]
+          },
+          "default": []
+        },
+        "java.debug.settings.stepping.skipSynthetics": {
+          "type": "boolean",
+          "description": "%java.debugger.launch.skipSynthetics.description%",
+          "default": false
+        },
+        "java.debug.settings.stepping.skipStaticInitializers": {
+          "type": "boolean",
+          "description": "%java.debugger.launch.skipStaticInitializers.description%",
+          "default": false
+        },
+        "java.debug.settings.stepping.skipConstructors": {
+          "type": "boolean",
+          "description": "%java.debugger.launch.skipConstructors.description%",
+          "default": false
         }
       }
     }

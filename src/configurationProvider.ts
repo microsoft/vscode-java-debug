@@ -9,6 +9,7 @@ import * as vscode from "vscode";
 import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
+import { populateStepFilters, resolveClassFilters } from "./classFilter";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
 import { addMoreHelpfulVMArgs, detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
@@ -28,11 +29,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
     constructor() {
         vscode.workspace.onDidChangeConfiguration((event) => {
-            if (vscode.debug.activeDebugSession) {
-                this.isUserSettingsDirty = false;
-                return updateDebugSettings();
-            } else {
-                this.isUserSettingsDirty = true;
+            if (event.affectsConfiguration("java.debug")) {
+                if (vscode.debug.activeDebugSession) {
+                    this.isUserSettingsDirty = false;
+                    return updateDebugSettings(event);
+                } else {
+                    this.isUserSettingsDirty = true;
+                }
             }
         });
     }
@@ -207,6 +210,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.vmArgs = this.concatArgs(config.vmArgs);
                 }
 
+                // Populate the class filters to the debug configuration.
+                await populateStepFilters(config);
+
                 // Auto add '--enable-preview' vmArgs if the java project enables COMPILER_PB_ENABLE_PREVIEW_FEATURES flag.
                 if (await lsPlugin.detectPreviewFlag(config.mainClass, config.projectName)) {
                     config.vmArgs = (config.vmArgs || "") + " --enable-preview";
@@ -257,6 +263,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                         anchor: anchor.ATTACH_CONFIG_ERROR,
                     });
                 }
+
+                // Populate the class filters to the debug configuration.
+                await populateStepFilters(config);
             } else {
                 throw new utility.UserError({
                     message: `Request type "${config.request}" is not supported. Only "launch" and "attach" are supported.`,
@@ -512,7 +521,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 }
 
-async function updateDebugSettings() {
+async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
     const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug");
     if (!debugSettingsRoot) {
         return;
@@ -521,9 +530,28 @@ async function updateDebugSettings() {
     const javaHome = await utility.getJavaHome();
     if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
         try {
-            // tslint:disable-next-line:no-console
-            console.log("settings:", await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
-                { ...debugSettingsRoot.settings, logLevel, javaHome })));
+            const stepFilters = {
+                skipClasses: await resolveClassFilters(debugSettingsRoot.settings.stepping.skipClasses),
+                skipSynthetics: debugSettingsRoot.settings.skipSynthetics,
+                skipStaticInitializers: debugSettingsRoot.settings.skipStaticInitializers,
+                skipConstructors: debugSettingsRoot.settings.skipConstructors,
+            };
+            const exceptionFilters = {
+                skipClasses: await resolveClassFilters(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),
+            };
+            const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
+                {
+                    ...debugSettingsRoot.settings,
+                    logLevel,
+                    javaHome,
+                    stepFilters,
+                    exceptionFilters,
+                    exceptionFiltersUpdated: event && event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.skipClasses"),
+                }));
+            if (logLevel === "FINE") {
+                // tslint:disable-next-line:no-console
+                console.log("settings:", settings);
+            }
         } catch (err) {
             // log a warning message and continue, since update settings failure should not block debug session
             // tslint:disable-next-line:no-console

@@ -69,7 +69,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `argfile` - Generate the classpath parameters to a temporary argument file, and launch the program with the command line 'java @argfile [args]'. This value only applies to Java 9 and higher.
   - `auto` - Automatically detect the command line length and determine whether to shorten the command line via an appropriate approach.
 - `stepFilters` - Skip specified classes or methods when stepping.
-  - `classNameFilters` - Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
+  - `classNameFilters` - [**Deprecated** - replaced by `skipClasses`] Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
+  - `skipClasses` - Skip the specified classes when stepping. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
@@ -85,7 +86,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. It is required when the workspace has multiple java projects, otherwise the expression evaluation and conditional breakpoint may not work.
 - `stepFilters` - Skip specified classes or methods when stepping.
-  - `classNameFilters` - Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
+  - `classNameFilters` - [**Deprecated** - replaced by `skipClasses`] Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
+  - `skipClasses` - Skip the specified classes when stepping. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
@@ -110,6 +112,11 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
+- `java.debug.settings.exceptionBreakpoint.skipClasses`: Skip the specified classes when breaking on exception. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
+- `java.debug.settings.stepping.skipClasses`: Skip the specified classes when stepping. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
+- `java.debug.settings.stepping.skipSynthetics`: Skip synthetic methods when stepping.
+- `java.debug.settings.stepping.skipStaticInitializers`: Skip static initializer methods when stepping.
+- `java.debug.settings.stepping.skipConstructors`: Skip constructor methods when stepping.
 
 Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.
 
