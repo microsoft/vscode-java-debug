@@ -9,7 +9,7 @@ import * as vscode from "vscode";
 import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
-import { populateStepFilters, resolveClassFilters } from "./classFilter";
+import { populateStepFilters, substituteFilterVariables } from "./classFilter";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
 import { addMoreHelpfulVMArgs, detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
@@ -531,13 +531,13 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
     if (debugSettingsRoot.settings && Object.keys(debugSettingsRoot.settings).length) {
         try {
             const stepFilters = {
-                skipClasses: await resolveClassFilters(debugSettingsRoot.settings.stepping.skipClasses),
+                skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.stepping.skipClasses),
                 skipSynthetics: debugSettingsRoot.settings.skipSynthetics,
                 skipStaticInitializers: debugSettingsRoot.settings.skipStaticInitializers,
                 skipConstructors: debugSettingsRoot.settings.skipConstructors,
             };
             const exceptionFilters = {
-                skipClasses: await resolveClassFilters(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),
+                skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),
             };
             const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
                 {

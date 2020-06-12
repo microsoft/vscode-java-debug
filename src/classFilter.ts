@@ -9,7 +9,7 @@ export async function populateStepFilters(config: vscode.DebugConfiguration) {
         return;
     }
 
-    const skipClasses = await resolveClassFilters(config.stepFilters.skipClasses);
+    const skipClasses = await substituteFilterVariables(config.stepFilters.skipClasses);
     // Migrate classNameFilters to skipClasses.
     if (Array.isArray(config.stepFilters.classNameFilters)) {
         mergeResult(config.stepFilters.classNameFilters, skipClasses);
@@ -18,7 +18,7 @@ export async function populateStepFilters(config: vscode.DebugConfiguration) {
     config.stepFilters.skipClasses = skipClasses;
 }
 
-export async function resolveClassFilters(skipClasses: string[]): Promise<any> {
+export async function substituteFilterVariables(skipClasses: string[]): Promise<any> {
     if (!skipClasses) {
         return [];
     }
