@@ -31,7 +31,7 @@ export class NotificationBar implements vscode.Disposable {
         this.statusBar.hide();
     }
 
-    dispose() {
+    public dispose() {
         this.statusBar.dispose();
     }
 }
