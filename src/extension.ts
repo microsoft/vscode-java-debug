@@ -19,8 +19,6 @@ import { pickJavaProcess } from "./processPicker";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
-const hcrStatusBar = new NotificationBar();
-
 export async function activate(context: vscode.ExtensionContext) {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
         firstParty: true,
@@ -53,7 +51,11 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
         // tslint:disable-next-line
         return javaProcess ? String(javaProcess.pid) : "${command:PickJavaProcess}";
     }));
-    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", applyHCR));
+    const hcrStatusBar: NotificationBar = new NotificationBar();
+    context.subscriptions.push(hcrStatusBar);
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", async () => {
+        await applyHCR(hcrStatusBar);
+    }));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.runJavaFile", async (uri: vscode.Uri) => {
         await runJavaFile(uri, true);
     }));
@@ -148,7 +150,7 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
     });
 }
 
-async function applyHCR() {
+async function applyHCR(hcrStatusBar: NotificationBar) {
     const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
     if (!debugSession) {
         return;
@@ -196,7 +198,7 @@ async function applyHCR() {
     }
 
     const changed = response.changedClasses.length;
-    hcrStatusBar.show("$(check)" + `${changed} changed classe${changed > 1 ? "s are" : " is"} reloaded!`, 5 * 1000);
+    hcrStatusBar.show("$(check)" + `${changed} changed class${changed > 1 ? "es are" : " is"} reloaded!`, 5 * 1000);
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {

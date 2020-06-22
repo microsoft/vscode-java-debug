@@ -3,7 +3,7 @@
 
 import * as vscode from "vscode";
 
-export class NotificationBar {
+export class NotificationBar implements vscode.Disposable {
     private statusBar: vscode.StatusBarItem;
     private lastUpdateTime: number;
 
@@ -29,5 +29,9 @@ export class NotificationBar {
     public clear() {
         this.statusBar.text = "";
         this.statusBar.hide();
+    }
+
+    dispose() {
+        this.statusBar.dispose();
     }
 }
