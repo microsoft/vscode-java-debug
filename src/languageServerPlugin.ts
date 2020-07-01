@@ -104,3 +104,7 @@ export function resolveJavaExecutable(mainClass, projectName) {
 export function fetchPlatformSettings(): any {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_FETCH_PLATFORM_SETTINGS);
 }
+
+export async function resolveClassFilters(patterns: string[]): Promise<string[]> {
+    return <string[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSFILTERS, ...patterns);
+}
