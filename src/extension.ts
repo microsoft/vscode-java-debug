@@ -9,6 +9,7 @@ import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentO
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
+import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
@@ -50,7 +51,11 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
         // tslint:disable-next-line
         return javaProcess ? String(javaProcess.pid) : "${command:PickJavaProcess}";
     }));
-    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", applyHCR));
+    const hcrStatusBar: NotificationBar = new NotificationBar();
+    context.subscriptions.push(hcrStatusBar);
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", async () => {
+        await applyHCR(hcrStatusBar);
+    }));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.runJavaFile", async (uri: vscode.Uri) => {
         await runJavaFile(uri, true);
     }));
@@ -145,7 +150,7 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
     });
 }
 
-async function applyHCR() {
+async function applyHCR(hcrStatusBar: NotificationBar) {
     const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
     if (!debugSession) {
         return;
@@ -178,14 +183,22 @@ async function applyHCR() {
         }
     }
 
-    return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
-        progress.report({ message: "Applying code changes..." });
+    hcrStatusBar.show("$(sync~spin)Applying code changes...");
+    const response = await debugSession.customRequest("redefineClasses");
+    if (response && response.errorMessage) {
+        // The detailed error message is handled by hotCodeReplace#handleHotCodeReplaceCustomEvent
+        hcrStatusBar.clear();
+        return;
+    }
 
-        const response = await debugSession.customRequest("redefineClasses");
-        if (!response || !response.changedClasses || !response.changedClasses.length) {
-            vscode.window.showWarningMessage("Cannot find any changed classes for hot replace!");
-        }
-    });
+    if (!response || !response.changedClasses || !response.changedClasses.length) {
+        hcrStatusBar.clear();
+        vscode.window.showWarningMessage("Cannot find any changed classes for hot replace!");
+        return;
+    }
+
+    const changed = response.changedClasses.length;
+    hcrStatusBar.show("$(check)" + `${changed} changed class${changed > 1 ? "es are" : " is"} reloaded!`, 5 * 1000);
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
