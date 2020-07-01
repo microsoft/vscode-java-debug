@@ -289,8 +289,7 @@
                 "default": {
                   "skipClasses": [
                     "$JDK",
-                    "junt.*",
-                    "java.lang.ClassLoader"
+                    "junit.*"
                   ],
                   "skipSynthetics": false,
                   "skipStaticInitializers": false,
@@ -298,34 +297,31 @@
                 },
                 "properties": {
                   "skipClasses": {
-                    "skipClasses": {
-                      "type": "array",
-                      "description": "%java.debugger.launch.skipClasses.description%",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "enum": [
-                              "$JDK",
-                              "$Libraries",
-                              "java.lang.ClassLoader",
-                              ""
-                            ],
-                            "enumDescriptions": [
-                              "%java.debugger.launch.skipClasses.skipJDK%",
-                              "%java.debugger.launch.skipClasses.skipLibraries%",
-                              "%java.debugger.launch.skipClasses.skipClassLoader%",
-                              "%java.debugger.launch.skipClasses.skipClassPattern%"
-                            ]
-                          },
-                          "string"
-                        ]
-                      },
-                      "default": [
-                        "$JDK",
-                        "junt.*",
-                        "java.lang.ClassLoader"
+                    "type": "array",
+                    "description": "%java.debugger.launch.skipClasses.description%",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "$JDK",
+                            "$Libraries",
+                            "java.lang.ClassLoader",
+                            ""
+                          ],
+                          "enumDescriptions": [
+                            "%java.debugger.launch.skipClasses.skipJDK%",
+                            "%java.debugger.launch.skipClasses.skipLibraries%",
+                            "%java.debugger.launch.skipClasses.skipClassLoader%",
+                            "%java.debugger.launch.skipClasses.skipClassPattern%"
+                          ]
+                        },
+                        "string"
                       ]
-                    }
+                    },
+                    "default": [
+                      "$JDK",
+                      "junit.*"
+                    ]
                   },
                   "skipSynthetics": {
                     "type": "boolean",
@@ -396,8 +392,7 @@
                 "default": {
                   "skipClasses": [
                     "$JDK",
-                    "junt.*",
-                    "java.lang.ClassLoader"
+                    "junit.*"
                   ],
                   "skipSynthetics": false,
                   "skipStaticInitializers": false,
@@ -428,8 +423,7 @@
                     },
                     "default": [
                       "$JDK",
-                      "junt.*",
-                      "java.lang.ClassLoader"
+                      "junit.*"
                     ]
                   },
                   "skipSynthetics": {

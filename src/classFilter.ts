@@ -26,9 +26,9 @@ export async function substituteFilterVariables(skipClasses: string[]): Promise<
     try {
         // Preprocess skipClasses configurations.
         if (Array.isArray(skipClasses)) {
-            const index = skipClasses.findIndex((filter) => filter === "$JDK" || filter === "$Libraries");
-            return index >= 0 ? await resolveClassFilters(skipClasses) : skipClasses;
-        } else if (skipClasses) {
+            const hasReservedName = skipClasses.some((filter) => filter === "$JDK" || filter === "$Libraries");
+            return hasReservedName ? await resolveClassFilters(skipClasses) : skipClasses;
+        } else {
             // tslint:disable-next-line:no-console
             console.error("Invalid type for skipClasses config:" + skipClasses);
         }
