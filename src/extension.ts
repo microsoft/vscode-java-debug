@@ -184,7 +184,16 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
     }
 
     hcrStatusBar.show("$(sync~spin)Applying code changes...");
+    const start = new Date().getTime();
     const response = await debugSession.customRequest("redefineClasses");
+    const elapsed = new Date().getTime() - start;
+    const humanVisibleDelay = elapsed < 150 ? 150 : 0;
+    if (humanVisibleDelay) {
+        await new Promise((resolve) => {
+            setTimeout(resolve, humanVisibleDelay);
+        });
+    }
+
     if (response && response.errorMessage) {
         // The detailed error message is handled by hotCodeReplace#handleHotCodeReplaceCustomEvent
         hcrStatusBar.clear();
@@ -198,7 +207,7 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
     }
 
     const changed = response.changedClasses.length;
-    hcrStatusBar.show("$(check)" + `${changed} changed class${changed > 1 ? "es are" : " is"} reloaded!`, 5 * 1000);
+    hcrStatusBar.show("$(check)" + `${changed} changed class${changed > 1 ? "es are" : " is"} reloaded`, 5 * 1000);
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
