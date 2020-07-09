@@ -196,6 +196,10 @@ export async function waitForStandardMode(): Promise<boolean> {
             + "Do you want to switch it to Standard mode now?", "Yes", "Cancel");
         if (answer === "Yes") {
             return vscode.window.withProgress<boolean>({ location: vscode.ProgressLocation.Window }, async (progress) => {
+                if (api.serverMode === ServerMode.STANDARD) {
+                    return true;
+                }
+
                 progress.report({ message: "Switching to Standard mode..." });
                 return new Promise<boolean>((resolve) => {
                     api.onDidServerModeChange((mode: string) => {
