@@ -204,8 +204,11 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
     const alreadyActivated: boolean = utility.isJavaExtActivated();
     try {
-        // Wait for Java Language Support extension being activated.
-        await utility.getJavaExtensionAPI();
+        // Wait for Java Language Support extension being on Standard mode.
+        const isOnStandardMode = await utility.waitForStandardMode();
+        if (!isOnStandardMode) {
+            return;
+        }
     } catch (ex) {
         if (ex instanceof utility.JavaExtensionNotEnabledError) {
             utility.guideToInstallJavaExtension();

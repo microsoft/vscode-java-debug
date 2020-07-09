@@ -19,8 +19,14 @@ const ENABLE_CODE_LENS_VARIABLE = "enableRunDebugCodeLens";
 export function initializeCodeLensProvider(context: vscode.ExtensionContext): void {
     // delay registering codelens provider until the Java extension is activated.
     if (isActivatedByJavaFile() && isJavaExtEnabled()) {
-        getJavaExtensionAPI().then(() => {
-            context.subscriptions.push(new DebugCodeLensContainer());
+        getJavaExtensionAPI().then((api) => {
+            if (api && (api.serverMode === "LightWeight" || api.serverMode === "Hybrid")) {
+                api.onDidServerModeChange((mode: string) => {
+                    context.subscriptions.push(new DebugCodeLensContainer());
+                });
+            } else {
+                context.subscriptions.push(new DebugCodeLensContainer());
+            }
         });
     } else {
         context.subscriptions.push(new DebugCodeLensContainer());
