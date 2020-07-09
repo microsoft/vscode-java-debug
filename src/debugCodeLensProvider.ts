@@ -9,7 +9,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import { JAVA_LANGID } from "./constants";
 import { initializeHoverProvider } from "./hoverProvider";
 import { IMainMethod, isOnClasspath, resolveMainMethod } from "./languageServerPlugin";
-import { getJavaExtensionAPI, isJavaExtEnabled } from "./utility";
+import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
 
 const JAVA_RUN_CODELENS_COMMAND = "java.debug.runCodeLens";
 const JAVA_DEBUG_CODELENS_COMMAND = "java.debug.debugCodeLens";
@@ -19,8 +19,16 @@ const ENABLE_CODE_LENS_VARIABLE = "enableRunDebugCodeLens";
 export function initializeCodeLensProvider(context: vscode.ExtensionContext): void {
     // delay registering codelens provider until the Java extension is activated.
     if (isActivatedByJavaFile() && isJavaExtEnabled()) {
-        getJavaExtensionAPI().then(() => {
-            context.subscriptions.push(new DebugCodeLensContainer());
+        getJavaExtensionAPI().then((api) => {
+            if (api && (api.serverMode === ServerMode.LIGHTWEIGHT || api.serverMode === ServerMode.HYBRID)) {
+                api.onDidServerModeChange((mode: string) => {
+                    if (mode === ServerMode.STANDARD) {
+                        context.subscriptions.push(new DebugCodeLensContainer());
+                    }
+                });
+            } else {
+                context.subscriptions.push(new DebugCodeLensContainer());
+            }
         });
     } else {
         context.subscriptions.push(new DebugCodeLensContainer());

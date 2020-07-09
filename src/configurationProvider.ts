@@ -95,6 +95,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     mainClass: "${file}",
                 };
                 try {
+                    const isOnStandardMode = await utility.waitForStandardMode();
+                    if (!isOnStandardMode) {
+                        resolve([defaultLaunchConfig]);
+                        return ;
+                    }
+
                     const mainClasses = await lsPlugin.resolveMainClass(folder ? folder.uri : undefined);
                     let cache;
                     cache = {};
@@ -148,6 +154,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async resolveAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration) {
         try {
+            const isOnStandardMode = await utility.waitForStandardMode();
+            if (!isOnStandardMode) {
+                return undefined;
+            }
+
             if (this.isUserSettingsDirty) {
                 this.isUserSettingsDirty = false;
                 await updateDebugSettings();
