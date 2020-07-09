@@ -179,32 +179,43 @@ export function getLauncherScriptPath() {
     return path.join(ext.extensionPath, "scripts", "launcher.bat");
 }
 
+export enum ServerMode {
+    STANDARD = "Standard",
+    LIGHTWEIGHT = "LightWeight",
+    HYBRID = "Hybrid",
+}
+
 /**
  * Wait for Java Language Support extension being on Standard mode,
  * and return true if the final status is on Standard mode.
  */
 export async function waitForStandardMode(): Promise<boolean> {
     const api = await getJavaExtensionAPI();
-    if (api && api.serverMode === "LightWeight") {
+    if (api && api.serverMode === ServerMode.LIGHTWEIGHT) {
         const answer = await vscode.window.showInformationMessage("Run/Debug feature requires Java language server to run in Standard mode. "
             + "Do you want to switch it to Standard mode now?", "Yes", "Cancel");
         if (answer === "Yes") {
-            await vscode.commands.executeCommand("java.server.mode.switch", "Standard", true);
             return vscode.window.withProgress<boolean>({ location: vscode.ProgressLocation.Window }, async (progress) => {
                 progress.report({ message: "Switching to Standard mode..." });
                 return new Promise<boolean>((resolve) => {
                     api.onDidServerModeChange((mode: string) => {
-                        resolve(true);
+                        if (mode === ServerMode.STANDARD) {
+                            resolve(true);
+                        }
                     });
+
+                    vscode.commands.executeCommand("java.server.mode.switch", ServerMode.STANDARD, true);
                 });
             });
         }
 
         return false;
-    } else if (api && api.serverMode === "Hybrid") {
+    } else if (api && api.serverMode === ServerMode.HYBRID) {
         return new Promise<boolean>((resolve) => {
             api.onDidServerModeChange((mode: string) => {
-                resolve(true);
+                if (mode === ServerMode.STANDARD) {
+                    resolve(true);
+                }
             });
         });
     }
