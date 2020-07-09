@@ -192,7 +192,7 @@ export async function waitForStandardMode(): Promise<boolean> {
             await vscode.commands.executeCommand("java.server.mode.switch", "Standard", true);
             return vscode.window.withProgress<boolean>({ location: vscode.ProgressLocation.Window }, async (progress) => {
                 progress.report({ message: "Switching to Standard mode..." });
-                return new Promise<boolean>(resolve => {
+                return new Promise<boolean>((resolve) => {
                     api.onDidServerModeChange((mode: string) => {
                         resolve(true);
                     });
@@ -202,7 +202,7 @@ export async function waitForStandardMode(): Promise<boolean> {
 
         return false;
     } else if (api && api.serverMode === "Hybrid") {
-        return new Promise<boolean>(resolve => {
+        return new Promise<boolean>((resolve) => {
             api.onDidServerModeChange((mode: string) => {
                 resolve(true);
             });
