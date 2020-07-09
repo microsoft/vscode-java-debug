@@ -187,9 +187,11 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
     const start = new Date().getTime();
     const response = await debugSession.customRequest("redefineClasses");
     const elapsed = new Date().getTime() - start;
-    const humanVisibleDelay = elapsed < 1000 ? 1000 : 0;
+    const humanVisibleDelay = elapsed < 150 ? 150 : 0;
     if (humanVisibleDelay) {
-        await setTimeout(() => {}, humanVisibleDelay);
+        await new Promise((resolve) => {
+            setTimeout(resolve, humanVisibleDelay);
+        });
     }
 
     if (response && response.errorMessage) {
