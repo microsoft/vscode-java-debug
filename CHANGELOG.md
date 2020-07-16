@@ -4,6 +4,26 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.27.0 - 2020-07-17
+### Added
+- Break on exception for “just my code”. [#756](https://github.com/microsoft/vscode-java-debug/issues/756).
+- Support step "just my code". [#628](https://github.com/microsoft/vscode-java-debug/issues/628).
+- Show return value of a method. [#660](https://github.com/microsoft/vscode-java-debug/issues/660).
+- Support "copy value" from Variable viewlet. [#819](https://github.com/microsoft/vscode-java-debug/issues/819).
+- From upstream jdt: support using lambda and reference expressions in debug evaluation. [#281](https://github.com/microsoft/vscode-java-debug/issues/281).
+- From upstream jdt: support evaluating local variables in the lambda body. [#754](https://github.com/microsoft/vscode-java-debug/issues/754).
+
+### Changed
+- Always give UI feedback whenever you click ⚡ button to apply code changes. [#833](https://github.com/microsoft/vscode-java-debug/pull/833).
+- Automatically add -XX:+ShowCodeDetailsInExceptionMessages when launching Java 14 apps. [#797](https://github.com/microsoft/vscode-java-debug/issues/797).
+- Adopt the new resolveVariable API. [#750](https://github.com/microsoft/vscode-java-debug/issues/750).
+- Adopt DebugAdapterDescriptorFactor API. [#751](https://github.com/microsoft/vscode-java-debug/issues/751).
+
+### Fixed
+- Give a response when you trigger debugging in LightWeight mode. [#841](https://github.com/microsoft/vscode-java-debug/issues/841).
+- Failed to get variables. Reason: com.sun.jdi.InvalidStackFrameException. [#767](https://github.com/microsoft/vscode-java-debug/issues/767).
+- Render the source link for stack trace from Java modules. [#824](https://github.com/microsoft/vscode-java-debug/issues/824).
+
 ## 0.26.0 - 2020-05-13
 ### Added
 - Support picking a Java process to auto attach. [#759](https://github.com/microsoft/vscode-java-debug/issues/759).
