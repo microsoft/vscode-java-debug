@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.27.0 - 2020-07-17
 ### Added
-- Break on exception for “just my code”. [#756](https://github.com/microsoft/vscode-java-debug/issues/756).
+- Break on exception for "just my code". [#756](https://github.com/microsoft/vscode-java-debug/issues/756).
 - Support step "just my code". [#628](https://github.com/microsoft/vscode-java-debug/issues/628).
 - Show return value of a method. [#660](https://github.com/microsoft/vscode-java-debug/issues/660).
 - Support "copy value" from Variable viewlet. [#819](https://github.com/microsoft/vscode-java-debug/issues/819).
