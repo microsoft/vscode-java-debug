@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Always give UI feedback whenever you click ⚡ button to apply code changes. [#833](https://github.com/microsoft/vscode-java-debug/pull/833).
-- Automatically add -XX:+ShowCodeDetailsInExceptionMessages when launching Java 14 apps. [#797](https://github.com/microsoft/vscode-java-debug/issues/797).
+- Automatically add -XX:+ShowCodeDetailsInExceptionMessages when launching your program with Java 14. [#797](https://github.com/microsoft/vscode-java-debug/issues/797).
 - Adopt the new resolveVariable API. [#750](https://github.com/microsoft/vscode-java-debug/issues/750).
 - Adopt DebugAdapterDescriptorFactor API. [#751](https://github.com/microsoft/vscode-java-debug/issues/751).
 
