@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.27.1 - 2020-07-21
+### Fixed
+- Hot Code Replace always reports "Cannot find any changed classes for hot replace!". [#850](https://github.com/microsoft/vscode-java-debug/issues/850).
+
 ## 0.27.0 - 2020-07-17
 ### Added
 - Break on exception for "just my code". [#756](https://github.com/microsoft/vscode-java-debug/issues/756).
