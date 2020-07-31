@@ -113,12 +113,12 @@
       "editor/title": [
         {
           "command": "java.debug.runJavaFile",
-          "when": "editorLangId == java && resourceExtname == .java",
+          "when": "resourceExtname == .java",
           "group": "1_run@10"
         },
         {
           "command": "java.debug.debugJavaFile",
-          "when": "editorLangId == java && resourceExtname == .java",
+          "when": "resourceExtname == .java",
           "group": "1_run@20"
         }
       ],
