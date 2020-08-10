@@ -117,6 +117,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.stepping.skipSynthetics`: Skip synthetic methods when stepping.
 - `java.debug.settings.stepping.skipStaticInitializers`: Skip static initializer methods when stepping.
 - `java.debug.settings.stepping.skipConstructors`: Skip constructor methods when stepping.
+- `java.debug.settings.limitOfVariablesPerJdwpRequest`: The maximum number of variables or fields that can be requested in one JDWP request. The higher the value, the less frequently debuggee will be requested when expanding the variable view. Defaults to 100.
 
 Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.
 
