@@ -685,6 +685,11 @@
           "type": "boolean",
           "description": "%java.debugger.launch.skipConstructors.description%",
           "default": false
+        },
+        "java.debug.settings.limitOfVariablesPerJdwpRequest": {
+          "type": "number",
+          "description": "%java.debugger.configuration.limitOfVariablesPerJdwpRequest.description%",
+          "default": 100
         }
       }
     }
