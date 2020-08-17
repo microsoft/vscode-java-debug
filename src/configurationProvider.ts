@@ -558,7 +558,7 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                     stepFilters,
                     exceptionFilters,
                     exceptionFiltersUpdated: event && event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.skipClasses"),
-                    limitOfVariablesPerJdwpRequest: debugSettingsRoot.settings.jdwp.limitOfVariablesPerJdwpRequest,
+                    limitOfVariablesPerJdwpRequest: Math.max(debugSettingsRoot.settings.jdwp.limitOfVariablesPerJdwpRequest, 1),
                     jdwpRequestTimeout: Math.max(debugSettingsRoot.settings.jdwp.requestTimeout, 100),
                 }));
             if (logLevel === "FINE") {
