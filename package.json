@@ -686,10 +686,17 @@
           "description": "%java.debugger.launch.skipConstructors.description%",
           "default": false
         },
-        "java.debug.settings.limitOfVariablesPerJdwpRequest": {
+        "java.debug.settings.jdwp.limitOfVariablesPerJdwpRequest": {
           "type": "number",
-          "description": "%java.debugger.configuration.limitOfVariablesPerJdwpRequest.description%",
-          "default": 100
+          "description": "%java.debugger.configuration.jdwp.limitOfVariablesPerJdwpRequest.description%",
+          "default": 100,
+          "minimum": 1
+        },
+        "java.debug.settings.jdwp.requestTimeout": {
+          "type": "number",
+          "description": "%java.debugger.configuration.jdwp.requestTimeout.description%",
+          "default": 3000,
+          "minimum": 100
         }
       }
     }
