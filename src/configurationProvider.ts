@@ -6,7 +6,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { instrumentOperation, sendInfo } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
 import { populateStepFilters, substituteFilterVariables } from "./classFilter";
@@ -75,6 +75,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 return this.resolveAndValidateDebugConfiguration(folder, config);
             } catch (ex) {
                 utility.showErrorMessage({
+                    type: Type.EXCEPTION,
                     message: String((ex && ex.message) || ex),
                 });
                 return undefined;
@@ -296,12 +297,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 return undefined;
             }
 
-            const errorMessage = (ex && ex.message) || ex;
-            utility.showErrorMessageWithTroubleshooting({
-                message: String(errorMessage),
-                type: Type.EXCEPTION,
-                details: utility.formatErrorProperties(ex),
-            });
+            utility.showErrorMessageWithTroubleshooting(utility.convertErrorToMessage(ex));
             return undefined;
         }
     }
@@ -392,6 +388,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 const selectedFix: lsPlugin.IMainClassOption =
                     await this.showMainClassQuickPick(pickItems, "Please select main class<project name>.", false);
                 if (selectedFix) {
+                    sendInfo(null, {
+                        fix: "yes",
+                        fixMessage: errors.join(os.EOL),
+                    });
+
+                    // Deprecated
                     logger.log(Type.USAGEDATA, {
                         fix: "yes",
                         fixMessage: errors.join(os.EOL),

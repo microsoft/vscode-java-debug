@@ -13,6 +13,7 @@ import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
+import { logJavaException, logJavaInfo } from "./javaLogger";
 import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 import { pickJavaProcess } from "./processPicker";
@@ -27,11 +28,8 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 function initializeExtension(operationId: string, context: vscode.ExtensionContext) {
+    // Deprecated
     logger.initialize(context, true);
-    logger.log(Type.ACTIVATEEXTENSION, {}); // TODO: Activation belongs to usage data, remove this line.
-    logger.log(Type.USAGEDATA, {
-        description: "activateExtension",
-    });
 
     registerDebugEventListener(context);
     context.subscriptions.push(logger);
@@ -90,6 +88,13 @@ function registerDebugEventListener(context: vscode.ExtensionContext) {
                             commonProperties[key] = String(entry[key]);
                         }
                     }
+                    if (entry.scope === "exception") {
+                        logJavaException(commonProperties);
+                    } else {
+                        logJavaInfo(commonProperties, measureProperties);
+                    }
+
+                    // Deprecated
                     logger.log(entry.scope === "exception" ? Type.EXCEPTION : Type.USAGEDATA, commonProperties, measureProperties);
                 });
             }
