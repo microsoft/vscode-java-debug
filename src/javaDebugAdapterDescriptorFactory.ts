@@ -5,7 +5,7 @@ import { DebugAdapterDescriptor, DebugAdapterDescriptorFactory, DebugAdapterExec
 
 import { startDebugSession } from "./languageServerPlugin";
 import { Type } from "./logger";
-import { formatErrorProperties, showErrorMessageWithTroubleshooting } from "./utility";
+import { convertErrorToMessage, showErrorMessageWithTroubleshooting } from "./utility";
 
 export class JavaDebugAdapterDescriptorFactory implements DebugAdapterDescriptorFactory {
     public async createDebugAdapterDescriptor(session: DebugSession, executable: DebugAdapterExecutable): Promise<DebugAdapterDescriptor> {
@@ -23,17 +23,10 @@ export class JavaDebugAdapterDescriptorFactory implements DebugAdapterDescriptor
             error = err;
         }
 
-        let errorMessage = "Failed to start debug server.";
-        let details = {};
-        if (error) {
-            errorMessage = error.message || String(error);
-            details = formatErrorProperties(error);
-        }
-
-        showErrorMessageWithTroubleshooting({
-            message: errorMessage,
+        const message = error ? convertErrorToMessage(error) : {
             type: Type.EXCEPTION,
-            details,
-        });
+            message: "Failed to start debug server.",
+        };
+        showErrorMessageWithTroubleshooting(message);
     }
 }

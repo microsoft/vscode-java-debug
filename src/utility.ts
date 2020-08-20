@@ -3,7 +3,7 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
-import { setUserError } from "vscode-extension-telemetry-wrapper";
+import { sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import { logger, Type } from "./logger";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
@@ -28,14 +28,10 @@ export class JavaExtensionNotEnabledError extends Error {
     }
 }
 
-interface IProperties {
-    [key: string]: string;
-}
-
 interface ILoggingMessage {
-    message: string;
     type?: Type;
-    details?: IProperties;
+    message: string;
+    stack?: string;
 }
 
 interface ITroubleshootingMessage extends ILoggingMessage {
@@ -47,11 +43,22 @@ function logMessage(message: ILoggingMessage): void {
         return;
     }
 
-    if (message.details) {
-        logger.log(message.type, message.details);
+    if (message.type === Type.EXCEPTION || message.type === Type.USAGEERROR) {
+        const error: Error = {
+            name: "error",
+            message: message.message,
+            stack: message.stack,
+        };
+        if (message.type === Type.USAGEERROR) {
+            setUserError(error);
+        }
+        sendError(error);
     } else {
-        logger.logMessage(message.type, message.message);
+        sendInfo(null, { message: message.message });
     }
+
+    // Deprecated
+    logger.log(message.type, { message: message.message, stack: message.stack });
 }
 
 export async function showInformationMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
@@ -95,6 +102,12 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
 
 export function openTroubleshootingPage(message: string, anchor: string) {
     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK));
+    sendInfo(null, {
+        troubleshooting: "yes",
+        troubleshootingMessage: message,
+    });
+
+    // Deprecated
     logger.log(Type.USAGEDATA, {
         troubleshooting: "yes",
         troubleshootingMessage: message,
@@ -122,7 +135,16 @@ async function installJavaExtension() {
     }
 }
 
-export function formatErrorProperties(ex: any): IProperties {
+export function convertErrorToMessage(err: Error): ILoggingMessage {
+    const properties = formatErrorProperties(err);
+    return {
+        type: Type.EXCEPTION,
+        message: properties.message,
+        stack: properties.stackTrace,
+    };
+}
+
+function formatErrorProperties(ex: any): any {
     const exception = (ex && ex.data && ex.data.cause)
         || { stackTrace: (ex && ex.stack), detailMessage: String((ex && ex.message) || ex || "Unknown exception") };
 
