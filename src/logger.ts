@@ -14,6 +14,7 @@ export enum Type {
 
 const SENSITIVE_PROPS = ["message", "stacktrace", "detailmessage"];
 
+// Deprecate
 class Logger implements vscode.Disposable {
     private reporter: TelemetryReporter = null;
 
@@ -24,10 +25,11 @@ class Logger implements vscode.Disposable {
 
         const extensionPackage = JSON.parse(fs.readFileSync(context.asAbsolutePath("./package.json"), "utf-8"));
         if (extensionPackage) {
+            const aiKey = extensionPackage.aiKey instanceof Array ? extensionPackage.aiKey[0] : extensionPackage.aiKey;
             const packageInfo = {
                 name: extensionPackage.name,
                 version: extensionPackage.version,
-                aiKey: extensionPackage.aiKey,
+                aiKey,
             };
             if (packageInfo.aiKey) {
                 this.reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey, firstParty);
