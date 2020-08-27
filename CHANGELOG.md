@@ -4,7 +4,7 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.28.0 - 2020-08-26
+## 0.28.0 - 2020-08-27
 ### Added
 - Add run/debug buttons to editor title bar for single file debugging. [#834](https://github.com/microsoft/vscode-java-debug/issues/834).
 - Add user settings `java.debug.settings.jdwp.limitOfVariablesPerJdwpRequest` and `java.debug.settings.jdwp.requestTimeout` to control JDWP request. [#862](https://github.com/microsoft/vscode-java-debug/pull/862),[#863](https://github.com/microsoft/vscode-java-debug/pull/863).
