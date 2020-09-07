@@ -14,6 +14,7 @@ import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
 import { addMoreHelpfulVMArgs, detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
 import { logger, Type } from "./logger";
+import { mainClassPicker } from "./mainClassPicker";
 import { resolveJavaProcess } from "./processPicker";
 import * as utility from "./utility";
 
@@ -26,7 +27,6 @@ const platformName = platformNameMappings[process.platform];
 
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
-    private debugHistory: MostRecentlyUsedHistory = new MostRecentlyUsedHistory();
     constructor() {
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (event.affectsConfiguration("java.debug")) {
@@ -331,11 +331,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             const currentFile = config.mainClass ||  _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
             if (currentFile) {
                 const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
-                if (mainEntries.length === 1) {
-                    return mainEntries[0];
-                } else if (mainEntries.length > 1) {
-                    return this.showMainClassQuickPick(this.formatMainClassOptions(mainEntries),
-                        `Please select a main class you want to run.`);
+                if (mainEntries.length) {
+                    return mainClassPicker.showQuickPick(mainEntries, "Please select a main class you want to run.");
                 }
             }
 
@@ -384,9 +381,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
             }, "Fix");
             if (answer === "Fix") {
-                const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(validationResponse.proposals);
-                const selectedFix: lsPlugin.IMainClassOption =
-                    await this.showMainClassQuickPick(pickItems, "Please select main class<project name>.", false);
+                const selectedFix = await mainClassPicker.showQuickPick(validationResponse.proposals,
+                    "Please select main class<project name>.", false);
                 if (selectedFix) {
                     sendInfo(null, {
                         fix: "yes",
@@ -445,92 +441,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             });
         }
 
-        const pickItems: IMainClassQuickPickItem[] = this.formatRecentlyUsedMainClassOptions(res);
-        const selected = await this.showMainClassQuickPick(pickItems, hintMessage || "Select main class<project name>");
-        if (selected) {
-            this.debugHistory.updateMRUTimestamp(selected);
-        }
-
-        return selected;
-    }
-
-    private async showMainClassQuickPick(pickItems: IMainClassQuickPickItem[], quickPickHintMessage: string, autoPick: boolean = true):
-        Promise<lsPlugin.IMainClassOption | undefined> {
-        // return undefined when the user cancels QuickPick by pressing ESC.
-        const selected = (pickItems.length === 1 && autoPick) ?
-            pickItems[0] : await vscode.window.showQuickPick(pickItems, { placeHolder: quickPickHintMessage });
-
-        return selected && selected.item;
-    }
-
-    private formatRecentlyUsedMainClassOptions(options: lsPlugin.IMainClassOption[]): IMainClassQuickPickItem[] {
-        // Sort the Main Class options with the recently used timestamp.
-        options.sort((a: lsPlugin.IMainClassOption, b: lsPlugin.IMainClassOption) => {
-            return this.debugHistory.getMRUTimestamp(b) - this.debugHistory.getMRUTimestamp(a);
-        });
-
-        const mostRecentlyUsedOption: lsPlugin.IMainClassOption = (options.length && this.debugHistory.contains(options[0])) ? options[0] : undefined;
-        const isMostRecentlyUsed = (option: lsPlugin.IMainClassOption): boolean => {
-            return mostRecentlyUsedOption
-                && mostRecentlyUsedOption.mainClass === option.mainClass
-                && mostRecentlyUsedOption.projectName === option.projectName;
-        };
-        const isFromActiveEditor = (option: lsPlugin.IMainClassOption): boolean => {
-            const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
-            const currentActiveFile: string = _.get(activeEditor, "document.uri.fsPath");
-            return option.filePath && currentActiveFile && path.relative(option.filePath, currentActiveFile) === "";
-        };
-        const isPrivileged = (option: lsPlugin.IMainClassOption): boolean => {
-            return isMostRecentlyUsed(option) || isFromActiveEditor(option);
-        };
-
-        // Show the most recently used Main Class as the first one,
-        // then the Main Class from Active Editor as second,
-        // finally other Main Class.
-        const adjustedOptions: lsPlugin.IMainClassOption[] = [];
-        options.forEach((option: lsPlugin.IMainClassOption) => {
-            if (isPrivileged(option)) {
-                adjustedOptions.push(option);
-            }
-        });
-        options.forEach((option: lsPlugin.IMainClassOption) => {
-            if (!isPrivileged(option)) {
-                adjustedOptions.push(option);
-            }
-        });
-
-        const pickItems: IMainClassQuickPickItem[] = this.formatMainClassOptions(adjustedOptions);
-        pickItems.forEach((pickItem: IMainClassQuickPickItem) => {
-            const adjustedDetail = [];
-            if (isMostRecentlyUsed(pickItem.item)) {
-                adjustedDetail.push("$(clock) recently used");
-            }
-
-            if (isFromActiveEditor(pickItem.item)) {
-                adjustedDetail.push(`$(file-text) active editor (${path.basename(pickItem.item.filePath)})`);
-            }
-
-            pickItem.detail = adjustedDetail.join(", ");
-        });
-
-        return pickItems;
-    }
-
-    private formatMainClassOptions(options: lsPlugin.IMainClassOption[]): IMainClassQuickPickItem[] {
-        return options.map((item) => {
-            let label = item.mainClass;
-            const description = item.filePath ? path.basename(item.filePath) : "";
-            if (item.projectName) {
-                label += `<${item.projectName}>`;
-            }
-
-            return {
-                label,
-                description,
-                detail: null,
-                item,
-            };
-        });
+        return mainClassPicker.showQuickPickWithRecentlyUsed(res, hintMessage || "Select main class<project name>");
     }
 }
 
@@ -593,29 +504,5 @@ function convertLogLevel(commonLogLevel: string) {
             return "INFO";
         default:
             return "FINE";
-    }
-}
-
-export interface IMainClassQuickPickItem extends vscode.QuickPickItem {
-    item: lsPlugin.IMainClassOption;
-}
-
-class MostRecentlyUsedHistory {
-    private cache: { [key: string]: number } = {};
-
-    public getMRUTimestamp(mainClassOption: lsPlugin.IMainClassOption): number {
-        return this.cache[this.getKey(mainClassOption)] || 0;
-    }
-
-    public updateMRUTimestamp(mainClassOption: lsPlugin.IMainClassOption): void {
-        this.cache[this.getKey(mainClassOption)] = Date.now();
-    }
-
-    public contains(mainClassOption: lsPlugin.IMainClassOption): boolean {
-        return Boolean(this.cache[this.getKey(mainClassOption)]);
-    }
-
-    private getKey(mainClassOption: lsPlugin.IMainClassOption): string {
-        return mainClassOption.mainClass + "|" + mainClassOption.projectName;
     }
 }
