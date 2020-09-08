@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
-    instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+    instrumentOperationAsVsCodeCommand, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
@@ -14,8 +14,9 @@ import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvi
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { logJavaException, logJavaInfo } from "./javaLogger";
-import { IMainMethod, resolveMainMethod } from "./languageServerPlugin";
+import { IMainClassOption, IMainMethod, resolveMainClass, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
+import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
@@ -59,6 +60,12 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
     }));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.debugJavaFile", async (uri: vscode.Uri) => {
         await runJavaFile(uri, false);
+    }));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.runFromProjectView", async (node: any) => {
+        await runJavaProject(node, true);
+    }));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.debugFromProjectView", async (node: any) => {
+        await runJavaProject(node, false);
     }));
     initializeHotCodeReplace(context);
     initializeCodeLensProvider(context);
@@ -261,17 +268,68 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         return;
     }
 
-    const projectName = mainMethods[0].projectName;
-    let mainClass = mainMethods[0].mainClass;
-    if (mainMethods.length > 1) {
-        mainClass = await vscode.window.showQuickPick(mainMethods.map((mainMethod) => mainMethod.mainClass), {
-            placeHolder: "Select the main class to launch.",
-        });
-    }
-
-    if (!mainClass) {
+    const pick = await mainClassPicker.showQuickPick(mainMethods, "Select the main class to run.", (option) => option.mainClass);
+    if (!pick) {
         return;
     }
 
-    await startDebugging(mainClass, projectName, uri, noDebug);
+    await startDebugging(pick.mainClass, pick.projectName, uri, noDebug);
+}
+
+async function runJavaProject(node: any, noDebug: boolean) {
+    if (!node || !node.name || !node.uri) {
+        vscode.window.showErrorMessage(`Failed to ${noDebug ? "run" : "debug"} the project because of invalid project node. `
+            + "This command only applies to Project Explorer view.");
+        const error = new Error(`Failed to ${noDebug ? "run" : "debug"} the project because of invalid project node.`);
+        setUserError(error);
+        throw error;
+    }
+
+    let mainClassesOptions: IMainClassOption[] = [];
+    try {
+        mainClassesOptions = await vscode.window.withProgress<IMainClassOption[]>(
+            {
+                location: vscode.ProgressLocation.Window,
+            },
+            async (p) => {
+                p.report({
+                    message: "Searching main class...",
+                });
+                return resolveMainClass(vscode.Uri.parse(node.uri));
+            });
+    } catch (ex) {
+        vscode.window.showErrorMessage(String((ex && ex.message) || ex));
+        throw ex;
+    }
+
+    if (!mainClassesOptions || !mainClassesOptions.length) {
+        vscode.window.showErrorMessage(`Failed to ${noDebug ? "run" : "debug"} this project '${node._nodeData.displayName || node.name}' `
+            + "because it does not contain any main class.");
+        return;
+    }
+
+    const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainClassesOptions,
+        "Select the main class to run.", (option) => option.mainClass);
+    if (!pick) {
+        return;
+    }
+
+    const projectName: string = pick.projectName;
+    const mainClass: string = pick.mainClass;
+    const filePath: string = pick.filePath;
+    const workspaceFolder: vscode.WorkspaceFolder = filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
+    const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspaceFolder);
+    const existingConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
+    const existConfig: vscode.DebugConfiguration = _.find(existingConfigs, (config) => {
+        return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
+    });
+    const debugConfig = existConfig || {
+        type: "java",
+        name: `Launch - ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
+        request: "launch",
+        mainClass,
+        projectName,
+    };
+    debugConfig.noDebug = noDebug;
+    vscode.debug.startDebugging(workspaceFolder, debugConfig);
 }

@@ -69,6 +69,14 @@
         "icon": "$(debug-alt-small)"
       },
       {
+        "command": "java.debug.runFromProjectView",
+        "title": "Run"
+      },
+      {
+        "command": "java.debug.debugFromProjectView",
+        "title": "Debug"
+      },
+      {
         "command": "java.debug.continueAll",
         "title": "Continue All"
       },
@@ -86,6 +94,18 @@
       }
     ],
     "menus": {
+      "view/item/context": [
+        {
+          "command": "java.debug.runFromProjectView",
+          "when": "view == javaProjectExplorer && viewItem =~ /java:project(?=.*?\\b\\+java\\b)(?=.*?\\b\\+uri\\b)/",
+          "group": "debugger@1"
+        },
+        {
+          "command": "java.debug.debugFromProjectView",
+          "when": "view == javaProjectExplorer && viewItem =~ /java:project(?=.*?\\b\\+java\\b)(?=.*?\\b\\+uri\\b)/",
+          "group": "debugger@2"
+        }
+      ],
       "explorer/context": [
         {
           "command": "java.debug.runJavaFile",
@@ -174,6 +194,14 @@
         },
         {
           "command": "java.debug.pauseOthers",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.runFromProjectView",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.debugFromProjectView",
           "when": "false"
         }
       ]
