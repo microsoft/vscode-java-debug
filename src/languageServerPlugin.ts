@@ -33,7 +33,11 @@ export interface ILaunchValidationResponse {
     readonly proposals?: IMainClassOption[];
 }
 
-export async function resolveMainMethod(uri: vscode.Uri): Promise<IMainMethod[]> {
+export async function resolveMainMethod(uri: vscode.Uri, token?: vscode.CancellationToken): Promise<IMainMethod[]> {
+    if (token) {
+        return <IMainMethod[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINMETHOD, uri.toString(), token);
+    }
+
     return <IMainMethod[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINMETHOD, uri.toString());
 }
 

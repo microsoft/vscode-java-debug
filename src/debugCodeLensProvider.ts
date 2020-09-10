@@ -102,7 +102,7 @@ class DebugCodeLensProvider implements vscode.CodeLensProvider {
 
     public async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
         try {
-            const mainMethods: IMainMethod[] = await resolveMainMethod(document.uri);
+            const mainMethods: IMainMethod[] = await resolveMainMethod(document.uri, token);
             return _.flatten(mainMethods.map((method) => {
                 return [
                     new vscode.CodeLens(method.range, {
