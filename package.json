@@ -636,6 +636,20 @@
           "description": "%java.debugger.configuration.forceBuildBeforeLaunch%",
           "default": true
         },
+        "java.debug.settings.onBuildFailure": {
+          "type": "string",
+          "enum": [
+            "Proceed",
+            "Fix...",
+            "Cancel"
+          ],
+          "enumDescriptions": [
+            "%java.debugger.configuration.onBuildFailureProceed%",
+            "%java.debugger.configuration.onBuildFailureFix%",
+            "%java.debugger.configuration.onBuildFailureCancel%"
+          ],
+          "description": "%java.debugger.configuration.onBuildFailure%"
+        },
         "java.debug.settings.console": {
           "type": "string",
           "enum": [
