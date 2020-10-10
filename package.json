@@ -636,6 +636,11 @@
           "description": "%java.debugger.configuration.forceBuildBeforeLaunch%",
           "default": true
         },
+        "java.debug.settings.onBuildFailureProceed": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.onBuildFailureProceed%",
+          "default": false
+        },
         "java.debug.settings.console": {
           "type": "string",
           "enum": [

@@ -23,6 +23,7 @@
 * [Modify the settings.json (User Setting)](#modify-the-settingsjson-user-setting)
   * java.debug.settings.console
   * java.debug.settings.forceBuildBeforeLaunch
+  * java.debug.settings.onBuildFailureProceed 
   * java.debug.settings.hotCodeReplace
   * java.debug.settings.enableRunDebugCodeLens
 * [FAQ](#faq)
@@ -328,6 +329,8 @@ In some cases, you may want to start your program with the external builder and 
   ![terminal](https://user-images.githubusercontent.com/14052197/67256063-cf8fa180-f4b7-11e9-9455-77daad2f0ec9.gif)
 
 - `java.debug.settings.forceBuildBeforeLaunch` - Force building the workspace before launching java program, defaults to `true`. Sometimes you may be bothered with the message *"Build failed, do you want to continue?"*, you could disable this setting to suppress the message.
+
+- `java.debug.settings.onBuildFailureProceed` - Sometimes you may be bothered with the message *"Build failed, do you want to continue?"*, you could use this setting to suppress the message and proceed.
 
 - `java.debug.settings.hotCodeReplace` - Reload the changed Java classes during debugging, defaults to `manual`. It supports `manual`, `auto`, `never`.
   - `manual` - Click the toolbar to apply the changes.  
