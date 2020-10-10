@@ -18,6 +18,7 @@ import { IMainClassOption, IMainMethod, resolveMainClass, resolveMainMethod } fr
 import { logger, Type } from "./logger";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
+import { JavaTerminalLinkProvder } from "./terminalLinkProvider";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
@@ -34,6 +35,7 @@ function initializeExtension(operationId: string, context: vscode.ExtensionConte
 
     registerDebugEventListener(context);
     context.subscriptions.push(logger);
+    context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("java", new JavaDebugAdapterDescriptorFactory()));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("JavaDebug.SpecifyProgramArgs", async () => {

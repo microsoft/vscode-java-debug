@@ -112,3 +112,7 @@ export function fetchPlatformSettings(): any {
 export async function resolveClassFilters(patterns: string[]): Promise<string[]> {
     return <string[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSFILTERS, ...patterns);
 }
+
+export async function resolveSourceUri(line: string): Promise<string> {
+    return <string> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_SOURCE_URI, line);
+}
