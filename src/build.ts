@@ -10,7 +10,7 @@ import * as lsPlugin from "./languageServerPlugin";
 import * as utility from "./utility";
 
 const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
-const ON_BUILD_FAILURE = "onBuildFailure";
+const ON_BUILD_FAILURE_PROCEED = "onBuildFailureProceed";
 
 export async function buildWorkspace(): Promise<boolean> {
     const buildResult = await instrumentOperation("build", async (operationId: string) => {
@@ -36,7 +36,7 @@ export async function buildWorkspace(): Promise<boolean> {
 
 async function handleBuildFailure(operationId: string, err: any): Promise<boolean> {
     const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION);
-    const onBuildFailure = configuration.get<string>(ON_BUILD_FAILURE);
+    const onBuildFailureProceed = configuration.get<boolean>(ON_BUILD_FAILURE_PROCEED);
 
     if (err instanceof utility.JavaExtensionNotEnabledError) {
         utility.guideToInstallJavaExtension();
@@ -53,8 +53,8 @@ async function handleBuildFailure(operationId: string, err: any): Promise<boolea
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
 
-        const ans = !onBuildFailure ? (await vscode.window.showErrorMessage("Build failed, do you want to continue?",
-            "Proceed", "Fix...", "Cancel")) : onBuildFailure;
+        const ans = onBuildFailureProceed ? "Proceed" : (await vscode.window.showErrorMessage("Build failed, do you want to continue?",
+            "Proceed", "Fix...", "Cancel"));
         sendInfo(operationId, {
             operationName: "build",
             choiceForBuildError: ans || "esc",
