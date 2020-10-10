@@ -730,6 +730,11 @@
           "description": "%java.debugger.configuration.jdwp.requestTimeout.description%",
           "default": 3000,
           "minimum": 100
+        },
+        "java.debug.settings.vmArgs": {
+          "type": "string",
+          "description": "%java.debugger.configuration.vmArgs.description%",
+          "default": ""
         }
       }
     }
