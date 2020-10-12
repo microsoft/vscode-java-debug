@@ -42,6 +42,8 @@ export const JAVA_FETCH_PLATFORM_SETTINGS = "vscode.java.fetchPlatformSettings";
 
 export const JAVA_RESOLVE_CLASSFILTERS = "vscode.java.resolveClassFilters";
 
+export const JAVA_RESOLVE_SOURCE_URI = "vscode.java.resolveSourceUri";
+
 export function executeJavaLanguageServerCommand(...rest) {
     return executeJavaExtensionCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }
