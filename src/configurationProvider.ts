@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as _ from "lodash";
 import * as os from "os";
 import * as path from "path";
+import { debug } from "util";
 import * as vscode from "vscode";
 
 import { instrumentOperation, sendInfo } from "vscode-extension-telemetry-wrapper";
@@ -173,6 +174,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             if (config.request === "launch") {
+                // If the user doesn't specify 'vmArgs' in launch.json, use the global setting to get the default vmArgs.
+                if (config.vmArgs === undefined) {
+                    const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+                    config.vmArgs = debugSettings.vmArgs;
+                }
                 // If the user doesn't specify 'console' in launch.json, use the global setting to get the launch console.
                 if (!config.console) {
                     const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
