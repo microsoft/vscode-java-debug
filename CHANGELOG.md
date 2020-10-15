@@ -4,6 +4,21 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.29.0 - 2020-10-16
+### Added
+- Jump to source when clicking the stack trace printed to the terminal. [PR#890](https://github.com/microsoft/vscode-java-debug/pull/890).
+- Contribute `Run` and `Debug` menus to Project Explorer. [#878](https://github.com/microsoft/vscode-java-debug/pull/878).
+- Provide a user setting `java.debug.settings.vmArgs` to set the default VM arguments to launch your program. [#220](https://github.com/microsoft/vscode-java-debug/issues/220),[#876](https://github.com/microsoft/vscode-java-debug/issues/876).
+- Provide a user setting `java.debug.settings.onBuildFailureProceed` to force the debug session to proceed when build fails. [#888](https://github.com/microsoft/vscode-java-debug/issues/888).
+
+### Changed
+- Allow cancelling the outdated codelens job. [PR#881](https://github.com/microsoft/vscode-java-debug/pull/881).
+
+### Fixed
+- Fix the wrong auto-completion result when typing the evaluation expression in DEBUG CONSOLE. [#880](https://github.com/microsoft/vscode-java-debug/issues/880).
+- Fix the error 'UNC path is missing sharename: \\\\java'. [#882](https://github.com/microsoft/vscode-java-debug/issues/882).
+- Use the correct runtime to validate the JVM versions between the debugger and debuggee. [PR#353](https://github.com/microsoft/java-debug/pull/353).
+
 ## 0.28.0 - 2020-08-27
 ### Added
 - Add run/debug buttons to editor title bar for single file debugging. [#834](https://github.com/microsoft/vscode-java-debug/issues/834).
