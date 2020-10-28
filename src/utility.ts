@@ -250,7 +250,7 @@ export async function waitForStandardMode(): Promise<boolean> {
     return true;
 }
 
-export async function searchMainMethods(uri: vscode.Uri): Promise<IMainClassOption> {
+export async function searchMainMethods(uri: vscode.Uri): Promise<IMainClassOption[]> {
     try {
         return await vscode.window.withProgress<IMainClassOption[]>(
             {
