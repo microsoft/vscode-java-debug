@@ -264,6 +264,50 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         throw ex;
     }
 
+    const hasMainMethods: boolean = mainMethods.length > 0;
+    const canRunTests: boolean = await canDelegateToJavaTestRunner(uri);
+
+    if (!hasMainMethods && !canRunTests) {
+        const workspaceFolder: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(uri);
+        if (!workspaceFolder) {
+            vscode.window.showErrorMessage(`Failed to run the project because the file: ${uri.fsPath} does not belongs to the current workspace.`);
+            return;
+        }
+        const mainClasses: IMainClassOption[] = await utility.searchMainMethods(workspaceFolder.uri);
+        await launchMain(mainClasses, uri, noDebug);
+    } else if (hasMainMethods && !canRunTests) {
+        await launchMain(mainMethods, uri, noDebug);
+    } else if (!hasMainMethods && canRunTests) {
+        await launchTesting(uri, noDebug);
+    } else {
+        const launchMainChoice: string = "main() method";
+        const launchTestChoice: string = "unit tests";
+        const choice: string = await vscode.window.showQuickPick(
+            [launchMainChoice, launchTestChoice],
+            { placeHolder: "Please select which kind of task you would like to launch" },
+        );
+        if (choice === launchMainChoice) {
+            await launchMain(mainMethods, uri, noDebug);
+        } else if (choice === launchTestChoice) {
+            await launchTesting(uri, noDebug);
+        }
+    }
+}
+
+async function canDelegateToJavaTestRunner(uri: vscode.Uri): Promise<boolean> {
+    const fsPath: string = uri.fsPath;
+    const isTestFile: boolean = /.*[\/\\]src[\/\\]test[\/\\]java[\/\\].*[Tt]ests?\.java/.test(fsPath);
+    if (!isTestFile) {
+        return false;
+    }
+    return (await vscode.commands.getCommands()).includes("java.test.editor.run");
+}
+
+async function launchTesting(uri: vscode.Uri, noDebug: boolean): Promise<void> {
+    noDebug ? vscode.commands.executeCommand("java.test.editor.run", uri) : vscode.commands.executeCommand("java.test.editor.debug", uri);
+}
+
+async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDebug: boolean): Promise<void> {
     if (!mainMethods || !mainMethods.length) {
         vscode.window.showErrorMessage(
             "Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
@@ -287,23 +331,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         throw error;
     }
 
-    let mainClassesOptions: IMainClassOption[] = [];
-    try {
-        mainClassesOptions = await vscode.window.withProgress<IMainClassOption[]>(
-            {
-                location: vscode.ProgressLocation.Window,
-            },
-            async (p) => {
-                p.report({
-                    message: "Searching main class...",
-                });
-                return resolveMainClass(vscode.Uri.parse(node.uri));
-            });
-    } catch (ex) {
-        vscode.window.showErrorMessage(String((ex && ex.message) || ex));
-        throw ex;
-    }
-
+    const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));
     if (!mainClassesOptions || !mainClassesOptions.length) {
         vscode.window.showErrorMessage(`Failed to ${noDebug ? "run" : "debug"} this project '${node._nodeData.displayName || node.name}' `
             + "because it does not contain any main class.");
