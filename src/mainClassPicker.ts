@@ -7,7 +7,7 @@ import { TextEditor, window } from "vscode";
 import { IMainClassOption } from "./languageServerPlugin";
 
 const defaultLabelFormatter = (option: IMainClassOption) => {
-    return option.mainClass + `${option.projectName ? "<" + option.projectName + ">" : ""}`;
+    return option.mainClass;
 };
 type Formatter = (option: IMainClassOption) => string;
 
@@ -44,7 +44,7 @@ class MainClassPicker {
             return {
                 label: labelFormatter(option),
                 description: option.filePath ? path.basename(option.filePath) : "",
-                detail: undefined,
+                detail: option.projectName ? `Project: ${option.projectName}` : "",
                 data: option,
             };
         });
@@ -107,6 +107,10 @@ class MainClassPicker {
 
             if (isFromActiveEditor(option)) {
                 adjustedDetail.push(`$(file-text) active editor (${path.basename(option.filePath)})`);
+            }
+
+            if (option.projectName) {
+                adjustedDetail.push(`Project: ${option.projectName}`);
             }
 
             const detail: string = adjustedDetail.join(", ");

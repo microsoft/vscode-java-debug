@@ -4,6 +4,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
+import { IMainClassOption, resolveMainClass } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
@@ -247,4 +248,18 @@ export async function waitForStandardMode(): Promise<boolean> {
     }
 
     return true;
+}
+
+export async function searchMainMethods(uri?: vscode.Uri): Promise<IMainClassOption[]> {
+    try {
+        return await vscode.window.withProgress<IMainClassOption[]>(
+            { location: vscode.ProgressLocation.Window },
+            async (p) => {
+                p.report({ message: "Searching main classes..." });
+                return resolveMainClass(uri);
+            });
+    } catch (ex) {
+        vscode.window.showErrorMessage(String((ex && ex.message) || ex));
+        throw ex;
+    }
 }
