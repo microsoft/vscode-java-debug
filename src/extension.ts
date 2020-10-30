@@ -309,7 +309,7 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         return;
     }
 
-    const pick = await mainClassPicker.showQuickPick(mainMethods, "Select the main class to run.", (option) => option.mainClass);
+    const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainMethods, "Select the main class to run.");
     if (!pick) {
         return;
     }
@@ -334,7 +334,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
     }
 
     const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainClassesOptions,
-        "Select the main class to run.", (option) => option.mainClass);
+        "Select the main class to run.");
     if (!pick) {
         return;
     }
