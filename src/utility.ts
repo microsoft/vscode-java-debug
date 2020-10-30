@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
 import { sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
