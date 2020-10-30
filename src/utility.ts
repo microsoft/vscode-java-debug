@@ -251,20 +251,13 @@ export async function waitForStandardMode(): Promise<boolean> {
     return true;
 }
 
-export async function searchMainMethods(...uris: vscode.Uri[] | undefined): Promise<IMainClassOption[]> {
+export async function searchMainMethods(uri?: vscode.Uri): Promise<IMainClassOption[]> {
     try {
         return await vscode.window.withProgress<IMainClassOption[]>(
             { location: vscode.ProgressLocation.Window },
             async (p) => {
                 p.report({ message: "Searching main classes..." });
-                if (_.isEmpty(uris)) {
-                    uris = vscode.workspace.workspaceFolders.map((folder) => folder.uri);
-                }
-                const mainClasses: IMainClassOption[] = [];
-                for (const uri of uris) {
-                    mainClasses.push(...await resolveMainClass(uri));
-                }
-                return mainClasses;
+                return resolveMainClass(uri);
             });
     } catch (ex) {
         vscode.window.showErrorMessage(String((ex && ex.message) || ex));
