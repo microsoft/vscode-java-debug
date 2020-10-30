@@ -268,12 +268,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
     const canRunTests: boolean = await canDelegateToJavaTestRunner(uri);
 
     if (!hasMainMethods && !canRunTests) {
-        const workspaceFolder: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(uri);
-        if (!workspaceFolder) {
-            vscode.window.showErrorMessage(`Failed to run the project because the file: ${uri.fsPath} does not belongs to the current workspace.`);
-            return;
-        }
-        const mainClasses: IMainClassOption[] = await utility.searchMainMethods(workspaceFolder.uri);
+        const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
         await launchMain(mainClasses, uri, noDebug);
     } else if (hasMainMethods && !canRunTests) {
         await launchMain(mainMethods, uri, noDebug);
