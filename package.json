@@ -70,7 +70,8 @@
       },
       {
         "command": "java.debug.runFromProjectView",
-        "title": "Run"
+        "title": "Run",
+        "icon": "$(play)"
       },
       {
         "command": "java.debug.debugFromProjectView",
@@ -95,6 +96,11 @@
     ],
     "menus": {
       "view/item/context": [
+        {
+          "command": "java.debug.runFromProjectView",
+          "when": "view == javaProjectExplorer && viewItem =~ /java:project(?=.*?\\b\\+java\\b)(?=.*?\\b\\+uri\\b)/",
+          "group": "inline@run_0"
+        },
         {
           "command": "java.debug.runFromProjectView",
           "when": "view == javaProjectExplorer && viewItem =~ /java:project(?=.*?\\b\\+java\\b)(?=.*?\\b\\+uri\\b)/",
