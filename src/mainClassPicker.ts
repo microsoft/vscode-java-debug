@@ -55,12 +55,30 @@ class MainClassPicker {
         }
     }
 
-    // Record the main class picking history in a most recently used cache.
-    public async showQuickPickWithRecentlyUsed(options: IMainClassOption[], placeHolder: string,
-                                               labelFormatter?: (option: IMainClassOption) => string): Promise<IMainClassOption | undefined> {
+    // tslint:disable-next-line
+    public async showQuickPickWithRecentlyUsed(options: IMainClassOption[], placeHolder: string): Promise<IMainClassOption | undefined>;
+    // tslint:disable-next-line
+    public async showQuickPickWithRecentlyUsed(options: IMainClassOption[], placeHolder: string, labelFormatter: Formatter): Promise<IMainClassOption | undefined>;
+    // tslint:disable-next-line
+    public async showQuickPickWithRecentlyUsed(options: IMainClassOption[], placeHolder: string, autoPick: boolean): Promise<IMainClassOption | undefined>;
+    // tslint:disable-next-line
+    public async showQuickPickWithRecentlyUsed(options: IMainClassOption[], placeHolder: string, parameter3?: Formatter | boolean,
+                                               parameter4?: boolean): Promise<IMainClassOption | undefined> {
+        // Record the main class picking history in a most recently used cache.
+        let labelFormatter: Formatter = defaultLabelFormatter;
+        let autoPick: boolean = true;
+        if (typeof parameter3 === "function") {
+            labelFormatter = parameter3;
+        } else if (typeof parameter3 === "boolean") {
+            autoPick = parameter3;
+        }
+        if (typeof parameter4 === "boolean") {
+            autoPick = parameter4;
+        }
+
         if (!options || !options.length) {
             return;
-        } else if (options.length === 1) {
+        } else if (autoPick && options.length === 1) {
             return options[0];
         }
 
