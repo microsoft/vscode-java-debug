@@ -269,7 +269,8 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
 
     if (!hasMainMethods && !canRunTests) {
         const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
-        await launchMain(mainClasses, uri, noDebug);
+        const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`
+        await launchMain(mainClasses, uri, noDebug, placeHolder);
     } else if (hasMainMethods && !canRunTests) {
         await launchMain(mainMethods, uri, noDebug);
     } else if (!hasMainMethods && canRunTests) {
@@ -302,14 +303,18 @@ async function launchTesting(uri: vscode.Uri, noDebug: boolean): Promise<void> {
     noDebug ? vscode.commands.executeCommand("java.test.editor.run", uri) : vscode.commands.executeCommand("java.test.editor.debug", uri);
 }
 
-async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDebug: boolean): Promise<void> {
+async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDebug: boolean, placeHolder?: string): Promise<void> {
     if (!mainMethods || !mainMethods.length) {
         vscode.window.showErrorMessage(
             "Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
         return;
     }
 
-    const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainMethods, "Select the main class to run.");
+    if (!placeHolder) {
+        placeHolder = "Select the main class to run";
+    }
+
+    const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainMethods, placeHolder);
     if (!pick) {
         return;
     }
