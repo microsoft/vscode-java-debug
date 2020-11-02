@@ -269,7 +269,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
 
     if (!hasMainMethods && !canRunTests) {
         const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
-        const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`
+        const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
         await launchMain(mainClasses, uri, noDebug, placeHolder);
     } else if (hasMainMethods && !canRunTests) {
         await launchMain(mainMethods, uri, noDebug);
