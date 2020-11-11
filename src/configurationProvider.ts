@@ -205,11 +205,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.mainClass = mainClassOption.mainClass;
                 config.projectName = mainClassOption.projectName;
 
-                if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
+                if (_.isEmpty(config.classPaths)) {
                     const result = <any[]>(await lsPlugin.resolveClasspath(config.mainClass, config.projectName));
-                    config.modulePaths = result[0];
                     config.classPaths = result[1];
                 }
+
                 if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
                     throw new utility.UserError({
                         message: "Cannot resolve the modulepaths/classpaths automatically, please specify the value in the launch.json.",
