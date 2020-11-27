@@ -38,7 +38,7 @@ export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
     }));
 }
 
-export function handleHotCodeReplaceCustomEvent(hcrEvent) {
+export function handleHotCodeReplaceCustomEvent(hcrEvent: vscode.DebugSessionCustomEvent) {
     if (hcrEvent.body.changeType === HcrChangeType.BUILD_COMPLETE) {
         if (getHotReloadFlag() === "auto") {
             return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
@@ -62,6 +62,7 @@ export function handleHotCodeReplaceCustomEvent(hcrEvent) {
             });
         }
     }
+    return undefined;
 }
 
 function getHotReloadFlag(): string {

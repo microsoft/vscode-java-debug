@@ -60,8 +60,8 @@ export async function addMoreHelpfulVMArgs(config: vscode.DebugConfiguration) {
 }
 
 function checkJavaVersion(javaExec: string): Promise<number> {
-    return new Promise((resolve, reject) => {
-        cp.execFile(javaExec, ["-version"], {}, (error, stdout, stderr) => {
+    return new Promise((resolve, _reject) => {
+        cp.execFile(javaExec, ["-version"], {}, (_error, _stdout, stderr) => {
             const javaVersion = parseMajorVersion(stderr);
             resolve(javaVersion);
         });

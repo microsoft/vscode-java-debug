@@ -44,11 +44,11 @@ export const JAVA_RESOLVE_CLASSFILTERS = "vscode.java.resolveClassFilters";
 
 export const JAVA_RESOLVE_SOURCE_URI = "vscode.java.resolveSourceUri";
 
-export function executeJavaLanguageServerCommand(...rest) {
+export function executeJavaLanguageServerCommand(...rest: any[]) {
     return executeJavaExtensionCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }
 
-export async function executeJavaExtensionCommand(commandName: string, ...rest) {
+export async function executeJavaExtensionCommand(commandName: string, ...rest: any[]) {
     // TODO: need to handle error and trace telemetry
     const javaExtension = utility.getJavaExtension();
     if (!javaExtension) {
