@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as compareVersions from "compare-versions";
 import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -18,21 +19,24 @@ import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServ
 import { logger, Type } from "./logger";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
+import { IProgressReporter } from "./progressAPI";
+import { progressReporterManager, registerProgressReporters } from "./progressImpl";
 import { JavaTerminalLinkProvder } from "./terminalLinkProvider";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
         firstParty: true,
     });
-    await instrumentOperation("activation", initializeExtension)(context);
+    return instrumentOperation("activation", initializeExtension)(context);
 }
 
-function initializeExtension(_operationId: string, context: vscode.ExtensionContext) {
+function initializeExtension(_operationId: string, context: vscode.ExtensionContext): any {
     // Deprecated
     logger.initialize(context, true);
 
+    registerProgressReporters(context);
     registerDebugEventListener(context);
     context.subscriptions.push(logger);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
@@ -72,6 +76,10 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     initializeHotCodeReplace(context);
     initializeCodeLensProvider(context);
     initializeThreadOperations(context);
+
+    return {
+        progressReporterManager,
+    };
 }
 
 // this method is called when your extension is deactivated
@@ -225,69 +233,63 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
-    const alreadyActivated: boolean = utility.isJavaExtActivated();
+    const progressReporter = progressReporterManager.create(noDebug ? "Run" : "Debug");
     try {
         // Wait for Java Language Support extension being on Standard mode.
-        const isOnStandardMode = await utility.waitForStandardMode();
+        const isOnStandardMode = await utility.waitForStandardMode(progressReporter);
         if (!isOnStandardMode) {
-            return;
+            throw new utility.OperationCancelledError("");
+        }
+
+        const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+        if (!uri && activeEditor && _.endsWith(path.basename(activeEditor.document.fileName), ".java")) {
+            uri = activeEditor.document.uri;
+        }
+
+        if (!uri) {
+            vscode.window.showErrorMessage(`${noDebug ? "Run" : "Debug"} failed. Please open a Java file with main method first.`);
+            throw new utility.OperationCancelledError("");
+        }
+
+        const mainMethods: IMainMethod[] = await resolveMainMethod(uri);
+        const hasMainMethods: boolean = mainMethods.length > 0;
+        const canRunTests: boolean = await canDelegateToJavaTestRunner(uri);
+        const defaultPlaceHolder: string = "Select the main class to run";
+
+        if (!hasMainMethods && !canRunTests) {
+            progressReporter.report("Resolve mainClass", "Resolving main class...");
+            const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
+            const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
+            await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
+        } else if (hasMainMethods && !canRunTests) {
+            await launchMain(mainMethods, uri, noDebug, progressReporter, defaultPlaceHolder);
+        } else if (!hasMainMethods && canRunTests) {
+            launchTesting(uri, noDebug, progressReporter);
+        } else {
+            const launchMainChoice: string = "main() method";
+            const launchTestChoice: string = "unit tests";
+            const choice: string | undefined = await vscode.window.showQuickPick(
+                [launchMainChoice, launchTestChoice],
+                { placeHolder: "Please select which kind of task you would like to launch" },
+            );
+            if (choice === launchMainChoice) {
+                await launchMain(mainMethods, uri, noDebug, progressReporter, defaultPlaceHolder);
+            } else if (choice === launchTestChoice) {
+                launchTesting(uri, noDebug, progressReporter);
+            }
         }
     } catch (ex) {
+        progressReporter.cancel();
+        if (ex instanceof utility.OperationCancelledError) {
+            return;
+        }
+
         if (ex instanceof utility.JavaExtensionNotEnabledError) {
             utility.guideToInstallJavaExtension();
             return;
         }
 
-        if (alreadyActivated) {
-            vscode.window.showErrorMessage(String((ex && ex.message) || ex));
-            return;
-        }
-
-        throw ex;
-    }
-
-    const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
-    if (!uri && activeEditor && _.endsWith(path.basename(activeEditor.document.fileName), ".java")) {
-        uri = activeEditor.document.uri;
-    }
-
-    if (!uri) {
-        vscode.window.showErrorMessage(`${noDebug ? "Run" : "Debug"} failed. Please open a Java file with main method first.`);
-        return;
-    }
-
-    let mainMethods: IMainMethod[] = [];
-    try {
-        mainMethods = await resolveMainMethod(uri);
-    } catch (ex) {
         vscode.window.showErrorMessage(String((ex && ex.message) || ex));
-        throw ex;
-    }
-
-    const hasMainMethods: boolean = mainMethods.length > 0;
-    const canRunTests: boolean = await canDelegateToJavaTestRunner(uri);
-    const defaultPlaceHolder: string = "Select the main class to run";
-
-    if (!hasMainMethods && !canRunTests) {
-        const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
-        const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
-        await launchMain(mainClasses, uri, noDebug, placeHolder, false /*autoPick*/);
-    } else if (hasMainMethods && !canRunTests) {
-        await launchMain(mainMethods, uri, noDebug, defaultPlaceHolder);
-    } else if (!hasMainMethods && canRunTests) {
-        await launchTesting(uri, noDebug);
-    } else {
-        const launchMainChoice: string = "main() method";
-        const launchTestChoice: string = "unit tests";
-        const choice: string | undefined = await vscode.window.showQuickPick(
-            [launchMainChoice, launchTestChoice],
-            { placeHolder: "Please select which kind of task you would like to launch" },
-        );
-        if (choice === launchMainChoice) {
-            await launchMain(mainMethods, uri, noDebug, defaultPlaceHolder);
-        } else if (choice === launchTestChoice) {
-            await launchTesting(uri, noDebug);
-        }
     }
 }
 
@@ -300,24 +302,34 @@ async function canDelegateToJavaTestRunner(uri: vscode.Uri): Promise<boolean> {
     return (await vscode.commands.getCommands()).includes("java.test.editor.run");
 }
 
-async function launchTesting(uri: vscode.Uri, noDebug: boolean): Promise<void> {
-    noDebug ? vscode.commands.executeCommand("java.test.editor.run", uri) : vscode.commands.executeCommand("java.test.editor.debug", uri);
+function launchTesting(uri: vscode.Uri, noDebug: boolean, progressReporter: IProgressReporter) {
+    const command: string = noDebug ? "java.test.editor.run" : "java.test.editor.debug";
+    vscode.commands.executeCommand(command, uri, progressReporter);
+    if (compareVersions(getTestExtensionVersion(), "0.26.1") <= 0) {
+        throw new utility.OperationCancelledError("");
+    }
 }
 
-async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDebug: boolean, placeHolder: string,
-                          autoPick: boolean = true): Promise<void> {
+function getTestExtensionVersion(): string {
+    const extension: vscode.Extension<any> | undefined = vscode.extensions.getExtension("vscjava.vscode-java-test");
+    return extension?.packageJSON.version || "0.0.0";
+}
+
+async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDebug: boolean, progressReporter: IProgressReporter,
+                          placeHolder: string, autoPick: boolean = true): Promise<void> {
     if (!mainMethods || !mainMethods.length) {
         vscode.window.showErrorMessage(
             "Error: Main method not found in the file, please define the main method as: public static void main(String[] args)");
-        return;
+        throw new utility.OperationCancelledError("");
     }
 
+    progressReporter.report("Select mainClass", "Selecting the main class to run...");
     const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainMethods, placeHolder, autoPick);
     if (!pick) {
-        return;
+        throw new utility.OperationCancelledError("");
     }
 
-    await startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug);
+    startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
 
 async function runJavaProject(node: any, noDebug: boolean) {
@@ -329,35 +341,53 @@ async function runJavaProject(node: any, noDebug: boolean) {
         throw error;
     }
 
-    const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));
-    if (!mainClassesOptions || !mainClassesOptions.length) {
-        vscode.window.showErrorMessage(`Failed to ${noDebug ? "run" : "debug"} this project '${node._nodeData.displayName || node.name}' `
-            + "because it does not contain any main class.");
-        return;
-    }
+    const progressReporter = progressReporterManager.create(noDebug ? "Run" : "Debug");
+    try {
+        progressReporter.report("Resolve mainClass", "Resolving main class...");
+        const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));
+        if (progressReporter.isCancelled()) {
+            throw new utility.OperationCancelledError("");
+        }
 
-    const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainClassesOptions,
-        "Select the main class to run.");
-    if (!pick) {
-        return;
-    }
+        if (!mainClassesOptions || !mainClassesOptions.length) {
+            vscode.window.showErrorMessage(`Failed to ${noDebug ? "run" : "debug"} this project '${node._nodeData.displayName || node.name}' `
+                + "because it does not contain any main class.");
+            throw new utility.OperationCancelledError("");
+        }
 
-    const projectName: string | undefined = pick.projectName;
-    const mainClass: string = pick.mainClass;
-    const filePath: string | undefined = pick.filePath;
-    const workspaceFolder: vscode.WorkspaceFolder | undefined = filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
-    const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspaceFolder);
-    const existingConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
-    const existConfig: vscode.DebugConfiguration | undefined = _.find(existingConfigs, (config) => {
-        return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
-    });
-    const debugConfig = existConfig || {
-        type: "java",
-        name: `Launch - ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
-        request: "launch",
-        mainClass,
-        projectName,
-    };
-    debugConfig.noDebug = noDebug;
-    vscode.debug.startDebugging(workspaceFolder, debugConfig);
+        progressReporter.report("Select mainClass", "Selecting the main class to run...");
+        const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainClassesOptions,
+            "Select the main class to run.");
+        if (!pick || progressReporter.isCancelled()) {
+            throw new utility.OperationCancelledError("");
+        }
+
+        const projectName: string | undefined = pick.projectName;
+        const mainClass: string = pick.mainClass;
+        const filePath: string | undefined = pick.filePath;
+        const workspaceFolder: vscode.WorkspaceFolder | undefined =
+            filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
+        const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspaceFolder);
+        const existingConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
+        const existConfig: vscode.DebugConfiguration | undefined = _.find(existingConfigs, (config) => {
+            return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
+        });
+        const debugConfig = existConfig || {
+            type: "java",
+            name: `Launch - ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
+            request: "launch",
+            mainClass,
+            projectName,
+        };
+        debugConfig.noDebug = noDebug;
+        debugConfig.__progressId = progressReporter.getId();
+        vscode.debug.startDebugging(workspaceFolder, debugConfig);
+    } catch (ex) {
+        progressReporter.cancel();
+        if (ex instanceof utility.OperationCancelledError) {
+            return;
+        }
+
+        throw ex;
+    }
 }

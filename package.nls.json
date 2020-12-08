@@ -58,5 +58,6 @@
     "java.debugger.configuration.exceptionBreakpoint.skipClasses": "Skip the specified classes when breaking on exception. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo",
     "java.debugger.configuration.jdwp.limitOfVariablesPerJdwpRequest.description": "The maximum number of variables or fields that can be requested in one JDWP request. The higher the value, the less frequently debuggee will be requested when expanding the variable view. Also a large number can cause JDWP request timeout.",
     "java.debugger.configuration.jdwp.requestTimeout.description": "The timeout (ms) of JDWP request when the debugger communicates with the target JVM.",
-    "java.debugger.configuration.vmArgs.description": "The default VM arguments to launch the Java program. Eg. Use '-Xmx1G -ea' to increase the heap size to 1GB and enable assertions. If you want to customize the VM arguments for a specific debug session, please modify the 'vmArgs' config in launch.json."
+    "java.debugger.configuration.vmArgs.description": "The default VM arguments to launch the Java program. Eg. Use '-Xmx1G -ea' to increase the heap size to 1GB and enable assertions. If you want to customize the VM arguments for a specific debug session, please modify the 'vmArgs' config in launch.json.",
+    "java.debugger.configuration.showRunStatusAsNotification": "Show the build status as the progress notification every time you run or debug a program."
 }

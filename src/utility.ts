@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import { IMainClassOption, resolveMainClass } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
+import { IProgressReporter } from "./progressAPI";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
 const LEARN_MORE = "Learn More";
@@ -26,6 +27,12 @@ export class JavaExtensionNotEnabledError extends Error {
     constructor(message: string) {
         super(message);
         setUserError(this);
+    }
+}
+
+export class OperationCancelledError extends Error {
+    constructor(message: string) {
+        super(message);
     }
 }
 
@@ -174,13 +181,19 @@ export async function getJavaHome(): Promise<string> {
     return "";
 }
 
-export function getJavaExtensionAPI(): Thenable<any> {
+export function getJavaExtensionAPI(progressReporter?: IProgressReporter): Thenable<any> {
     const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
     if (!extension) {
         throw new JavaExtensionNotEnabledError("VS Code Java Extension is not enabled.");
     }
 
-    return extension.activate();
+    return new Promise<any>(async (resolve) => {
+        progressReporter?.getCancellationToken().onCancellationRequested(() => {
+            resolve(undefined);
+        });
+
+        resolve(await extension.activate());
+    });
 }
 
 export function getJavaExtension(): vscode.Extension<any> | undefined {
@@ -212,33 +225,46 @@ export enum ServerMode {
  * Wait for Java Language Support extension being on Standard mode,
  * and return true if the final status is on Standard mode.
  */
-export async function waitForStandardMode(): Promise<boolean> {
-    const api = await getJavaExtensionAPI();
+export async function waitForStandardMode(progressReporter: IProgressReporter): Promise<boolean> {
+    if (await isImportingProjects()) {
+        progressReporter.report("Import", "Importing Java projects...");
+    }
+
+    const api = await getJavaExtensionAPI(progressReporter);
+    if (!api) {
+        return false;
+    }
+
     if (api && api.serverMode === ServerMode.LIGHTWEIGHT) {
         const answer = await vscode.window.showInformationMessage("Run/Debug feature requires Java language server to run in Standard mode. "
             + "Do you want to switch it to Standard mode now?", "Yes", "Cancel");
         if (answer === "Yes") {
-            return vscode.window.withProgress<boolean>({ location: vscode.ProgressLocation.Window }, async (progress) => {
-                if (api.serverMode === ServerMode.STANDARD) {
-                    return true;
-                }
+            if (api.serverMode === ServerMode.STANDARD) {
+                return true;
+            }
 
-                progress.report({ message: "Switching to Standard mode..." });
-                return new Promise<boolean>((resolve) => {
-                    api.onDidServerModeChange((mode: string) => {
-                        if (mode === ServerMode.STANDARD) {
-                            resolve(true);
-                        }
-                    });
-
-                    vscode.commands.executeCommand("java.server.mode.switch", ServerMode.STANDARD, true);
+            progressReporter?.report("Import", "Importing Java projects...");
+            return new Promise<boolean>((resolve) => {
+                progressReporter.getCancellationToken().onCancellationRequested(() => {
+                    resolve(false);
                 });
+                api.onDidServerModeChange((mode: string) => {
+                    if (mode === ServerMode.STANDARD) {
+                        resolve(true);
+                    }
+                });
+
+                vscode.commands.executeCommand("java.server.mode.switch", ServerMode.STANDARD, true);
             });
         }
 
         return false;
     } else if (api && api.serverMode === ServerMode.HYBRID) {
+        progressReporter.report("Import", "Importing Java projects...");
         return new Promise<boolean>((resolve) => {
+            progressReporter.getCancellationToken().onCancellationRequested(() => {
+                resolve(false);
+            });
             api.onDidServerModeChange((mode: string) => {
                 if (mode === ServerMode.STANDARD) {
                     resolve(true);
@@ -251,6 +277,10 @@ export async function waitForStandardMode(): Promise<boolean> {
 }
 
 export async function searchMainMethods(uri?: vscode.Uri): Promise<IMainClassOption[]> {
+    return resolveMainClass(uri);
+}
+
+export async function searchMainMethodsWithProgress(uri?: vscode.Uri): Promise<IMainClassOption[]> {
     try {
         return await vscode.window.withProgress<IMainClassOption[]>(
             { location: vscode.ProgressLocation.Window },
@@ -262,4 +292,25 @@ export async function searchMainMethods(uri?: vscode.Uri): Promise<IMainClassOpt
         vscode.window.showErrorMessage(String((ex && ex.message) || ex));
         throw ex;
     }
+}
+
+async function isImportingProjects(): Promise<boolean> {
+    const extension = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+    if (!extension) {
+        return false;
+    }
+
+    const serverMode = getJavaServerMode();
+    if (serverMode === ServerMode.STANDARD || serverMode === ServerMode.HYBRID) {
+        const allCommands = await vscode.commands.getCommands();
+        return (!extension.isActive && allCommands.includes("java.show.server.task.status"))
+            || (extension.isActive && extension.exports?.serverMode === ServerMode.HYBRID);
+    }
+
+    return false;
+}
+
+function getJavaServerMode(): ServerMode {
+    return vscode.workspace.getConfiguration().get("java.server.launchMode")
+        || ServerMode.HYBRID;
 }

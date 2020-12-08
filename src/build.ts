@@ -7,16 +7,24 @@ import { instrumentOperation, sendInfo, sendOperationError, setErrorCode } from 
 import * as anchor from "./anchor";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
+import { IProgressReporter } from "./progressAPI";
 import * as utility from "./utility";
 
 const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
 const ON_BUILD_FAILURE_PROCEED = "onBuildFailureProceed";
 
-export async function buildWorkspace(): Promise<boolean> {
+enum CompileWorkspaceStatus {
+    FAILED = 0,
+    SUCCEED = 1,
+    WITHERROR = 2,
+    CANCELLED = 3,
+}
+
+export async function buildWorkspace(progressReporter: IProgressReporter): Promise<boolean> {
     const buildResult = await instrumentOperation("build", async (operationId: string) => {
         let error;
         try {
-            await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false);
+            await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false, progressReporter.getCancellationToken());
         } catch (err) {
             error = err;
         }
@@ -27,11 +35,11 @@ export async function buildWorkspace(): Promise<boolean> {
         };
     })();
 
-    if (buildResult.error) {
+    if (buildResult.error === CompileWorkspaceStatus.CANCELLED) {
+        return false;
+    } else {
         return handleBuildFailure(buildResult.operationId, buildResult.error);
     }
-
-    return true;
 }
 
 async function handleBuildFailure(operationId: string, err: any): Promise<boolean> {
