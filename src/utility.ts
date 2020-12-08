@@ -59,7 +59,7 @@ function logMessage(message: ILoggingMessage): void {
     }
 
     // Deprecated
-    logger.log(message.type, { message: message.message, stack: message.stack ? message.stack : "" });
+    logger.log(message.type, { message: message.message, stack: message.stack || "" });
 }
 
 export async function showInformationMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
@@ -194,10 +194,7 @@ export function isJavaExtEnabled(): boolean {
 
 export function isJavaExtActivated(): boolean {
     const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
-    if (javaExt && javaExt.isActive) {
-        return true;
-    }
-    return false;
+    return !!javaExt && javaExt.isActive;
 }
 
 export function getLauncherScriptPath() {

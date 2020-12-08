@@ -90,11 +90,9 @@ class MainClassPicker {
 
         const mostRecentlyUsedOption: IMainClassOption | undefined = (options.length && this.contains(options[0])) ? options[0] : undefined;
         const isMostRecentlyUsed = (option: IMainClassOption): boolean => {
-            if (mostRecentlyUsedOption) {
-                return mostRecentlyUsedOption.mainClass === option.mainClass
+            return !!mostRecentlyUsedOption
+                && mostRecentlyUsedOption.mainClass === option.mainClass
                 && mostRecentlyUsedOption.projectName === option.projectName;
-            }
-            return false;
         };
         const isFromActiveEditor = (option: IMainClassOption): boolean => {
             const activeEditor: TextEditor | undefined = window.activeTextEditor;
