@@ -73,7 +73,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             try {
                 // See https://github.com/microsoft/vscode-java-debug/issues/778
                 // Merge the platform specific properties to the global config to simplify the subsequent resolving logic.
-                this.mergePlatformProperties(folder, config);
+                this.mergePlatformProperties(config, folder);
                 return this.resolveAndValidateDebugConfiguration(folder, config);
             } catch (ex) {
                 utility.showErrorMessage({
@@ -110,7 +110,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     const launchConfigs = mainClasses.map((item) => {
                         return {
                             ...defaultLaunchConfig,
-                            name: this.constructLaunchConfigName(item.mainClass, item.projectName, cache),
+                            name: this.constructLaunchConfigName(item.mainClass, cache, item.projectName),
                             mainClass: item.mainClass,
                             projectName: item.projectName,
                         };
@@ -127,7 +127,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         });
     }
 
-    private mergePlatformProperties(_folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration) {
+    private mergePlatformProperties(config: vscode.DebugConfiguration, _folder?: vscode.WorkspaceFolder) {
         if (config && platformName && config[platformName]) {
             try {
                 for (const key of Object.keys(config[platformName])) {
@@ -140,7 +140,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private constructLaunchConfigName(mainClass: string, projectName: string, cache: {[key: string]: any}) {
+    private constructLaunchConfigName(mainClass: string, cache: {[key: string]: any}, projectName?: string) {
         const prefix = "Debug (Launch)-";
         let name = prefix + mainClass.substr(mainClass.lastIndexOf(".") + 1);
         if (projectName !== undefined) {
@@ -333,7 +333,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return Object.keys(config).filter((key: string) => key !== "noDebug").length === 0;
     }
 
-    private async resolveLaunchConfig(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration): Promise<lsPlugin.IMainClassOption> {
+    private async resolveLaunchConfig(folder: vscode.Uri | undefined,
+                                      config: vscode.DebugConfiguration): Promise<lsPlugin.IMainClassOption | undefined> {
         if (!config.mainClass || this.isFile(config.mainClass)) {
             const currentFile = config.mainClass ||  _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
             if (currentFile) {
@@ -350,7 +351,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
 
         const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
-        const validationResponse = await lsPlugin.validateLaunchConfig(folder, config.mainClass, config.projectName, containsExternalClasspaths);
+        const validationResponse = await lsPlugin.validateLaunchConfig(config.mainClass, config.projectName, containsExternalClasspaths, folder);
         if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
             return this.fixMainClass(folder, config, validationResponse);
         }
@@ -391,7 +392,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 const selectedFix = await mainClassPicker.showQuickPick(validationResponse.proposals,
                     "Please select main class<project name>.", false);
                 if (selectedFix) {
-                    sendInfo(null, {
+                    sendInfo("", {
                         fix: "yes",
                         fixMessage: errors.join(os.EOL),
                     });

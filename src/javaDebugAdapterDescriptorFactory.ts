@@ -8,8 +8,9 @@ import { Type } from "./logger";
 import { convertErrorToMessage, showErrorMessageWithTroubleshooting } from "./utility";
 
 export class JavaDebugAdapterDescriptorFactory implements DebugAdapterDescriptorFactory {
-    public async createDebugAdapterDescriptor(_session: DebugSession, _executable: DebugAdapterExecutable): Promise<DebugAdapterDescriptor> {
-        let error: Error;
+    public async createDebugAdapterDescriptor(_session: DebugSession,
+                                              _executable: DebugAdapterExecutable): Promise<DebugAdapterDescriptor | undefined> {
+        let error: Error| undefined;
         try {
             const debugServerPort = <number> (await startDebugSession());
             if (debugServerPort) {

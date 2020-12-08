@@ -88,16 +88,19 @@ class MainClassPicker {
             return this.getMRUTimestamp(b) - this.getMRUTimestamp(a);
         });
 
-        const mostRecentlyUsedOption: IMainClassOption = (options.length && this.contains(options[0])) ? options[0] : undefined;
+        const mostRecentlyUsedOption: IMainClassOption | undefined = (options.length && this.contains(options[0])) ? options[0] : undefined;
         const isMostRecentlyUsed = (option: IMainClassOption): boolean => {
-            return mostRecentlyUsedOption
+            return !!mostRecentlyUsedOption
                 && mostRecentlyUsedOption.mainClass === option.mainClass
                 && mostRecentlyUsedOption.projectName === option.projectName;
         };
         const isFromActiveEditor = (option: IMainClassOption): boolean => {
-            const activeEditor: TextEditor = window.activeTextEditor;
+            const activeEditor: TextEditor | undefined = window.activeTextEditor;
             const currentActiveFile: string = _.get(activeEditor, "document.uri.fsPath");
-            return option.filePath && currentActiveFile && path.relative(option.filePath, currentActiveFile) === "";
+            if (option.filePath && currentActiveFile) {
+                return path.relative(option.filePath, currentActiveFile) === "";
+            }
+            return false;
         };
         const isPrivileged = (option: IMainClassOption): boolean => {
             return isMostRecentlyUsed(option) || isFromActiveEditor(option);
@@ -124,7 +127,7 @@ class MainClassPicker {
                 adjustedDetail.push("$(clock) recently used");
             }
 
-            if (isFromActiveEditor(option)) {
+            if (isFromActiveEditor(option) && option.filePath) {
                 adjustedDetail.push(`$(file-text) active editor (${path.basename(option.filePath)})`);
             }
 

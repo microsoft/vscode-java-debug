@@ -55,11 +55,11 @@ function logMessage(message: ILoggingMessage): void {
         }
         sendError(error);
     } else {
-        sendInfo(null, { message: message.message });
+        sendInfo("", { message: message.message });
     }
 
     // Deprecated
-    logger.log(message.type, { message: message.message, stack: message.stack });
+    logger.log(message.type, { message: message.message, stack: message.stack || "" });
 }
 
 export async function showInformationMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
@@ -79,20 +79,20 @@ export async function showErrorMessage(message: ILoggingMessage, ...items: strin
 
 export async function showInformationMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showInformationMessage(message, ...items, LEARN_MORE);
-    return handleTroubleshooting(choice, message.message, message.anchor);
+    return handleTroubleshooting(message.message, choice, message.anchor);
 }
 
 export async function showWarningMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showWarningMessage(message, ...items, LEARN_MORE);
-    return handleTroubleshooting(choice, message.message, message.anchor);
+    return handleTroubleshooting(message.message, choice, message.anchor);
 }
 
 export async function showErrorMessageWithTroubleshooting(message: ITroubleshootingMessage, ...items: string[]): Promise<string | undefined> {
     const choice = await showErrorMessage(message, ...items, LEARN_MORE);
-    return handleTroubleshooting(choice, message.message, message.anchor);
+    return handleTroubleshooting(message.message, choice, message.anchor);
 }
 
-function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
+function handleTroubleshooting(message: string, choice?: string, anchor?: string): string | undefined {
     if (choice === LEARN_MORE) {
         openTroubleshootingPage(message, anchor);
         return undefined;
@@ -101,9 +101,9 @@ function handleTroubleshooting(choice: string, message: string, anchor: string):
     return choice;
 }
 
-export function openTroubleshootingPage(message: string, anchor: string) {
+export function openTroubleshootingPage(message: string, anchor?: string) {
     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK));
-    sendInfo(null, {
+    sendInfo("", {
         troubleshooting: "yes",
         troubleshootingMessage: message,
     });
@@ -183,7 +183,7 @@ export function getJavaExtensionAPI(): Thenable<any> {
     return extension.activate();
 }
 
-export function getJavaExtension(): vscode.Extension<any> {
+export function getJavaExtension(): vscode.Extension<any> | undefined {
     return vscode.extensions.getExtension(JAVA_EXTENSION_ID);
 }
 
@@ -194,11 +194,11 @@ export function isJavaExtEnabled(): boolean {
 
 export function isJavaExtActivated(): boolean {
     const javaExt = vscode.extensions.getExtension(JAVA_EXTENSION_ID);
-    return javaExt && javaExt.isActive;
+    return !!javaExt && javaExt.isActive;
 }
 
 export function getLauncherScriptPath() {
-    const ext = vscode.extensions.getExtension(DEBUGGER_EXTENSION_ID);
+    const ext = vscode.extensions.getExtension(DEBUGGER_EXTENSION_ID)!;
     return path.join(ext.extensionPath, "scripts", "launcher.bat");
 }
 

@@ -49,14 +49,14 @@ export function resolveClasspath(mainClass: string, projectName: string) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
-export function resolveMainClass(workspaceUri: vscode.Uri): Promise<IMainClassOption[]> {
+export function resolveMainClass(workspaceUri?: vscode.Uri): Promise<IMainClassOption[]> {
     if (workspaceUri) {
         return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, workspaceUri.toString());
     }
     return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
-export function validateLaunchConfig(workspaceUri: vscode.Uri, mainClass: string, projectName: string, containsExternalClasspaths: boolean):
+export function validateLaunchConfig(mainClass: string, projectName: string, containsExternalClasspaths: boolean, workspaceUri?: vscode.Uri):
     Promise<ILaunchValidationResponse> {
     return <Promise<ILaunchValidationResponse>>commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,
         workspaceUri ? workspaceUri.toString() : undefined, mainClass, projectName, containsExternalClasspaths);

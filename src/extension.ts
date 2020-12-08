@@ -165,7 +165,7 @@ function specifyProgramArguments(context: vscode.ExtensionContext): Thenable<str
 }
 
 async function applyHCR(hcrStatusBar: NotificationBar) {
-    const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
+    const debugSession: vscode.DebugSession | undefined = vscode.debug.activeDebugSession;
     if (!debugSession) {
         return;
     }
@@ -246,7 +246,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         throw ex;
     }
 
-    const activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
+    const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
     if (!uri && activeEditor && _.endsWith(path.basename(activeEditor.document.fileName), ".java")) {
         uri = activeEditor.document.uri;
     }
@@ -279,7 +279,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
     } else {
         const launchMainChoice: string = "main() method";
         const launchTestChoice: string = "unit tests";
-        const choice: string = await vscode.window.showQuickPick(
+        const choice: string | undefined = await vscode.window.showQuickPick(
             [launchMainChoice, launchTestChoice],
             { placeHolder: "Please select which kind of task you would like to launch" },
         );
@@ -317,7 +317,7 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         return;
     }
 
-    await startDebugging(pick.mainClass, pick.projectName, uri, noDebug);
+    await startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug);
 }
 
 async function runJavaProject(node: any, noDebug: boolean) {
@@ -342,13 +342,13 @@ async function runJavaProject(node: any, noDebug: boolean) {
         return;
     }
 
-    const projectName: string = pick.projectName;
+    const projectName: string | undefined = pick.projectName;
     const mainClass: string = pick.mainClass;
-    const filePath: string = pick.filePath;
-    const workspaceFolder: vscode.WorkspaceFolder = filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
+    const filePath: string | undefined = pick.filePath;
+    const workspaceFolder: vscode.WorkspaceFolder | undefined = filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
     const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspaceFolder);
     const existingConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
-    const existConfig: vscode.DebugConfiguration = _.find(existingConfigs, (config) => {
+    const existConfig: vscode.DebugConfiguration | undefined = _.find(existingConfigs, (config) => {
         return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
     });
     const debugConfig = existConfig || {

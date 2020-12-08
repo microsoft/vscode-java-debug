@@ -23,7 +23,7 @@ export function initializeThreadOperations(context: vscode.ExtensionContext) {
 }
 
 async function operateThread(request: string, threadId: any): Promise<void> {
-    const debugSession: vscode.DebugSession = vscode.debug.activeDebugSession;
+    const debugSession: vscode.DebugSession | undefined = vscode.debug.activeDebugSession;
     if (!debugSession) {
         return;
     }
