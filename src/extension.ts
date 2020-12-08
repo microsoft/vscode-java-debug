@@ -14,7 +14,7 @@ import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvi
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { logJavaException, logJavaInfo } from "./javaLogger";
-import { IMainClassOption, IMainMethod, resolveMainClass, resolveMainMethod } from "./languageServerPlugin";
+import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
@@ -29,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await instrumentOperation("activation", initializeExtension)(context);
 }
 
-function initializeExtension(operationId: string, context: vscode.ExtensionContext) {
+function initializeExtension(_operationId: string, context: vscode.ExtensionContext) {
     // Deprecated
     logger.initialize(context, true);
 
@@ -123,7 +123,7 @@ function registerDebugEventListener(context: vscode.ExtensionContext) {
     }));
 }
 
-function handleUserNotification(customEvent) {
+function handleUserNotification(customEvent: vscode.DebugSessionCustomEvent) {
     if (customEvent.body.notificationType === "ERROR") {
         utility.showErrorMessageWithTroubleshooting({
             message: customEvent.body.message,

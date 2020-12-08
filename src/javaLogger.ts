@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { sendError, sendInfo, sendOperationError } from "vscode-extension-telemetry-wrapper";
+import { sendInfo, sendOperationError } from "vscode-extension-telemetry-wrapper";
 
 export function logJavaException(errorProperties: any): void {
     /**

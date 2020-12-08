@@ -35,7 +35,7 @@ class MainClassPicker {
         }
 
         if (!options || !options.length) {
-            return;
+            return undefined;
         } else if (autoPick && options.length === 1) {
             return options[0];
         }
@@ -53,6 +53,7 @@ class MainClassPicker {
         if (selected) {
             return selected.data;
         }
+        return undefined;
     }
 
     // tslint:disable-next-line
@@ -77,7 +78,7 @@ class MainClassPicker {
         }
 
         if (!options || !options.length) {
-            return;
+            return undefined;
         } else if (autoPick && options.length === 1) {
             return options[0];
         }
@@ -146,6 +147,7 @@ class MainClassPicker {
             this.updateMRUTimestamp(selected.data);
             return selected.data;
         }
+        return undefined;
     }
 
     private getMRUTimestamp(mainClassOption: IMainClassOption): number {

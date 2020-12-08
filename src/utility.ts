@@ -23,7 +23,7 @@ export class UserError extends Error {
 }
 
 export class JavaExtensionNotEnabledError extends Error {
-    constructor(message) {
+    constructor(message: string) {
         super(message);
         setUserError(this);
     }
@@ -95,7 +95,7 @@ export async function showErrorMessageWithTroubleshooting(message: ITroubleshoot
 function handleTroubleshooting(choice: string, message: string, anchor: string): string | undefined {
     if (choice === LEARN_MORE) {
         openTroubleshootingPage(message, anchor);
-        return;
+        return undefined;
     }
 
     return choice;

@@ -14,7 +14,7 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
      * @param token A cancellation token.
      * @return A list of terminal links for the given line.
      */
-    public provideTerminalLinks(context: TerminalLinkContext, token: CancellationToken): ProviderResult<IJavaTerminalLink[]> {
+    public provideTerminalLinks(context: TerminalLinkContext, _token: CancellationToken): ProviderResult<IJavaTerminalLink[]> {
         if (context.terminal.name !== "Java Debug Console" && context.terminal.name !== "Java Process Console") {
             return [];
         }
@@ -32,6 +32,8 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
                 lineNumber: sourceLineNumber,
             }];
         }
+
+        return [];
     }
 
     /**

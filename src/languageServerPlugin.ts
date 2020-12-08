@@ -45,7 +45,7 @@ export function startDebugSession() {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_START_DEBUGSESSION);
 }
 
-export function resolveClasspath(mainClass, projectName) {
+export function resolveClasspath(mainClass: string, projectName: string) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
@@ -101,7 +101,7 @@ export async function isOnClasspath(uri: string): Promise<boolean> {
     }
 }
 
-export function resolveJavaExecutable(mainClass, projectName) {
+export function resolveJavaExecutable(mainClass: string, projectName: string) {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_JAVAEXECUTABLE, mainClass, projectName);
 }
 

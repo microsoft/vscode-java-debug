@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import * as path from "path";
-import { DebugConfiguration, window } from "vscode";
+import { window } from "vscode";
 import { getProcesses, getProcessTree } from "./processTree";
 
 const JAVA_PATTERN = /(?:java|javaw|j9|j9w)$/i;
@@ -42,12 +42,14 @@ function convertToJavaProcess(pid: number, command: string, args: string): IJava
             };
         }
     }
+
+    return undefined;
 }
 
 export async function pickJavaProcess(): Promise<IJavaProcess> {
     const javaProcesses: IJavaProcess[] = [];
     try {
-        await getProcesses((pid: number, ppid: number, command: string, args: string, date: number) => {
+        await getProcesses((pid: number, _ppid: number, command: string, args: string, _date: number) => {
             const javaProcess = convertToJavaProcess(pid, command, args);
             if (javaProcess) {
                 javaProcesses.push(javaProcess);
@@ -79,6 +81,8 @@ export async function pickJavaProcess(): Promise<IJavaProcess> {
     if (pick) {
         return pick.process;
     }
+
+    return undefined;
 }
 
 export async function resolveJavaProcess(pid: number): Promise<IJavaProcess | undefined> {

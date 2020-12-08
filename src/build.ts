@@ -86,7 +86,7 @@ function checkErrorsReportedByJavaExtension(): boolean {
 }
 
 async function showFixSuggestions(operationId: string) {
-    let buildFiles = [];
+    let buildFiles: string[] = [];
     try {
         buildFiles = await lsPlugin.resolveBuildFiles();
     } catch (error) {

@@ -43,10 +43,10 @@ class DebugHoverProvider implements Disposable {
 }
 
 class InternalDebugHoverProvider implements HoverProvider {
-    public provideHover(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Hover> {
+    public provideHover(document: TextDocument, position: Position, _token: CancellationToken): ProviderResult<Hover> {
         const range = document.getWordRangeAtPosition(position, /\w+/);
         if (!range || document.getText(range) !== "main") {
-            return;
+            return undefined;
         }
 
         const line = document.lineAt(position);
@@ -69,6 +69,8 @@ class InternalDebugHoverProvider implements HoverProvider {
             contributed.isTrusted = true;
             return new Hover(contributed);
         }
+
+        return undefined;
     }
 
     private isMainMethod(line: string): boolean {

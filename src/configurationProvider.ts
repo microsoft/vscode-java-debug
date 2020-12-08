@@ -4,7 +4,6 @@ import * as fs from "fs";
 import * as _ from "lodash";
 import * as os from "os";
 import * as path from "path";
-import { debug } from "util";
 import * as vscode from "vscode";
 
 import { instrumentOperation, sendInfo } from "vscode-extension-telemetry-wrapper";
@@ -19,7 +18,7 @@ import { mainClassPicker } from "./mainClassPicker";
 import { resolveJavaProcess } from "./processPicker";
 import * as utility from "./utility";
 
-const platformNameMappings = {
+const platformNameMappings: {[key: string]: string} = {
     win32: "windows",
     linux: "linux",
     darwin: "osx",
@@ -38,20 +37,22 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     this.isUserSettingsDirty = true;
                 }
             }
+            return undefined;
         });
     }
 
     // Returns an initial debug configurations based on contextual information.
-    public provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken):
+    public provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, _token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration[]> {
-        const provideDebugConfigurationsHandler = instrumentOperation("provideDebugConfigurations", (operationId: string) => {
+        const provideDebugConfigurationsHandler = instrumentOperation("provideDebugConfigurations", (_operationId: string) => {
             return <Thenable<vscode.DebugConfiguration[]>>this.provideDebugConfigurationsAsync(folder);
         });
         return provideDebugConfigurationsHandler();
     }
 
     // Try to add all missing attributes to the debug configuration being launched.
-    public resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken):
+    public resolveDebugConfiguration(_folder: vscode.WorkspaceFolder | undefined,
+                                     config: vscode.DebugConfiguration, _token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
         // If no debug configuration is provided, then generate one in memory.
         if (this.isEmptyConfig(config)) {
@@ -67,8 +68,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     public resolveDebugConfigurationWithSubstitutedVariables(
         folder: vscode.WorkspaceFolder | undefined,
         config: vscode.DebugConfiguration,
-        token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
-        const resolveDebugConfigurationHandler = instrumentOperation("resolveDebugConfiguration", (operationId: string) => {
+        _token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+        const resolveDebugConfigurationHandler = instrumentOperation("resolveDebugConfiguration", (_operationId: string) => {
             try {
                 // See https://github.com/microsoft/vscode-java-debug/issues/778
                 // Merge the platform specific properties to the global config to simplify the subsequent resolving logic.
@@ -85,9 +86,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         return resolveDebugConfigurationHandler();
     }
 
-    private provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
+    private provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, _token?: vscode.CancellationToken) {
         return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (p) => {
-            return new Promise(async (resolve, reject) => {
+            return new Promise(async (resolve, _reject) => {
                 p.report({ message: "Auto generating configuration..." });
                 const defaultLaunchConfig = {
                     type: "java",
@@ -104,7 +105,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     }
 
                     const mainClasses = await lsPlugin.resolveMainClass(folder ? folder.uri : undefined);
-                    let cache;
+                    let cache: {[key: string]: any};
                     cache = {};
                     const launchConfigs = mainClasses.map((item) => {
                         return {
@@ -126,7 +127,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         });
     }
 
-    private mergePlatformProperties(folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration) {
+    private mergePlatformProperties(_folder: vscode.WorkspaceFolder, config: vscode.DebugConfiguration) {
         if (config && platformName && config[platformName]) {
             try {
                 for (const key of Object.keys(config[platformName])) {
@@ -139,7 +140,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private constructLaunchConfigName(mainClass: string, projectName: string, cache: {}) {
+    private constructLaunchConfigName(mainClass: string, projectName: string, cache: {[key: string]: any}) {
         const prefix = "Debug (Launch)-";
         let name = prefix + mainClass.substr(mainClass.lastIndexOf(".") + 1);
         if (projectName !== undefined) {
@@ -199,7 +200,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 const mainClassOption = await this.resolveLaunchConfig(folder ? folder.uri : undefined, config);
                 if (!mainClassOption || !mainClassOption.mainClass) { // Exit silently if the user cancels the prompt fix by ESC.
                     // Exit the debug session.
-                    return;
+                    return undefined;
                 }
 
                 config.mainClass = mainClassOption.mainClass;
@@ -406,7 +407,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 return selectedFix;
             }
             // return undefined if the user clicks "Learn More".
-            return;
+            return undefined;
         }
 
         throw new utility.UserError({
