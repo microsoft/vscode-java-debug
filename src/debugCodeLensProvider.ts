@@ -134,11 +134,11 @@ function debugJavaProgram(mainClass: string, projectName: string, uri: vscode.Ur
     return startDebugging(mainClass, projectName, uri, false);
 }
 
-async function constructDebugConfig(mainClass: string, projectName: string, workspace: vscode.Uri): Promise<vscode.DebugConfiguration> {
+async function constructDebugConfig(mainClass: string, projectName: string, workspace?: vscode.Uri): Promise<vscode.DebugConfiguration> {
     const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspace);
     const rawConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
 
-    let debugConfig: vscode.DebugConfiguration = _.find(rawConfigs, (config) => {
+    let debugConfig: vscode.DebugConfiguration | undefined = _.find(rawConfigs, (config) => {
         return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
     });
 
@@ -174,7 +174,7 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
     return _.cloneDeep(debugConfig);
 }
 
-async function launchJsonExists(workspace: vscode.Uri): Promise<boolean> {
+async function launchJsonExists(workspace?: vscode.Uri): Promise<boolean> {
     if (!workspace) {
         return false;
     }
@@ -185,8 +185,8 @@ async function launchJsonExists(workspace: vscode.Uri): Promise<boolean> {
 }
 
 export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
-    const workspaceFolder: vscode.WorkspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-    const workspaceUri: vscode.Uri = workspaceFolder ? workspaceFolder.uri : undefined;
+    const workspaceFolder: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(uri);
+    const workspaceUri: vscode.Uri | undefined = workspaceFolder ? workspaceFolder.uri : undefined;
     const onClasspath = await isOnClasspath(uri.toString());
     if (workspaceUri && onClasspath === false && !(await addToClasspath(uri))) {
         return false;

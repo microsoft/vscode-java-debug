@@ -20,7 +20,7 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
         }
 
         const regex = new RegExp("(\\sat\\s+)([\\w$\\.]+\\/)?(([\\w$]+\\.)+[<\\w$>]+)\\(([\\w-$]+\\.java:\\d+)\\)");
-        const result: RegExpExecArray = regex.exec(context.line);
+        const result: RegExpExecArray | null = regex.exec(context.line);
         if (result && result.length) {
             const stackTrace = `${result[2] || ""}${result[3]}(${result[5]})`;
             const sourceLineNumber = Number(result[5].split(":")[1]);

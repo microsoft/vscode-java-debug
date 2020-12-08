@@ -16,7 +16,7 @@ const SENSITIVE_PROPS = ["message", "stacktrace", "detailmessage"];
 
 // Deprecate
 class Logger implements vscode.Disposable {
-    private reporter: TelemetryReporter = null;
+    private reporter: TelemetryReporter | null = null;
 
     public initialize(context: vscode.ExtensionContext, firstParty?: boolean): void {
         if (this.reporter) {
