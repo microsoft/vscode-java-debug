@@ -317,7 +317,7 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         return;
     }
 
-    await startDebugging(pick.mainClass, pick.projectName!, uri, noDebug);
+    await startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug);
 }
 
 async function runJavaProject(node: any, noDebug: boolean) {
