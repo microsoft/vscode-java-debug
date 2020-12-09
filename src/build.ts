@@ -38,11 +38,11 @@ export async function buildWorkspace(progressReporter: IProgressReporter): Promi
     if (buildResult.error === CompileWorkspaceStatus.CANCELLED) {
         return false;
     } else {
-        return handleBuildFailure(buildResult.operationId, buildResult.error);
+        return handleBuildFailure(buildResult.operationId, buildResult.error, progressReporter);
     }
 }
 
-async function handleBuildFailure(operationId: string, err: any): Promise<boolean> {
+async function handleBuildFailure(operationId: string, err: any, progressReporter: IProgressReporter): Promise<boolean> {
     const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION);
     const onBuildFailureProceed = configuration.get<boolean>(ON_BUILD_FAILURE_PROCEED);
 
@@ -61,6 +61,9 @@ async function handleBuildFailure(operationId: string, err: any): Promise<boolea
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
 
+        if (!onBuildFailureProceed) {
+            progressReporter.report("Confirm Build Errors", "Build failed, please select the next action...");
+        }
         const ans = onBuildFailureProceed ? "Proceed" : (await vscode.window.showErrorMessage("Build failed, do you want to continue?",
             "Proceed", "Fix...", "Cancel"));
         sendInfo(operationId, {
