@@ -2,48 +2,51 @@
 // Licensed under the MIT license.
 
 import { v4 } from "uuid";
-import { CancellationToken, CancellationTokenSource, commands, Disposable, EventEmitter, ExtensionContext, ProgressLocation,
+import { CancellationToken, CancellationTokenSource, Disposable, EventEmitter, Progress, ProgressLocation,
     StatusBarAlignment, StatusBarItem, window, workspace } from "vscode";
-import { IProgressReporter, IProgressReporterManager } from "./progressAPI";
+import { IProgressReporter, IProgressReporterProvider } from "./progressAPI";
 
-const showProgressNotificationCommand = "_java.debug.showProgressNotification";
-export function registerProgressReporters(context: ExtensionContext) {
-    context.subscriptions.push(commands.registerCommand(showProgressNotificationCommand, async (progressReporter: JavaProgressReporter) => {
-        progressReporter.showProgressNotification();
-    }));
-}
-
-class JavaProgressReporter implements IProgressReporter {
-    public jobName: string;
-    public subTaskName: string;
-    public detailedMessage: string = "Building Java workspace...";
-
+const STATUS_COMMAND: string = "java.show.server.task.status";
+class ProgressReporter implements IProgressReporter {
     private _id: string = v4();
+    private _jobName: string;
+    private _progressLocation: ProgressLocation | { viewId: string };
+    private _cancellable: boolean = false;
+
+    private _subTaskName: string;
+    private _detailedMessage: string;
+    private _isShown: boolean;
+
     private _tokenSource = new CancellationTokenSource();
     private _statusBarItem: StatusBarItem | undefined;
-    private _isProgressNotificationRunning: boolean = false;
-    private _cancelEventEmitter: EventEmitter<any>;
+    private _cancelProgressEventEmitter: EventEmitter<any>;
     private _progressEventEmitter: EventEmitter<any>;
     private _disposables: Disposable[] = [];
 
-    constructor(jobName: string, showInStatusBar?: boolean) {
-        this.jobName = jobName || "Java Job Status";
-        const config = workspace.getConfiguration("java.debug.settings");
-        if (showInStatusBar || !config.showRunStatusAsNotification) {
+    constructor(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable?: boolean) {
+        this._jobName = jobName;
+        this._progressLocation = progressLocation || ProgressLocation.Notification;
+        this._cancellable = !!cancellable;
+        const config = workspace.getConfiguration("java");
+        if (config.silentNotification && this._progressLocation === ProgressLocation.Notification) {
+            this._progressLocation = ProgressLocation.Window;
+        }
+
+        if (this._progressLocation === ProgressLocation.Window) {
             this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 1);
-            this._statusBarItem.text = "$(sync~spin) Building...";
+            this._statusBarItem.text = `$(sync~spin) ${this._jobName}...`;
             this._statusBarItem.command = {
                 title: "Check Java Build Status",
-                command: showProgressNotificationCommand,
-                arguments: [ this ],
+                command: STATUS_COMMAND,
+                arguments: [],
             };
             this._statusBarItem.tooltip = "Check Java Build Status";
             this._disposables.push(this._statusBarItem);
         }
 
-        this._cancelEventEmitter = new EventEmitter<any>();
+        this._cancelProgressEventEmitter = new EventEmitter<any>();
         this._progressEventEmitter = new EventEmitter<any>();
-        this._disposables.push(this._cancelEventEmitter);
+        this._disposables.push(this._cancelProgressEventEmitter);
         this._disposables.push(this._progressEventEmitter);
         this._disposables.push(this._tokenSource);
     }
@@ -53,27 +56,46 @@ class JavaProgressReporter implements IProgressReporter {
     }
 
     public report(subTaskName: string, detailedMessage: string): void {
-        this.subTaskName = subTaskName;
-        this.detailedMessage = detailedMessage || subTaskName || "Building...";
+        this._subTaskName = subTaskName;
+        this._detailedMessage = detailedMessage || subTaskName || this._jobName;
         this._progressEventEmitter.fire(undefined);
         if (this._statusBarItem) {
-            this._statusBarItem.text = subTaskName ? `$(sync~spin) Building - ${subTaskName}...` : "$(sync~spin) Building...";
+            this._statusBarItem.text = `$(sync~spin) ${this._subTaskName || this._jobName}...`;
+        }
+
+        this.show();
+    }
+
+    public show(): void {
+        if (this._statusBarItem) {
             this._statusBarItem.show();
-        } else {
-            this.showProgressNotification();
+            return;
+        }
+
+        this.showNativeProgress();
+    }
+
+    public hide(onlyNotifications?: boolean): void {
+        if (onlyNotifications && this._progressLocation === ProgressLocation.Notification) {
+            this._cancelProgressEventEmitter.fire(undefined);
+            this._isShown = false;
         }
     }
 
     public cancel() {
         this._tokenSource.cancel();
-        this._cancelEventEmitter.fire(undefined);
+        this._cancelProgressEventEmitter.fire(undefined);
         this._statusBarItem?.hide();
         this._disposables.forEach((disposable) => disposable.dispose());
-        progressReporterManager.remove(this);
+        (<ProgressReporterProvider> progressProvider).remove(this);
     }
 
     public isCancelled(): boolean {
         return this.getCancellationToken().isCancellationRequested;
+    }
+
+    public done(): void {
+        this.cancel();
     }
 
     public getCancellationToken(): CancellationToken {
@@ -86,45 +108,64 @@ class JavaProgressReporter implements IProgressReporter {
         });
     }
 
-    public showProgressNotification() {
-        if (this._isProgressNotificationRunning) {
+    private showNativeProgress() {
+        if (this._isShown) {
             return;
         }
 
-        this._isProgressNotificationRunning = true;
+        this._isShown = true;
         window.withProgress<boolean>({
-            location: ProgressLocation.Notification,
-            title: `[${this.jobName}](command:java.show.server.task.status)`,
-            cancellable: true,
+            location: this._progressLocation,
+            title: this._jobName ? `[${this._jobName}](command:${STATUS_COMMAND})` : undefined,
+            cancellable: this._cancellable,
         }, (progress, token) => {
-            progress.report({
-                message: this.detailedMessage,
-            });
-            this._progressEventEmitter.event(() => {
-                progress.report({
-                    message: this.detailedMessage,
-                });
-            });
+            this.reportMessage(progress);
             this.observe(token);
+            this._progressEventEmitter.event(() => {
+                this.reportMessage(progress);
+            });
             return new Promise((resolve) => {
-                this._cancelEventEmitter.event(() => {
+                this._cancelProgressEventEmitter.event(() => {
                     resolve(true);
                 });
             });
         });
     }
+
+    private reportMessage(progress: Progress<{ message?: string; increment?: number }>): void {
+        const message: string = this._progressLocation === ProgressLocation.Notification ? this._detailedMessage : this._subTaskName;
+        progress.report({
+            message,
+        });
+    }
 }
 
-class JavaProgressReporterManager implements IProgressReporterManager {
+class PreLaunchTaskProgressReporter extends ProgressReporter implements IProgressReporter {
+    constructor(jobName: string) {
+        super(jobName, ProgressLocation.Notification, true);
+    }
+
+    public report(subTaskName: string, detailedMessage: string): void {
+        super.report("Building - " + subTaskName, detailedMessage);
+    }
+}
+
+class ProgressReporterProvider implements IProgressReporterProvider {
     private store: { [key: string]: IProgressReporter } = {};
 
-    public create(jobName: string, showInStatusBar?: boolean): IProgressReporter {
-        const progressReporter = new JavaProgressReporter(jobName, showInStatusBar);
+    public createProgressReporter(jobName: string, progressLocation: ProgressLocation, cancellable?: boolean): IProgressReporter {
+        const progressReporter = new ProgressReporter(jobName, progressLocation, cancellable);
         this.store[progressReporter.getId()] = progressReporter;
         return progressReporter;
     }
 
-    public get(progressId: string): IProgressReporter | undefined {
+    public createProgressReporterForPreLaunchTask(jobName: string): IProgressReporter {
+        const progressReporter = new PreLaunchTaskProgressReporter(jobName);
+        this.store[progressReporter.getId()] = progressReporter;
+        return progressReporter;
+    }
+
+    public getProgressReporter(progressId: string): IProgressReporter | undefined {
         return this.store[progressId];
     }
 
@@ -133,4 +174,4 @@ class JavaProgressReporterManager implements IProgressReporterManager {
     }
 }
 
-export const progressReporterManager: IProgressReporterManager = new JavaProgressReporterManager();
+export const progressProvider: IProgressReporterProvider = new ProgressReporterProvider();

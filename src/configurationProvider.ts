@@ -17,7 +17,7 @@ import { logger, Type } from "./logger";
 import { mainClassPicker } from "./mainClassPicker";
 import { resolveJavaProcess } from "./processPicker";
 import { IProgressReporter } from "./progressAPI";
-import { progressReporterManager } from "./progressImpl";
+import { progressProvider } from "./progressImpl";
 import * as utility from "./utility";
 
 const platformNameMappings: {[key: string]: string} = {
@@ -90,7 +90,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private provideDebugConfigurationsAsync(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken) {
         return new Promise(async (resolve, _reject) => {
-            const progressReporter = progressReporterManager.create("Create launch.json", true);
+            const progressReporter = progressProvider.createProgressReporter("Create launch.json", vscode.ProgressLocation.Window);
             progressReporter.observe(token);
             const defaultLaunchConfig = {
                 type: "java",
@@ -171,11 +171,11 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async resolveAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration,
                                                        token?: vscode.CancellationToken) {
-        let progressReporter = progressReporterManager.get(config.__progressId);
+        let progressReporter = progressProvider.getProgressReporter(config.__progressId);
         if (!progressReporter && config.__progressId) {
             return undefined;
         }
-        progressReporter = progressReporter || progressReporterManager.create(config.noDebug ? "Run" : "Debug");
+        progressReporter = progressReporter || progressProvider.createProgressReporterForPreLaunchTask(config.noDebug ? "Run" : "Debug");
         progressReporter.observe(token);
         if (progressReporter.isCancelled()) {
             return undefined;
@@ -221,6 +221,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     if (!proceed) {
                         return undefined;
                     }
+
+                    progressReporter.show();
                 }
 
                 if (progressReporter.isCancelled()) {
@@ -353,7 +355,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             utility.showErrorMessageWithTroubleshooting(utility.convertErrorToMessage(ex));
             return undefined;
         } finally {
-            progressReporter.cancel();
+            progressReporter.done();
         }
     }
 
@@ -388,7 +390,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             if (currentFile) {
                 const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
                 if (mainEntries.length) {
-                    progressReporter.report("Select mainClass", "Selecting the main class to run...");
+                    progressReporter.hide(true);
                     return mainClassPicker.showQuickPick(mainEntries, "Please select a main class you want to run.");
                 }
             }
@@ -433,14 +435,13 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
 
         if (validationResponse.proposals && validationResponse.proposals.length) {
-            progressReporter.report("Confirm Config Error", "Config error, please select the next action...");
+            progressReporter.hide(true);
             const answer = await utility.showErrorMessageWithTroubleshooting({
                 message: errors.join(os.EOL),
                 type: Type.USAGEERROR,
                 anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
             }, "Fix");
             if (answer === "Fix") {
-                progressReporter.report("Select mainClass", "Select the main class to run...");
                 const selectedFix = await mainClassPicker.showQuickPick(validationResponse.proposals,
                     "Please select main class<project name>.", false);
                 if (selectedFix) {
@@ -502,7 +503,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             });
         }
 
-        progressReporter.report("Select mainClass", "Selecting the main class to run...");
+        progressReporter.hide(true);
         return mainClassPicker.showQuickPickWithRecentlyUsed(res, hintMessage || "Select main class<project name>");
     }
 }

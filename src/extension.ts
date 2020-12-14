@@ -20,7 +20,7 @@ import { logger, Type } from "./logger";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
 import { IProgressReporter } from "./progressAPI";
-import { progressReporterManager, registerProgressReporters } from "./progressImpl";
+import { progressProvider } from "./progressImpl";
 import { JavaTerminalLinkProvder } from "./terminalLinkProvider";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
@@ -36,7 +36,6 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     // Deprecated
     logger.initialize(context, true);
 
-    registerProgressReporters(context);
     registerDebugEventListener(context);
     context.subscriptions.push(logger);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
@@ -78,7 +77,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     initializeThreadOperations(context);
 
     return {
-        progressReporterManager,
+        progressProvider,
     };
 }
 
@@ -233,7 +232,7 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
-    const progressReporter = progressReporterManager.create(noDebug ? "Run" : "Debug");
+    const progressReporter = progressProvider.createProgressReporterForPreLaunchTask(noDebug ? "Run" : "Debug");
     try {
         // Wait for Java Language Support extension being on Standard mode.
         const isOnStandardMode = await utility.waitForStandardMode(progressReporter);
@@ -323,12 +322,13 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         throw new utility.OperationCancelledError("");
     }
 
-    progressReporter.report("Select mainClass", "Selecting the main class to run...");
+    progressReporter.hide(true);
     const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainMethods, placeHolder, autoPick);
     if (!pick) {
         throw new utility.OperationCancelledError("");
     }
 
+    progressReporter.show();
     startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
 
@@ -341,7 +341,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         throw error;
     }
 
-    const progressReporter = progressReporterManager.create(noDebug ? "Run" : "Debug");
+    const progressReporter = progressProvider.createProgressReporterForPreLaunchTask(noDebug ? "Run" : "Debug");
     try {
         progressReporter.report("Resolve mainClass", "Resolving main class...");
         const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));
@@ -355,13 +355,14 @@ async function runJavaProject(node: any, noDebug: boolean) {
             throw new utility.OperationCancelledError("");
         }
 
-        progressReporter.report("Select mainClass", "Selecting the main class to run...");
+        progressReporter.hide(true);
         const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainClassesOptions,
             "Select the main class to run.");
         if (!pick || progressReporter.isCancelled()) {
             throw new utility.OperationCancelledError("");
         }
 
+        progressReporter.show();
         const projectName: string | undefined = pick.projectName;
         const mainClass: string = pick.mainClass;
         const filePath: string | undefined = pick.filePath;

@@ -56,16 +56,13 @@ async function handleBuildFailure(operationId: string, err: any, progressReporte
     });
     setErrorCode(error, Number(err));
     sendOperationError(operationId, "build", error);
-    if (err === lsPlugin.CompileWorkspaceStatus.WITHERROR || err === lsPlugin.CompileWorkspaceStatus.FAILED) {
+    if (!onBuildFailureProceed && (err === lsPlugin.CompileWorkspaceStatus.WITHERROR || err === lsPlugin.CompileWorkspaceStatus.FAILED)) {
         if (checkErrorsReportedByJavaExtension()) {
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
 
-        if (!onBuildFailureProceed) {
-            progressReporter.report("Confirm Build Errors", "Build failed, please select the next action...");
-        }
-        const ans = onBuildFailureProceed ? "Proceed" : (await vscode.window.showErrorMessage("Build failed, do you want to continue?",
-            "Proceed", "Fix...", "Cancel"));
+        progressReporter.hide(true);
+        const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Fix...", "Cancel");
         sendInfo(operationId, {
             operationName: "build",
             choiceForBuildError: ans || "esc",

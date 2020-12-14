@@ -742,10 +742,10 @@
           "description": "%java.debugger.configuration.vmArgs.description%",
           "default": ""
         },
-        "java.debug.settings.showRunStatusAsNotification": {
+        "java.silentNotification": {
           "type": "boolean",
-          "description": "%java.debugger.configuration.showRunStatusAsNotification%",
-          "default": true
+          "description": "%java.debugger.configuration.silentNotification%",
+          "default": false
         }
       }
     }
