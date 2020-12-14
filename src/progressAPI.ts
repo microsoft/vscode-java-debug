@@ -3,6 +3,7 @@
 
 import { CancellationToken, ProgressLocation } from "vscode";
 
+/* tslint:disable */
 export interface IProgressReporter {
     /**
      * Returns the id of the progress reporter.
@@ -11,10 +12,27 @@ export interface IProgressReporter {
 
     /**
      * Reports a progress message update.
-     * @param subTaskName the message shown in the status bar
-     * @param detailedMessage the detailed message shown in the notification
+     * @param subTaskName the sub task name that's running
+     * @param detailedMessage a more detailed message to be shown in progress notifications
      */
-    report(subTaskName: string, detailedMessage: string): void;
+    report(subTaskName: string, detailedMessage?: string): void;
+
+    /**
+     * Reports a progress message update.
+     * @param subTaskName the sub task name that's running
+     * @param increment use `increment` to report discrete progress. Each call with a `increment`
+     *                  value will be summed up and reflected as overall progress until 100% is reached.
+     */
+    report(subTaskName: string, increment?: number): void;
+
+    /**
+     * Reports a progress message update.
+     * @param subTaskName the sub task name that's running
+     * @param detailedMessage a more detailed message to be shown in progress notifications
+     * @param increment use `increment` to report discrete progress. Each call with a `increment`
+     *                  value will be summed up and reflected as overall progress until 100% is reached.
+     */
+    report(subTaskName: string, detailedMessage: string, increment?: number): void;
 
     /**
      * Shows the progress reporter.
@@ -23,14 +41,9 @@ export interface IProgressReporter {
 
     /**
      * Hides the progress reporter.
-     * @param onlyNotifications only hide the progress reporter when it's shown as notification
+     * @param onlyNotifications only hide the progress reporter when it's shown as notification.
      */
     hide(onlyNotifications?: boolean): void;
-
-    /**
-     * Cancels the progress reporter.
-     */
-    cancel(): void;
 
     /**
      * Returns whether the progress reporter has been cancelled or completed.
@@ -54,7 +67,7 @@ export interface IProgressReporter {
     observe(token?: CancellationToken): void;
 }
 
-export interface IProgressReporterProvider {
+export interface IProgressProvider {
     /**
      * Creates a progress reporter.
      * @param jobName the job name
@@ -67,7 +80,9 @@ export interface IProgressReporterProvider {
     createProgressReporter(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable?: boolean): IProgressReporter;
 
     /**
-     * Creates a progress reporter for the task to run before the debug session starts.
+     * Creates a progress reporter for the preLaunch task that runs before the debug session starts.
+     * For example, building the workspace and calculating the launch configuration are the typical
+     * preLaunch tasks.
      * @param jobName the job name
      */
     createProgressReporterForPreLaunchTask(jobName: string): IProgressReporter;

@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 import { v4 } from "uuid";
-import { CancellationToken, CancellationTokenSource, Disposable, EventEmitter, Progress, ProgressLocation,
+import { CancellationToken, CancellationTokenSource, Disposable, EventEmitter, ProgressLocation,
     StatusBarAlignment, StatusBarItem, window, workspace } from "vscode";
-import { IProgressReporter, IProgressReporterProvider } from "./progressAPI";
+import { IProgressProvider, IProgressReporter } from "./progressAPI";
 
 const STATUS_COMMAND: string = "java.show.server.task.status";
 class ProgressReporter implements IProgressReporter {
@@ -13,8 +13,8 @@ class ProgressReporter implements IProgressReporter {
     private _progressLocation: ProgressLocation | { viewId: string };
     private _cancellable: boolean = false;
 
-    private _subTaskName: string;
-    private _detailedMessage: string;
+    private _message: string;
+    private _increment: number | undefined;
     private _isShown: boolean;
 
     private _tokenSource = new CancellationTokenSource();
@@ -55,14 +55,23 @@ class ProgressReporter implements IProgressReporter {
         return this._id;
     }
 
-    public report(subTaskName: string, detailedMessage: string): void {
-        this._subTaskName = subTaskName;
-        this._detailedMessage = detailedMessage || subTaskName || this._jobName;
-        this._progressEventEmitter.fire(undefined);
+    public report(subTaskName: string, detailedMessage?: string | number, increment?: number): void {
+        this._message = subTaskName || this._jobName;
         if (this._statusBarItem) {
-            this._statusBarItem.text = `$(sync~spin) ${this._subTaskName || this._jobName}...`;
+            this._statusBarItem.text = `$(sync~spin) ${this._message}...`;
+        } else {
+            if (typeof increment === "number") {
+                this._increment = increment;
+            } else if (typeof detailedMessage === "number") {
+                this._increment = detailedMessage;
+            }
+
+            if (typeof detailedMessage === "string") {
+                this._message = detailedMessage || this._message;
+            }
         }
 
+        this._progressEventEmitter.fire(undefined);
         this.show();
     }
 
@@ -82,20 +91,16 @@ class ProgressReporter implements IProgressReporter {
         }
     }
 
-    public cancel() {
-        this._tokenSource.cancel();
-        this._cancelProgressEventEmitter.fire(undefined);
-        this._statusBarItem?.hide();
-        this._disposables.forEach((disposable) => disposable.dispose());
-        (<ProgressReporterProvider> progressProvider).remove(this);
-    }
-
     public isCancelled(): boolean {
         return this.getCancellationToken().isCancellationRequested;
     }
 
     public done(): void {
-        this.cancel();
+        this._tokenSource.cancel();
+        this._cancelProgressEventEmitter.fire(undefined);
+        this._statusBarItem?.hide();
+        this._disposables.forEach((disposable) => disposable.dispose());
+        (<ProgressProvider> progressProvider).remove(this);
     }
 
     public getCancellationToken(): CancellationToken {
@@ -104,7 +109,7 @@ class ProgressReporter implements IProgressReporter {
 
     public observe(token?: CancellationToken): void {
         token?.onCancellationRequested(() => {
-            this.cancel();
+            this.done();
         });
     }
 
@@ -119,10 +124,16 @@ class ProgressReporter implements IProgressReporter {
             title: this._jobName ? `[${this._jobName}](command:${STATUS_COMMAND})` : undefined,
             cancellable: this._cancellable,
         }, (progress, token) => {
-            this.reportMessage(progress);
+            progress.report({
+                message: this._message,
+                increment: this._increment,
+            });
             this.observe(token);
             this._progressEventEmitter.event(() => {
-                this.reportMessage(progress);
+                progress.report({
+                    message: this._message,
+                    increment: this._increment,
+                });
             });
             return new Promise((resolve) => {
                 this._cancelProgressEventEmitter.event(() => {
@@ -131,26 +142,19 @@ class ProgressReporter implements IProgressReporter {
             });
         });
     }
-
-    private reportMessage(progress: Progress<{ message?: string; increment?: number }>): void {
-        const message: string = this._progressLocation === ProgressLocation.Notification ? this._detailedMessage : this._subTaskName;
-        progress.report({
-            message,
-        });
-    }
 }
 
-class PreLaunchTaskProgressReporter extends ProgressReporter implements IProgressReporter {
+class PreLaunchTaskProgressReporter extends ProgressReporter {
     constructor(jobName: string) {
         super(jobName, ProgressLocation.Notification, true);
     }
 
-    public report(subTaskName: string, detailedMessage: string): void {
-        super.report("Building - " + subTaskName, detailedMessage);
+    public report(subTaskName: string, detailedMessage?: string | number, increment?: number): void {
+        super.report("Building - " + subTaskName, detailedMessage, increment);
     }
 }
 
-class ProgressReporterProvider implements IProgressReporterProvider {
+class ProgressProvider implements IProgressProvider {
     private store: { [key: string]: IProgressReporter } = {};
 
     public createProgressReporter(jobName: string, progressLocation: ProgressLocation, cancellable?: boolean): IProgressReporter {
@@ -174,4 +178,4 @@ class ProgressReporterProvider implements IProgressReporterProvider {
     }
 }
 
-export const progressProvider: IProgressReporterProvider = new ProgressReporterProvider();
+export const progressProvider: IProgressProvider = new ProgressProvider();

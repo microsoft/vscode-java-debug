@@ -57,5 +57,5 @@
     "java.debugger.configuration.jdwp.limitOfVariablesPerJdwpRequest.description": "一次JDWP请求中可以请求的变量或字段的最大数量。该值越高，在展开变量视图时，请求debuggee的频率就越低。同时数量过大也会导致JDWP请求超时。",
     "java.debugger.configuration.jdwp.requestTimeout.description": "调试器与目标JVM通信时JDWP请求的超时时间（ms）。",
     "java.debugger.configuration.vmArgs.description": "启动Java程序的默认VM参数。例如，使用'-Xmx1G -ea'将堆大小增加到1GB并启用断言。如果要为特定的调试会话定制VM参数，请修改launch.json中的'vmArgs'配置。",
-    "java.debugger.configuration.silentNotification": "控制是否可以显示进度通知。"
+    "java.debugger.configuration.silentNotification": "控制是否可以使用通知来报告进度。如果为真，则使用状态栏来报告进度。"
 }

@@ -278,7 +278,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
             }
         }
     } catch (ex) {
-        progressReporter.cancel();
+        progressReporter.done();
         if (ex instanceof utility.OperationCancelledError) {
             return;
         }
@@ -389,7 +389,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         debugConfig.__progressId = progressReporter.getId();
         vscode.debug.startDebugging(workspaceFolder, debugConfig);
     } catch (ex) {
-        progressReporter.cancel();
+        progressReporter.done();
         if (ex instanceof utility.OperationCancelledError) {
             return;
         }

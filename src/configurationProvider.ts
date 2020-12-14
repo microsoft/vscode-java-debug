@@ -136,7 +136,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
                 resolve([defaultLaunchConfig]);
             } finally {
-                progressReporter.cancel();
+                progressReporter.done();
             }
         });
     }
