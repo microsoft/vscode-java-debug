@@ -221,8 +221,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     if (!proceed) {
                         return undefined;
                     }
-
-                    progressReporter.show();
                 }
 
                 if (progressReporter.isCancelled()) {
@@ -390,7 +388,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             if (currentFile) {
                 const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
                 if (mainEntries.length) {
-                    progressReporter.hide(true);
+                    if (!mainClassPicker.isAutoPicked(mainEntries)) {
+                        progressReporter.hide(true);
+                    }
                     return mainClassPicker.showQuickPick(mainEntries, "Please select a main class you want to run.");
                 }
             }
@@ -503,7 +503,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             });
         }
 
-        progressReporter.hide(true);
+        if (!mainClassPicker.isAutoPicked(res)) {
+            progressReporter.hide(true);
+        }
         return mainClassPicker.showQuickPickWithRecentlyUsed(res, hintMessage || "Select main class<project name>");
     }
 }

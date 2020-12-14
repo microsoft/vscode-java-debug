@@ -322,13 +322,16 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         throw new utility.OperationCancelledError("");
     }
 
-    progressReporter.hide(true);
+    if (!mainClassPicker.isAutoPicked(mainMethods, autoPick)) {
+        progressReporter.hide(true);
+    }
+
     const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainMethods, placeHolder, autoPick);
     if (!pick) {
         throw new utility.OperationCancelledError("");
     }
 
-    progressReporter.show();
+    progressReporter.report("Launch mainClass", "Launching the main class...");
     startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
 
@@ -355,14 +358,16 @@ async function runJavaProject(node: any, noDebug: boolean) {
             throw new utility.OperationCancelledError("");
         }
 
-        progressReporter.hide(true);
+        if (!mainClassPicker.isAutoPicked(mainClassesOptions)) {
+            progressReporter.hide(true);
+        }
         const pick = await mainClassPicker.showQuickPickWithRecentlyUsed(mainClassesOptions,
             "Select the main class to run.");
         if (!pick || progressReporter.isCancelled()) {
             throw new utility.OperationCancelledError("");
         }
 
-        progressReporter.show();
+        progressReporter.report("Launch mainClass", "Launching the main class...");
         const projectName: string | undefined = pick.projectName;
         const mainClass: string = pick.mainClass;
         const filePath: string | undefined = pick.filePath;
