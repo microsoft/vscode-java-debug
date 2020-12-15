@@ -110,7 +110,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     resolve([defaultLaunchConfig]);
                     return;
                 }
-                progressReporter.report("Resolve Java Configs", "Auto generating Java configuration...");
+                progressReporter.report("Generating Java configuration...");
                 const mainClasses = await lsPlugin.resolveMainClass(folder ? folder.uri : undefined);
                 const cache = {};
                 const launchConfigs = mainClasses.map((item) => {
@@ -174,8 +174,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         let progressReporter = progressProvider.getProgressReporter(config.__progressId);
         if (!progressReporter && config.__progressId) {
             return undefined;
+        } else if (!progressReporter) {
+            progressReporter = progressProvider.createProgressReporter(config.noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
         }
-        progressReporter = progressReporter || progressProvider.createProgressReporterForPreLaunchTask(config.noDebug ? "Run" : "Debug");
+
         progressReporter.observe(token);
         if (progressReporter.isCancelled()) {
             return undefined;
@@ -216,7 +218,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
 
                 if (needsBuildWorkspace()) {
-                    progressReporter.report("Compile", "Compiling Java workspace...");
+                    progressReporter.report("Compiling...");
                     const proceed = await buildWorkspace(progressReporter);
                     if (!proceed) {
                         return undefined;
@@ -227,9 +229,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     return undefined;
                 }
                 if (!config.mainClass) {
-                    progressReporter.report("Resolve mainClass", "Resolving main class...");
+                    progressReporter.report("Resolving mainClass...");
                 } else {
-                    progressReporter.report("Resolve Configuration", "Resolving launch configuration...");
+                    progressReporter.report("Resolving launch configuration...");
                 }
                 const mainClassOption = await this.resolveAndValidateMainClass(folder && folder.uri, config, progressReporter);
                 if (!mainClassOption || !mainClassOption.mainClass) { // Exit silently if the user cancels the prompt fix by ESC.
@@ -237,7 +239,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     return undefined;
                 }
 
-                progressReporter.report("Resolve Configuration", "Resolving launch configuration...");
+                progressReporter.report("Resolving launch configuration...");
                 config.mainClass = mainClassOption.mainClass;
                 config.projectName = mainClassOption.projectName;
 

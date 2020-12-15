@@ -3,7 +3,6 @@
 
 import { CancellationToken, ProgressLocation } from "vscode";
 
-/* tslint:disable */
 export interface IProgressReporter {
     /**
      * Returns the id of the progress reporter.
@@ -12,27 +11,13 @@ export interface IProgressReporter {
 
     /**
      * Reports a progress message update.
-     * @param subTaskName the sub task name that's running
-     * @param detailedMessage a more detailed message to be shown in progress notifications
-     */
-    report(subTaskName: string, detailedMessage?: string): void;
-
-    /**
-     * Reports a progress message update.
-     * @param subTaskName the sub task name that's running
+     * @param message the message to update
      * @param increment use `increment` to report discrete progress. Each call with a `increment`
      *                  value will be summed up and reflected as overall progress until 100% is reached.
+     *                  Note that currently only `ProgressLocation.Notification` is capable of showing
+     *                  discrete progress.
      */
-    report(subTaskName: string, increment?: number): void;
-
-    /**
-     * Reports a progress message update.
-     * @param subTaskName the sub task name that's running
-     * @param detailedMessage a more detailed message to be shown in progress notifications
-     * @param increment use `increment` to report discrete progress. Each call with a `increment`
-     *                  value will be summed up and reflected as overall progress until 100% is reached.
-     */
-    report(subTaskName: string, detailedMessage: string, increment?: number): void;
+    report(message: string, increment?: number): void;
 
     /**
      * Shows the progress reporter.
@@ -78,14 +63,6 @@ export interface IProgressProvider {
      *                    button.
      */
     createProgressReporter(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable?: boolean): IProgressReporter;
-
-    /**
-     * Creates a progress reporter for the preLaunch task that runs before the debug session starts.
-     * For example, building the workspace and calculating the launch configuration are the typical
-     * preLaunch tasks.
-     * @param jobName the job name
-     */
-    createProgressReporterForPreLaunchTask(jobName: string): IProgressReporter;
 
     /**
      * Returns the progress reporter with the progress id.

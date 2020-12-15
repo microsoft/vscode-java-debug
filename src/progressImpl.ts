@@ -55,20 +55,13 @@ class ProgressReporter implements IProgressReporter {
         return this._id;
     }
 
-    public report(subTaskName: string, detailedMessage?: string | number, increment?: number): void {
-        this._message = subTaskName || this._jobName;
+    public report(message: string, increment?: number): void {
         if (this._statusBarItem) {
-            this._statusBarItem.text = `$(sync~spin) ${this._message}...`;
+            const text = message ? `${this._jobName} - ${message}` : `${this._jobName}...`;
+            this._statusBarItem.text = `$(sync~spin) ${text}`;
         } else {
-            if (typeof increment === "number") {
-                this._increment = increment;
-            } else if (typeof detailedMessage === "number") {
-                this._increment = detailedMessage;
-            }
-
-            if (typeof detailedMessage === "string") {
-                this._message = detailedMessage || this._message;
-            }
+            this._message = message;
+            this._increment = increment;
         }
 
         this._progressEventEmitter.fire(undefined);
@@ -144,27 +137,11 @@ class ProgressReporter implements IProgressReporter {
     }
 }
 
-class PreLaunchTaskProgressReporter extends ProgressReporter {
-    constructor(jobName: string) {
-        super(jobName, ProgressLocation.Notification, true);
-    }
-
-    public report(subTaskName: string, detailedMessage?: string | number, increment?: number): void {
-        super.report("Building - " + subTaskName, detailedMessage, increment);
-    }
-}
-
 class ProgressProvider implements IProgressProvider {
     private store: { [key: string]: IProgressReporter } = {};
 
     public createProgressReporter(jobName: string, progressLocation: ProgressLocation, cancellable?: boolean): IProgressReporter {
         const progressReporter = new ProgressReporter(jobName, progressLocation, cancellable);
-        this.store[progressReporter.getId()] = progressReporter;
-        return progressReporter;
-    }
-
-    public createProgressReporterForPreLaunchTask(jobName: string): IProgressReporter {
-        const progressReporter = new PreLaunchTaskProgressReporter(jobName);
         this.store[progressReporter.getId()] = progressReporter;
         return progressReporter;
     }

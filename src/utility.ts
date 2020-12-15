@@ -227,7 +227,7 @@ export enum ServerMode {
  */
 export async function waitForStandardMode(progressReporter: IProgressReporter): Promise<boolean> {
     if (await isImportingProjects()) {
-        progressReporter.report("Import", "Importing Java projects...");
+        progressReporter.report("Importing projects...");
     }
 
     const api = await getJavaExtensionAPI(progressReporter);
@@ -243,7 +243,7 @@ export async function waitForStandardMode(progressReporter: IProgressReporter): 
                 return true;
             }
 
-            progressReporter?.report("Import", "Importing Java projects...");
+            progressReporter?.report("Importing projects...");
             return new Promise<boolean>((resolve) => {
                 progressReporter.getCancellationToken().onCancellationRequested(() => {
                     resolve(false);
@@ -260,7 +260,7 @@ export async function waitForStandardMode(progressReporter: IProgressReporter): 
 
         return false;
     } else if (api && api.serverMode === ServerMode.HYBRID) {
-        progressReporter.report("Import", "Importing Java projects...");
+        progressReporter.report("Importing projects...");
         return new Promise<boolean>((resolve) => {
             progressReporter.getCancellationToken().onCancellationRequested(() => {
                 resolve(false);

@@ -232,7 +232,7 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
-    const progressReporter = progressProvider.createProgressReporterForPreLaunchTask(noDebug ? "Run" : "Debug");
+    const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
     try {
         // Wait for Java Language Support extension being on Standard mode.
         const isOnStandardMode = await utility.waitForStandardMode(progressReporter);
@@ -256,7 +256,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         const defaultPlaceHolder: string = "Select the main class to run";
 
         if (!hasMainMethods && !canRunTests) {
-            progressReporter.report("Resolve mainClass", "Resolving main class...");
+            progressReporter.report("Resolving mainClass...");
             const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
             const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
             await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
@@ -331,7 +331,7 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         throw new utility.OperationCancelledError("");
     }
 
-    progressReporter.report("Launch mainClass", "Launching the main class...");
+    progressReporter.report("Launching mainClass...");
     startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
 
@@ -344,9 +344,9 @@ async function runJavaProject(node: any, noDebug: boolean) {
         throw error;
     }
 
-    const progressReporter = progressProvider.createProgressReporterForPreLaunchTask(noDebug ? "Run" : "Debug");
+    const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
     try {
-        progressReporter.report("Resolve mainClass", "Resolving main class...");
+        progressReporter.report("Resolving mainClass...");
         const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));
         if (progressReporter.isCancelled()) {
             throw new utility.OperationCancelledError("");
@@ -367,7 +367,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
             throw new utility.OperationCancelledError("");
         }
 
-        progressReporter.report("Launch mainClass", "Launching the main class...");
+        progressReporter.report("Launching mainClass...");
         const projectName: string | undefined = pick.projectName;
         const mainClass: string = pick.mainClass;
         const filePath: string | undefined = pick.filePath;
