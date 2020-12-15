@@ -256,8 +256,12 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         const defaultPlaceHolder: string = "Select the main class to run";
 
         if (!hasMainMethods && !canRunTests) {
-            progressReporter.report("Resolving mainClass...");
+            progressReporter.report("Resolving main class...");
             const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
+            if (progressReporter.isCancelled()) {
+                throw new utility.OperationCancelledError("");
+            }
+
             const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
             await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
         } else if (hasMainMethods && !canRunTests) {
@@ -331,7 +335,7 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         throw new utility.OperationCancelledError("");
     }
 
-    progressReporter.report("Launching mainClass...");
+    progressReporter.report("Launching main class...");
     startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
 
@@ -346,7 +350,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
 
     const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
     try {
-        progressReporter.report("Resolving mainClass...");
+        progressReporter.report("Resolving main class...");
         const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));
         if (progressReporter.isCancelled()) {
             throw new utility.OperationCancelledError("");
@@ -367,7 +371,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
             throw new utility.OperationCancelledError("");
         }
 
-        progressReporter.report("Launching mainClass...");
+        progressReporter.report("Launching main class...");
         const projectName: string | undefined = pick.projectName;
         const mainClass: string = pick.mainClass;
         const filePath: string | undefined = pick.filePath;

@@ -229,7 +229,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     return undefined;
                 }
                 if (!config.mainClass) {
-                    progressReporter.report("Resolving mainClass...");
+                    progressReporter.report("Resolving main class...");
                 } else {
                     progressReporter.report("Resolving launch configuration...");
                 }
@@ -389,7 +389,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             const currentFile = config.mainClass ||  _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
             if (currentFile) {
                 const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
-                if (mainEntries.length) {
+                if (progressReporter.isCancelled()) {
+                    return undefined;
+                } else if (mainEntries.length) {
                     if (!mainClassPicker.isAutoPicked(mainEntries)) {
                         progressReporter.hide(true);
                     }
@@ -405,7 +407,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
         const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
         const validationResponse = await lsPlugin.validateLaunchConfig(config.mainClass, config.projectName, containsExternalClasspaths, folder);
-        if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
+        if (progressReporter.isCancelled()) {
+            return undefined;
+        } else if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
             return this.fixMainClass(folder, config, validationResponse, progressReporter);
         }
 
@@ -496,7 +500,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async promptMainClass(folder: vscode.Uri | undefined, progressReporter: IProgressReporter, hintMessage?: string):
         Promise<lsPlugin.IMainClassOption | undefined> {
         const res = await lsPlugin.resolveMainClass(folder);
-        if (res.length === 0) {
+        if (progressReporter.isCancelled()) {
+            return undefined;
+        } else if (res.length === 0) {
             const workspaceFolder = folder ? vscode.workspace.getWorkspaceFolder(folder) : undefined;
             throw new utility.UserError({
                 message: `Cannot find a class with the main method${ workspaceFolder ? " in the folder '" + workspaceFolder.name + "'" : ""}.`,

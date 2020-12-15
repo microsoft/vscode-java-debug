@@ -35,7 +35,7 @@ export async function buildWorkspace(progressReporter: IProgressReporter): Promi
         };
     })();
 
-    if (buildResult.error === CompileWorkspaceStatus.CANCELLED) {
+    if (progressReporter.isCancelled() || buildResult.error === CompileWorkspaceStatus.CANCELLED) {
         return false;
     } else {
         return handleBuildFailure(buildResult.operationId, buildResult.error, progressReporter);

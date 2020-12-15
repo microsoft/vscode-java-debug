@@ -19,8 +19,8 @@ class ProgressReporter implements IProgressReporter {
 
     private _tokenSource = new CancellationTokenSource();
     private _statusBarItem: StatusBarItem | undefined;
-    private _cancelProgressEventEmitter: EventEmitter<any>;
-    private _progressEventEmitter: EventEmitter<any>;
+    private _cancelProgressEventEmitter: EventEmitter<void>;
+    private _progressEventEmitter: EventEmitter<void>;
     private _disposables: Disposable[] = [];
 
     constructor(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable?: boolean) {
@@ -59,12 +59,11 @@ class ProgressReporter implements IProgressReporter {
         if (this._statusBarItem) {
             const text = message ? `${this._jobName} - ${message}` : `${this._jobName}...`;
             this._statusBarItem.text = `$(sync~spin) ${text}`;
-        } else {
-            this._message = message;
-            this._increment = increment;
         }
 
-        this._progressEventEmitter.fire(undefined);
+        this._message = message;
+        this._increment = increment;
+        this._progressEventEmitter.fire();
         this.show();
     }
 
@@ -79,7 +78,7 @@ class ProgressReporter implements IProgressReporter {
 
     public hide(onlyNotifications?: boolean): void {
         if (onlyNotifications && this._progressLocation === ProgressLocation.Notification) {
-            this._cancelProgressEventEmitter.fire(undefined);
+            this._cancelProgressEventEmitter.fire();
             this._isShown = false;
         }
     }
@@ -90,7 +89,7 @@ class ProgressReporter implements IProgressReporter {
 
     public done(): void {
         this._tokenSource.cancel();
-        this._cancelProgressEventEmitter.fire(undefined);
+        this._cancelProgressEventEmitter.fire();
         this._statusBarItem?.hide();
         this._disposables.forEach((disposable) => disposable.dispose());
         (<ProgressProvider> progressProvider).remove(this);
