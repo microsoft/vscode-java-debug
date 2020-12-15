@@ -153,6 +153,22 @@ class MainClassPicker {
         return undefined;
     }
 
+    /**
+     * Checks whether the item options can be picked automatically without popping up the QuickPick box.
+     * @param options the item options to pick
+     * @param autoPick pick it automatically if only one option is available
+     */
+    public isAutoPicked(options: IMainClassOption[], autoPick?: boolean) {
+        const shouldAutoPick: boolean = (autoPick === undefined ? true : !!autoPick);
+        if (!options || !options.length) {
+            return true;
+        } else if (shouldAutoPick && options.length === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
     private getMRUTimestamp(mainClassOption: IMainClassOption): number {
         return this.cache[this.getKey(mainClassOption)] || 0;
     }

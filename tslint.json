@@ -9,7 +9,7 @@
         "no-duplicate-variable": true,
         "max-classes-per-file": false,
         "no-implicit-dependencies": [
-            false, // Turned off due to: https://github.com/microsoft/vscode/issues/78019
+            false,
             "dev"
         ],
         "no-empty": false,

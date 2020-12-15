@@ -9,6 +9,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import { JAVA_LANGID } from "./constants";
 import { initializeHoverProvider } from "./hoverProvider";
 import { IMainMethod, isOnClasspath, resolveMainMethod } from "./languageServerPlugin";
+import { IProgressReporter } from "./progressAPI";
 import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
 
 const JAVA_RUN_CODELENS_COMMAND = "java.debug.runCodeLens";
@@ -184,7 +185,8 @@ async function launchJsonExists(workspace?: vscode.Uri): Promise<boolean> {
     return !!results.find((launchJson) => vscode.workspace.getWorkspaceFolder(launchJson) === workspaceFolder);
 }
 
-export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean): Promise<boolean> {
+export async function startDebugging(mainClass: string, projectName: string, uri: vscode.Uri, noDebug: boolean,
+                                     progressReporter?: IProgressReporter): Promise<boolean> {
     const workspaceFolder: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(uri);
     const workspaceUri: vscode.Uri | undefined = workspaceFolder ? workspaceFolder.uri : undefined;
     const onClasspath = await isOnClasspath(uri.toString());
@@ -195,6 +197,7 @@ export async function startDebugging(mainClass: string, projectName: string, uri
     const debugConfig: vscode.DebugConfiguration = await constructDebugConfig(mainClass, projectName, workspaceUri);
     debugConfig.projectName = projectName;
     debugConfig.noDebug = noDebug;
+    debugConfig.__progressId = progressReporter?.getId();
 
     return vscode.debug.startDebugging(workspaceFolder, debugConfig);
 }

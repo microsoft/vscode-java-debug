@@ -77,8 +77,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 
 			const wmic = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'wbem', 'WMIC.exe');
 			proc = spawn(wmic, [ 'process', 'get', 'CommandLine,CreationDate,ParentProcessId,ProcessId' ]);
-			proc.stdout.setEncoding('utf8');
-			proc.stdout.on('data', lines(line => {
+			proc.stdout?.setEncoding('utf8');
+			proc.stdout?.on('data', lines(line => {
 				let matches = CMD_PAT.exec(line.trim());
 				if (matches && matches.length === 5) {
 					const pid = Number(matches[4]);
@@ -110,8 +110,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 		} else if (process.platform === 'darwin') {	// OS X
 
 			proc = spawn('/bin/ps', [ '-x', '-o', `pid,ppid,comm=${'a'.repeat(256)},command` ]);
-			proc.stdout.setEncoding('utf8');
-			proc.stdout.on('data', lines(line => {
+			proc.stdout?.setEncoding('utf8');
+			proc.stdout?.on('data', lines(line => {
 
 				const pid = Number(line.substr(0, 5));
 				const ppid = Number(line.substr(6, 5));
@@ -126,8 +126,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 		} else {	// linux
 
 			proc = spawn('/bin/ps', [ '-ax', '-o', 'pid,ppid,comm:20,command' ]);
-			proc.stdout.setEncoding('utf8');
-			proc.stdout.on('data', lines(line => {
+			proc.stdout?.setEncoding('utf8');
+			proc.stdout?.on('data', lines(line => {
 
 				const pid = Number(line.substr(0, 5));
 				const ppid = Number(line.substr(6, 5));
@@ -157,8 +157,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 			reject(err);
 		});
 
-		proc.stderr.setEncoding('utf8');
-		proc.stderr.on('data', data => {
+		proc.stderr?.setEncoding('utf8');
+		proc.stderr?.on('data', data => {
 			const e = data.toString();
 			if (e.indexOf('screen size is bogus') >= 0) {
 				// ignore this error silently; see https://github.com/microsoft/vscode/issues/75932

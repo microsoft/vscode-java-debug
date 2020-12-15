@@ -7,16 +7,24 @@ import { instrumentOperation, sendInfo, sendOperationError, setErrorCode } from 
 import * as anchor from "./anchor";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
+import { IProgressReporter } from "./progressAPI";
 import * as utility from "./utility";
 
 const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
 const ON_BUILD_FAILURE_PROCEED = "onBuildFailureProceed";
 
-export async function buildWorkspace(): Promise<boolean> {
+enum CompileWorkspaceStatus {
+    FAILED = 0,
+    SUCCEED = 1,
+    WITHERROR = 2,
+    CANCELLED = 3,
+}
+
+export async function buildWorkspace(progressReporter: IProgressReporter): Promise<boolean> {
     const buildResult = await instrumentOperation("build", async (operationId: string) => {
         let error;
         try {
-            await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false);
+            await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false, progressReporter.getCancellationToken());
         } catch (err) {
             error = err;
         }
@@ -27,14 +35,14 @@ export async function buildWorkspace(): Promise<boolean> {
         };
     })();
 
-    if (buildResult.error) {
-        return handleBuildFailure(buildResult.operationId, buildResult.error);
+    if (progressReporter.isCancelled() || buildResult.error === CompileWorkspaceStatus.CANCELLED) {
+        return false;
+    } else {
+        return handleBuildFailure(buildResult.operationId, buildResult.error, progressReporter);
     }
-
-    return true;
 }
 
-async function handleBuildFailure(operationId: string, err: any): Promise<boolean> {
+async function handleBuildFailure(operationId: string, err: any, progressReporter: IProgressReporter): Promise<boolean> {
     const configuration = vscode.workspace.getConfiguration(JAVA_DEBUG_CONFIGURATION);
     const onBuildFailureProceed = configuration.get<boolean>(ON_BUILD_FAILURE_PROCEED);
 
@@ -48,13 +56,13 @@ async function handleBuildFailure(operationId: string, err: any): Promise<boolea
     });
     setErrorCode(error, Number(err));
     sendOperationError(operationId, "build", error);
-    if (err === lsPlugin.CompileWorkspaceStatus.WITHERROR || err === lsPlugin.CompileWorkspaceStatus.FAILED) {
+    if (!onBuildFailureProceed && (err === lsPlugin.CompileWorkspaceStatus.WITHERROR || err === lsPlugin.CompileWorkspaceStatus.FAILED)) {
         if (checkErrorsReportedByJavaExtension()) {
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
 
-        const ans = onBuildFailureProceed ? "Proceed" : (await vscode.window.showErrorMessage("Build failed, do you want to continue?",
-            "Proceed", "Fix...", "Cancel"));
+        progressReporter.hide(true);
+        const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Fix...", "Cancel");
         sendInfo(operationId, {
             operationName: "build",
             choiceForBuildError: ans || "esc",
