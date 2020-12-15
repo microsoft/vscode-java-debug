@@ -175,7 +175,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         if (!progressReporter && config.__progressId) {
             return undefined;
         } else if (!progressReporter) {
-            progressReporter = progressProvider.createProgressReporter(config.noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
+            progressReporter = progressProvider.createProgressReporter(config.noDebug ? "Run" : "Debug");
         }
 
         progressReporter.observe(token);

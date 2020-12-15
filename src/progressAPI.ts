@@ -56,13 +56,12 @@ export interface IProgressProvider {
     /**
      * Creates a progress reporter.
      * @param jobName the job name
-     * @param progressLocation The location at which progress should show
-     * @param cancellable Controls if a cancel button should show to allow the user
-     *                    to cancel the progress reporter. Note that currently only
-     *                    `ProgressLocation.Notification` is supporting to show a cancel
-     *                    button.
+     * @param progressLocation The location at which progress should show, defaults to `ProgressLocation.Notification`.
+     * @param cancellable Controls if a cancel button should show to allow the user to cancel the progress reporter,
+     *                    defaults to true. Note that currently only `ProgressLocation.Notification` is supporting
+     *                    to show a cancel button.
      */
-    createProgressReporter(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable?: boolean): IProgressReporter;
+    createProgressReporter(jobName: string, progressLocation?: ProgressLocation | { viewId: string }, cancellable?: boolean): IProgressReporter;
 
     /**
      * Returns the progress reporter with the progress id.

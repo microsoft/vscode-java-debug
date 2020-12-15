@@ -232,7 +232,7 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
 }
 
 async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
-    const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
+    const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug");
     try {
         // Wait for Java Language Support extension being on Standard mode.
         const isOnStandardMode = await utility.waitForStandardMode(progressReporter);
@@ -348,7 +348,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         throw error;
     }
 
-    const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug", vscode.ProgressLocation.Notification, true);
+    const progressReporter = progressProvider.createProgressReporter(noDebug ? "Run" : "Debug");
     try {
         progressReporter.report("Resolving main class...");
         const mainClassesOptions: IMainClassOption[] = await utility.searchMainMethods(vscode.Uri.parse(node.uri));

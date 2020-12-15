@@ -23,10 +23,10 @@ class ProgressReporter implements IProgressReporter {
     private _progressEventEmitter: EventEmitter<void>;
     private _disposables: Disposable[] = [];
 
-    constructor(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable?: boolean) {
+    constructor(jobName: string, progressLocation: ProgressLocation | { viewId: string }, cancellable: boolean) {
         this._jobName = jobName;
         this._progressLocation = progressLocation || ProgressLocation.Notification;
-        this._cancellable = !!cancellable;
+        this._cancellable = cancellable;
         const config = workspace.getConfiguration("java");
         if (config.silentNotification && this._progressLocation === ProgressLocation.Notification) {
             this._progressLocation = ProgressLocation.Window;
@@ -139,8 +139,10 @@ class ProgressReporter implements IProgressReporter {
 class ProgressProvider implements IProgressProvider {
     private store: { [key: string]: IProgressReporter } = {};
 
-    public createProgressReporter(jobName: string, progressLocation: ProgressLocation, cancellable?: boolean): IProgressReporter {
-        const progressReporter = new ProgressReporter(jobName, progressLocation, cancellable);
+    public createProgressReporter(jobName: string, progressLocation?: ProgressLocation | { viewId: string },
+                                  cancellable?: boolean): IProgressReporter {
+        const progressReporter = new ProgressReporter(jobName, progressLocation || ProgressLocation.Notification,
+                                cancellable === undefined ? true : !!cancellable);
         this.store[progressReporter.getId()] = progressReporter;
         return progressReporter;
     }
