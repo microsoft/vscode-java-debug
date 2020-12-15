@@ -500,7 +500,7 @@
             "description": "%java.debugger.snippet.launch.description%",
             "body": {
               "type": "java",
-              "name": "Debug (Launch)",
+              "name": "Launch Java Program",
               "request": "launch",
               "mainClass": ""
             }
@@ -510,7 +510,7 @@
             "description": "%java.debugger.snippet.launchInExternalTerminal.description%",
             "body": {
               "type": "java",
-              "name": "Debug (Launch) - External Terminal",
+              "name": "Launch External Terminal",
               "request": "launch",
               "console": "externalTerminal",
               "mainClass": ""
@@ -521,7 +521,7 @@
             "description": "%java.debugger.snippet.launchCurrentFile.description%",
             "body": {
               "type": "java",
-              "name": "Debug (Launch) - Current File",
+              "name": "Launch Current File",
               "request": "launch",
               "mainClass": "^\"\\${file}\""
             }
@@ -531,7 +531,7 @@
             "description": "%java.debugger.snippet.launchWithArgumentsPrompt.description%",
             "body": {
               "type": "java",
-              "name": "Debug (Launch) with Arguments Prompt",
+              "name": "Launch with Arguments Prompt",
               "request": "launch",
               "mainClass": "",
               "args": "^\"\\${command:SpecifyProgramArgs}\""
@@ -542,7 +542,7 @@
             "description": "%java.debugger.snippet.attach.description%",
             "body": {
               "type": "java",
-              "name": "Debug (Attach)",
+              "name": "Attach",
               "request": "attach",
               "hostName": "localhost",
               "port": "<debug port of the debuggee>"
@@ -563,7 +563,7 @@
             "description": "%java.debugger.snippet.attachRemote.description%",
             "body": {
               "type": "java",
-              "name": "Debug (Attach) - Remote",
+              "name": "Attach to Remote Program",
               "request": "attach",
               "hostName": "<The host name or ip address of remote debuggee>",
               "port": "<debug port of remote debuggee>"
