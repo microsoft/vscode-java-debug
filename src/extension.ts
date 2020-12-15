@@ -384,7 +384,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         });
         const debugConfig = existConfig || {
             type: "java",
-            name: `Launch - ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
+            name: `Launch ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
             request: "launch",
             mainClass,
             projectName,

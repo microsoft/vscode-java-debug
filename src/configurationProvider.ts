@@ -94,7 +94,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             progressReporter.observe(token);
             const defaultLaunchConfig = {
                 type: "java",
-                name: "Debug (Launch) - Current File",
+                name: "Launch Current File",
                 request: "launch",
                 // tslint:disable-next-line
                 mainClass: "${file}",
@@ -116,7 +116,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 const launchConfigs = mainClasses.map((item) => {
                     return {
                         ...defaultLaunchConfig,
-                        name: this.constructLaunchConfigName(item.mainClass, cache, item.projectName),
+                        name: this.constructLaunchConfigName(item.mainClass, cache),
                         mainClass: item.mainClass,
                         projectName: item.projectName,
                     };
@@ -154,12 +154,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private constructLaunchConfigName(mainClass: string, cache: {[key: string]: any}, projectName?: string) {
-        const prefix = "Debug (Launch)-";
-        let name = prefix + mainClass.substr(mainClass.lastIndexOf(".") + 1);
-        if (projectName !== undefined) {
-            name += `<${projectName}>`;
-        }
+    private constructLaunchConfigName(mainClass: string, cache: {[key: string]: any}) {
+        const name = `Launch ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`;
         if (cache[name] === undefined) {
             cache[name] = 0;
             return name;
