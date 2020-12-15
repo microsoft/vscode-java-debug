@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 import * as cp from "child_process";
+import * as fs from "fs";
 import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -17,19 +18,25 @@ enum shortenApproach {
 
 const HELPFUL_NPE_VMARGS = "-XX:+ShowCodeDetailsInExceptionMessages";
 
-export async function detectLaunchCommandStyle(config: vscode.DebugConfiguration): Promise<shortenApproach> {
-    const javaExec: string = config.javaExec || path.join(await getJavaHome(), "bin", "java");
-    const javaVersion = await checkJavaVersion(javaExec);
-    const recommendedShortenApproach = javaVersion <= 8 ? shortenApproach.jarmanifest : shortenApproach.argfile;
+/**
+ * Returns the recommended approach to shorten the command line length.
+ * @param config the launch configuration
+ * @param runtimeVersion the target runtime version
+ */
+export async function getShortenApproachForCLI(config: vscode.DebugConfiguration, runtimeVersion: number): Promise<shortenApproach> {
+    const recommendedShortenApproach = runtimeVersion <= 8 ? shortenApproach.jarmanifest : shortenApproach.argfile;
     return (await shouldShortenIfNecessary(config)) ? recommendedShortenApproach : shortenApproach.none;
 }
 
-export async function validateRuntime(config: vscode.DebugConfiguration) {
+/**
+ * Validates whether the specified runtime version could be supported by the Java tooling.
+ * @param runtimeVersion the target runtime version
+ */
+export async function validateRuntimeCompatibility(runtimeVersion: number) {
     try {
         const platformSettings = await fetchPlatformSettings();
         if (platformSettings && platformSettings.latestSupportedJavaVersion) {
             const latestSupportedVersion = flattenMajorVersion(platformSettings.latestSupportedJavaVersion);
-            const runtimeVersion = await checkJavaVersion(config.javaExec || path.join(await getJavaHome(), "bin", "java"));
             if (latestSupportedVersion < runtimeVersion) {
                 showWarningMessageWithTroubleshooting({
                     message: "The compiled classes are not compatible with the runtime JDK. To mitigate the issue, please refer to \"Learn More\".",
@@ -42,11 +49,14 @@ export async function validateRuntime(config: vscode.DebugConfiguration) {
     }
 }
 
-export async function addMoreHelpfulVMArgs(config: vscode.DebugConfiguration) {
+/**
+ * Add some helpful VM arguments to the launch configuration based on the target runtime version.
+ * @param config the launch configuration
+ * @param runtimeVersion the target runtime version
+ */
+export async function addMoreHelpfulVMArgs(config: vscode.DebugConfiguration, runtimeVersion: number) {
     try {
-        const javaExec = config.javaExec || path.join(await getJavaHome(), "bin", "java");
-        const version = await checkJavaVersion(javaExec);
-        if (version >= 14) {
+        if (runtimeVersion >= 14) {
             // JEP-358: https://openjdk.java.net/jeps/358
             if (config.vmArgs && config.vmArgs.indexOf(HELPFUL_NPE_VMARGS) >= 0) {
                 return;
@@ -59,23 +69,63 @@ export async function addMoreHelpfulVMArgs(config: vscode.DebugConfiguration) {
     }
 }
 
-function checkJavaVersion(javaExec: string): Promise<number> {
-    return new Promise((resolve, _reject) => {
-        cp.execFile(javaExec, ["-version"], {}, (_error, _stdout, stderr) => {
-            const javaVersion = parseMajorVersion(stderr);
-            resolve(javaVersion);
-        });
-    });
+/**
+ * Returns the target runtime version. If the javaExec is not specified, then return the current Java version
+ * that the Java tooling used.
+ * @param javaExec the path of the Java executable
+ */
+export async function getJavaVersion(javaExec: string): Promise<number> {
+    javaExec = javaExec || path.join(await getJavaHome(), "bin", "java");
+    let javaVersion = await checkVersionInReleaseFile(path.resolve(javaExec, "..", ".."));
+    if (!javaVersion) {
+        javaVersion = await checkVersionByCLI(javaExec);
+    }
+    return javaVersion;
 }
 
-function parseMajorVersion(content: string): number {
-    const regexp = /version "(.*)"/g;
-    const match = regexp.exec(content);
-    if (!match) {
+async function checkVersionInReleaseFile(javaHome: string): Promise<number> {
+    if (!javaHome) {
+        return 0;
+    }
+    const releaseFile = path.join(javaHome, "release");
+    if (!await fs.existsSync(releaseFile)) {
         return 0;
     }
 
-    return flattenMajorVersion(match[1]);
+    try {
+        const content = fs.readFileSync(releaseFile);
+        const regexp = /^JAVA_VERSION="(.*)"/gm;
+        const match = regexp.exec(content.toString());
+        if (!match) {
+            return 0;
+        }
+        const majorVersion = flattenMajorVersion(match[1]);
+        return majorVersion;
+    } catch (error) {
+        // ignore
+    }
+
+    return 0;
+}
+
+/**
+ * Get version by parsing `JAVA_HOME/bin/java -version`
+ */
+async function checkVersionByCLI(javaExec: string): Promise<number> {
+    if (!javaExec) {
+        return 0;
+    }
+    return new Promise((resolve) => {
+        cp.execFile(javaExec, ["-version"], {}, (_error, _stdout, stderr) => {
+            const regexp = /version "(.*)"/g;
+            const match = regexp.exec(stderr);
+            if (!match) {
+                return resolve(0);
+            }
+            const javaVersion = flattenMajorVersion(match[1]);
+            resolve(javaVersion);
+        });
+    });
 }
 
 function flattenMajorVersion(version: string): number {
