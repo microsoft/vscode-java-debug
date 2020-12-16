@@ -6,13 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.30.0 - 2020-12-16
 ### Added
-- Add run button as inline button in Java Projects Explorer. [PR#900](https://github.com/microsoft/vscode-java-debug/pull/900).
+- Add run button as inline button in Java Project Explorer. [PR#900](https://github.com/microsoft/vscode-java-debug/pull/900).
 - Use progress to hint the current build status whenever you trigger the Run and Debug features. [PR#919](https://github.com/microsoft/vscode-java-debug/pull/919).
 - Thanks for the contribution from [pablojimpas](https://github.com/pablojimpas): Spanish localization support. [PR#904](https://github.com/microsoft/vscode-java-debug/pull/904).
 
 ### Changed
 - Make the run buttons in editor toolbar more context-aware. [PR#898](https://github.com/microsoft/vscode-java-debug/pull/898).
-- Update the group name of the Run and Debug menus registered in the Java Projects Explorer. [PR#908](https://github.com/microsoft/vscode-java-debug/pull/908).
+- Update the group name of the Run and Debug menus registered in the Java Project Explorer. [PR#908](https://github.com/microsoft/vscode-java-debug/pull/908).
 - Simplify the name label of the launch configuration. [PR#921](https://github.com/microsoft/vscode-java-debug/pull/921).
 - Debt: Enable more tslint rules. [PR#914](https://github.com/microsoft/vscode-java-debug/pull/914),[PR#918](https://github.com/microsoft/vscode-java-debug/pull/918).
 
