@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.29.0",
+  "version": "0.30.0",
   "publisher": "vscjava",
   "preview": true,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -773,8 +773,8 @@
     "tslint": "^5.18.0",
     "typescript": "^4.1.2",
     "vscode-test": "^1.2.0",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "webpack": "^5.10.3",
+    "webpack-cli": "^4.2.0"
   },
   "dependencies": {
     "compare-versions": "^3.6.0",

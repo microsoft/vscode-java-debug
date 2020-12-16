@@ -4,6 +4,21 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.30.0 - 2020-12-16
+### Added
+- Add run button as inline button in Java Projects Explorer. [PR#900](https://github.com/microsoft/vscode-java-debug/pull/900).
+- Use progress to hint the current build status whenever you trigger the Run and Debug features. [PR#919](https://github.com/microsoft/vscode-java-debug/pull/919).
+- Thanks for the contribution from [pablojimpas](https://github.com/pablojimpas): Spanish localization support. [PR#904](https://github.com/microsoft/vscode-java-debug/pull/904).
+
+### Changed
+- Make the run buttons in editor toolbar more context-aware. [PR#898](https://github.com/microsoft/vscode-java-debug/pull/898).
+- Update the group name of the Run and Debug menus registered in the Java Projects Explorer. [PR#908](https://github.com/microsoft/vscode-java-debug/pull/908).
+- Simplify the name label of the launch configuration. [PR#921](https://github.com/microsoft/vscode-java-debug/pull/921).
+- Debt: Enable more tslint rules. [PR#914](https://github.com/microsoft/vscode-java-debug/pull/914),[PR#918](https://github.com/microsoft/vscode-java-debug/pull/918).
+
+### Fixed
+- Find Java version from release file. [#910](https://github.com/microsoft/vscode-java-debug/issues/910).
+
 ## 0.29.0 - 2020-10-16
 ### Added
 - Jump to source when clicking the stack trace printed to the terminal. [PR#890](https://github.com/microsoft/vscode-java-debug/pull/890).
