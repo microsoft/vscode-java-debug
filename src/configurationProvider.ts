@@ -12,7 +12,7 @@ import { buildWorkspace } from "./build";
 import { populateStepFilters, substituteFilterVariables } from "./classFilter";
 import * as commands from "./commands";
 import * as lsPlugin from "./languageServerPlugin";
-import { addMoreHelpfulVMArgs, detectLaunchCommandStyle, validateRuntime } from "./launchCommand";
+import { addMoreHelpfulVMArgs, getJavaVersion, getShortenApproachForCLI, validateRuntimeCompatibility } from "./launchCommand";
 import { logger, Type } from "./logger";
 import { mainClassPicker } from "./mainClassPicker";
 import { resolveJavaProcess } from "./processPicker";
@@ -271,17 +271,18 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 // Populate the class filters to the debug configuration.
                 await populateStepFilters(config);
 
+                const targetJavaVersion: number = await getJavaVersion(config.javaExec);
                 // Auto add '--enable-preview' vmArgs if the java project enables COMPILER_PB_ENABLE_PREVIEW_FEATURES flag.
                 if (await lsPlugin.detectPreviewFlag(config.mainClass, config.projectName)) {
                     config.vmArgs = (config.vmArgs || "") + " --enable-preview";
-                    validateRuntime(config);
+                    validateRuntimeCompatibility(targetJavaVersion);
                 }
 
                 // Add more helpful vmArgs.
-                await addMoreHelpfulVMArgs(config);
+                await addMoreHelpfulVMArgs(config, targetJavaVersion);
 
                 if (!config.shortenCommandLine || config.shortenCommandLine === "auto") {
-                    config.shortenCommandLine = await detectLaunchCommandStyle(config);
+                    config.shortenCommandLine = await getShortenApproachForCLI(config, targetJavaVersion);
                 }
 
                 if (process.platform === "win32" && config.console !== "internalConsole") {
