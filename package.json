@@ -753,7 +753,7 @@
   "scripts": {
     "vscode:prepublish": "npm run build",
     "compile": "tsc -p . && webpack --config webpack.config.js",
-    "watch": "webpack --config webpack.config.js --watch --info-verbosity verbose",
+    "watch": "webpack --config webpack.config.js --watch",
     "build": "webpack --config webpack.config.js --mode=\"production\"",
     "test": "npm run compile && node ./out/test/index.js"
   },
