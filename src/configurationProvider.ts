@@ -216,9 +216,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.request = "launch";
             }
 
-            this.mergeEnvFile(config);
-
             if (config.request === "launch") {
+                this.mergeEnvFile(config);
+
                 // If the user doesn't specify 'vmArgs' in launch.json, use the global setting to get the default vmArgs.
                 if (config.vmArgs === undefined) {
                     const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
