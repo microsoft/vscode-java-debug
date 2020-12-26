@@ -54,7 +54,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     // Try to add all missing attributes to the debug configuration being launched.
     public resolveDebugConfiguration(_folder: vscode.WorkspaceFolder | undefined,
-        config: vscode.DebugConfiguration, _token?: vscode.CancellationToken):
+                                     config: vscode.DebugConfiguration, _token?: vscode.CancellationToken):
         vscode.ProviderResult<vscode.DebugConfiguration> {
         // If no debug configuration is provided, then generate one in memory.
         if (this.isEmptyConfig(config)) {
@@ -172,7 +172,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             try {
                 result = {
                     ...baseEnv,
-                    ...readEnvFile(config.envFile)
+                    ...readEnvFile(config.envFile),
                 };
             } catch (e) {
                 throw new utility.UserError({
@@ -185,7 +185,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 
     private async resolveAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration,
-        token?: vscode.CancellationToken) {
+                                                       token?: vscode.CancellationToken) {
         let progressReporter = progressProvider.getProgressReporter(config.__progressId);
         if (!progressReporter && config.__progressId) {
             return undefined;
@@ -215,7 +215,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 config.name = "Java Debug";
                 config.request = "launch";
             }
-            
+
             this.mergeEnvFile(config);
 
             if (config.request === "launch") {
@@ -402,7 +402,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 
     private async resolveAndValidateMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
-        progressReporter: IProgressReporter): Promise<lsPlugin.IMainClassOption | undefined> {
+                                              progressReporter: IProgressReporter): Promise<lsPlugin.IMainClassOption | undefined> {
         if (!config.mainClass || this.isFile(config.mainClass)) {
             const currentFile = config.mainClass || _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
             if (currentFile) {
@@ -447,7 +447,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 
     private async fixMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
-        validationResponse: lsPlugin.ILaunchValidationResponse, progressReporter: IProgressReporter):
+                               validationResponse: lsPlugin.ILaunchValidationResponse, progressReporter: IProgressReporter):
         Promise<lsPlugin.IMainClassOption | undefined> {
         const errors: string[] = [];
         if (!validationResponse.mainClass.isValid) {
@@ -604,27 +604,27 @@ function readEnvFile(file: string): { [key: string]: string } {
         return {};
     }
 
-    const buffer = stripBOM(fs.readFileSync(file, 'utf8'));
+    const buffer = stripBOM(fs.readFileSync(file, "utf8"));
     const env: { [key: string]: string } = {};
-    for (const line of buffer.split('\n')) {
+    for (const line of buffer.split("\n")) {
         const r = line.match(/^\s*([\w\.\-]+)\s*=\s*(.*)?\s*$/);
         if (!r) {
             continue;
         }
 
-        let value = r[2] || '';
+        let value = r[2] || "";
         // .env variables never overwrite existing variables (see #21169)
         if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
-            value = value.replace(/\\n/gm, '\n');
+            value = value.replace(/\\n/gm, "\n");
         }
-        env[r[1]] = value.replace(/(^['"]|['"]$)/g, '');
+        env[r[1]] = value.replace(/(^['"]|['"]$)/g, "");
     }
 
     return env;
 }
 
 function stripBOM(s: string): string {
-    if (s && s[0] === '\uFEFF') {
+    if (s && s[0] === "\uFEFF") {
         s = s.substr(1);
     }
     return s;
