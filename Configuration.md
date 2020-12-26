@@ -102,6 +102,11 @@ In case you want to manually edit the configuration, below are the explanation a
     }
   ```
 
+- `envFile` - Absolute path to a file containing environment variable definitions.
+  ```json
+    "envFile": "${workspaceFolder}/.env"
+  ```
+
 ### Don't step into the specified classes or methods
 
 - `stepFilters` - Skip the specified classes or methods you don't want to step into. Class names should be fully qualified. Wildcard is supported.
