@@ -297,7 +297,7 @@
               "envFile": {
                 "type": "string",
                 "description": "%java.debugger.launch.envFile.description%",
-                "default": ""
+                "default": "${workspaceFolder}/.env"
               },
               "stopOnEntry": {
                 "type": "boolean",

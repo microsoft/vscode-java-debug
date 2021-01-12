@@ -9,7 +9,7 @@
     "java.debugger.launch.encoding.description": "JVM的file.encoding设置。如果未指定，将使用“UTF-8”。可以在http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html中找到可能的值。",
     "java.debugger.launch.cwd.description": "应用程序的工作目录。默认为当前工作空间根目录。",
     "java.debugger.launch.env.description": "启动应用程序时自定义的环境变量。",
-    "java.debugger.launch.envFile.description": "包含環境變數定義之檔案的絕對路徑。",
+    "java.debugger.launch.envFile.description": "环境变量文件绝对路径。",
     "java.debugger.launch.stopOnEntry.description": "启动后自动暂停应用程序。",
     "java.debugger.launch.internalConsole.description": "VS Code调试控制台（不支持输入流）。",
     "java.debugger.launch.integratedTerminal.description": "VS Code集成终端。",

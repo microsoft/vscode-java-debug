@@ -598,7 +598,7 @@ function convertLogLevel(commonLogLevel: string) {
     }
 }
 
-// from vscode-js-debug
+// from vscode-js-debug https://github.com/microsoft/vscode-js-debug/blob/master/src/targets/node/nodeLauncherBase.ts
 function readEnvFile(file: string): { [key: string]: string } {
     if (!fs.existsSync(file)) {
         return {};
