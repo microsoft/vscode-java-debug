@@ -17,7 +17,8 @@
             "projectName": "26.environmentVariables",
             "env": {
                 "CUSTOM_ENV_FOR_TEST_PLAN": "This env is for test plan."
-            }
+            },
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

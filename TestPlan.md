@@ -441,6 +441,7 @@ Exception in thread "main" java.lang.IllegalStateException
     ```
     CustomEnv: This env is for test plan.
     SystemPath: <value of PATH >
+    FileEnv: Successfully loaded an env from a file.
     ```
 
 ## Runtime classpath entry

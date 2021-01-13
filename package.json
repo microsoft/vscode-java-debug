@@ -294,6 +294,11 @@
                 "description": "%java.debugger.launch.env.description%",
                 "default": {}
               },
+              "envFile": {
+                "type": "string",
+                "description": "%java.debugger.launch.envFile.description%",
+                "default": "${workspaceFolder}/.env"
+              },
               "stopOnEntry": {
                 "type": "boolean",
                 "description": "%java.debugger.launch.stopOnEntry.description%",

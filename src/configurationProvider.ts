@@ -20,7 +20,7 @@ import { IProgressReporter } from "./progressAPI";
 import { progressProvider } from "./progressImpl";
 import * as utility from "./utility";
 
-const platformNameMappings: {[key: string]: string} = {
+const platformNameMappings: { [key: string]: string } = {
     win32: "windows",
     linux: "linux",
     darwin: "osx",
@@ -103,7 +103,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 const isOnStandardMode = await utility.waitForStandardMode(progressReporter);
                 if (!isOnStandardMode) {
                     resolve([defaultLaunchConfig]);
-                    return ;
+                    return;
                 }
 
                 if (progressReporter.isCancelled()) {
@@ -154,7 +154,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private constructLaunchConfigName(mainClass: string, cache: {[key: string]: any}) {
+    private constructLaunchConfigName(mainClass: string, cache: { [key: string]: any }) {
         const name = `Launch ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`;
         if (cache[name] === undefined) {
             cache[name] = 0;
@@ -163,6 +163,25 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             cache[name] += 1;
             return `${name}(${cache[name]})`;
         }
+    }
+
+    private mergeEnvFile(config: vscode.DebugConfiguration) {
+        const baseEnv = config.env || {};
+        let result = baseEnv;
+        if (config.envFile) {
+            try {
+                result = {
+                    ...baseEnv,
+                    ...readEnvFile(config.envFile),
+                };
+            } catch (e) {
+                throw new utility.UserError({
+                    message: "Cannot load environment file.",
+                    type: Type.USAGEERROR,
+                });
+            }
+        }
+        config.env = result;
     }
 
     private async resolveAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration,
@@ -198,6 +217,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             if (config.request === "launch") {
+                this.mergeEnvFile(config);
+
                 // If the user doesn't specify 'vmArgs' in launch.json, use the global setting to get the default vmArgs.
                 if (config.vmArgs === undefined) {
                     const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
@@ -383,7 +404,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async resolveAndValidateMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
                                               progressReporter: IProgressReporter): Promise<lsPlugin.IMainClassOption | undefined> {
         if (!config.mainClass || this.isFile(config.mainClass)) {
-            const currentFile = config.mainClass ||  _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
+            const currentFile = config.mainClass || _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
             if (currentFile) {
                 const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
                 if (progressReporter.isCancelled()) {
@@ -427,7 +448,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async fixMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
                                validationResponse: lsPlugin.ILaunchValidationResponse, progressReporter: IProgressReporter):
-                               Promise<lsPlugin.IMainClassOption | undefined> {
+        Promise<lsPlugin.IMainClassOption | undefined> {
         const errors: string[] = [];
         if (!validationResponse.mainClass.isValid) {
             errors.push(String(validationResponse.mainClass.message));
@@ -575,4 +596,36 @@ function convertLogLevel(commonLogLevel: string) {
         default:
             return "FINE";
     }
+}
+
+// from vscode-js-debug https://github.com/microsoft/vscode-js-debug/blob/master/src/targets/node/nodeLauncherBase.ts
+function readEnvFile(file: string): { [key: string]: string } {
+    if (!fs.existsSync(file)) {
+        return {};
+    }
+
+    const buffer = stripBOM(fs.readFileSync(file, "utf8"));
+    const env: { [key: string]: string } = {};
+    for (const line of buffer.split("\n")) {
+        const r = line.match(/^\s*([\w\.\-]+)\s*=\s*(.*)?\s*$/);
+        if (!r) {
+            continue;
+        }
+
+        let value = r[2] || "";
+        // .env variables never overwrite existing variables (see #21169)
+        if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+            value = value.replace(/\\n/gm, "\n");
+        }
+        env[r[1]] = value.replace(/(^['"]|['"]$)/g, "");
+    }
+
+    return env;
+}
+
+function stripBOM(s: string): string {
+    if (s && s[0] === "\uFEFF") {
+        s = s.substr(1);
+    }
+    return s;
 }
