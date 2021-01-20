@@ -16,8 +16,8 @@ repositories {
 dependencies {
 	compile("org.springframework.boot:spring-boot-starter-data-mongodb")
 	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('org.apache.spark:spark-core_2.11:2.3.2')
-	compile('org.apache.spark:spark-sql_2.11:2.3.2')
+	compile('org.apache.spark:spark-core_2.11:2.4.7')
+	compile('org.apache.spark:spark-sql_2.11:2.4.7')
 	// compile('org.mongodb.spark:mongo-spark-connector_2.11:2.3.1')
 	testImplementation('org.springframework.boot:spring-boot-starter-test')
 }
