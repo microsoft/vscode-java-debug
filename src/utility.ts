@@ -216,14 +216,14 @@ export function getLauncherScriptPath() {
 }
 
 export function isGitBash(isIntegratedTerminal: boolean): boolean {
-    const terminal: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("terminal");
-    const shellPath: string | undefined = isIntegratedTerminal ? terminal?.get("integrated.shell.windows") : terminal?.get("external.windowsExec");
-    if (!shellPath) {
+    const currentWindowsShellPath: string | undefined = isIntegratedTerminal ? vscode.env.shell :
+        vscode.workspace.getConfiguration("terminal")?.get("external.windowsExec");
+    if (!currentWindowsShellPath) {
         return false;
     }
 
     const candidates: string[] = ["Git\\bin\\bash.exe", "Git\\bin\\bash", "Git\\usr\\bin\\bash.exe", "Git\\usr\\bin\\bash"];
-    const find: string | undefined = candidates.find((candidate: string) => shellPath.endsWith(candidate));
+    const find: string | undefined = candidates.find((candidate: string) => currentWindowsShellPath.endsWith(candidate));
     return !!find;
 }
 
