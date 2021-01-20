@@ -307,7 +307,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
 
                 if (process.platform === "win32" && config.console !== "internalConsole") {
-                    config.launcherScript = utility.getLauncherScriptPath();
+                    const launcherScript: string = utility.getLauncherScriptPath();
+                    if (!launcherScript.includes(" ") || !utility.isGitBash(config.console === "integratedTerminal")) {
+                        config.launcherScript = launcherScript;
+                    }
                 }
             } else if (config.request === "attach") {
                 if (config.hostName && config.port) {

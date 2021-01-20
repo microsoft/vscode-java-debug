@@ -215,6 +215,18 @@ export function getLauncherScriptPath() {
     return path.join(ext.extensionPath, "scripts", "launcher.bat");
 }
 
+export function isGitBash(isIntegratedTerminal: boolean): boolean {
+    const terminal: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("terminal");
+    const shellPath: string | undefined = isIntegratedTerminal ? terminal?.get("integrated.shell.windows") : terminal?.get("external.windowsExec");
+    if (!shellPath) {
+        return false;
+    }
+
+    const candidates: string[] = ["Git\\bin\\bash.exe", "Git\\bin\\bash", "Git\\usr\\bin\\bash.exe", "Git\\usr\\bin\\bash"];
+    const find: string | undefined = candidates.find((candidate: string) => shellPath.endsWith(candidate));
+    return !!find;
+}
+
 export enum ServerMode {
     STANDARD = "Standard",
     LIGHTWEIGHT = "LightWeight",
