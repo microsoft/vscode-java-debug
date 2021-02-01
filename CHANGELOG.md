@@ -4,6 +4,17 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.31.0 - 2021-02-02
+### Added
+- Support envFile option in launch.json. [#523](https://github.com/microsoft/vscode-java-debug/issues/523).
+
+### Fixed
+- Git bash failed to execute Run/Debug when Windows username have blank space. [#678](https://github.com/microsoft/vscode-java-debug/issues/678).
+- TEMP folder with spaces breaks debugger process. [#822](https://github.com/microsoft/vscode-java-debug/issues/822).
+- The sort of completion list in DEBUG CONSOLE is different from that in editor. [#909](https://github.com/microsoft/vscode-java-debug/issues/909).
+- The program failed to run in terminal if clicking run button several times in succession. [#924](https://github.com/microsoft/vscode-java-debug/issues/924).
+- Fix vulnerabilities. [#935](https://github.com/microsoft/vscode-java-debug/issues/935), [#936](https://github.com/microsoft/vscode-java-debug/issues/936).
+
 ## 0.30.0 - 2020-12-16
 ### Added
 - Add run button as inline button in Java Project Explorer. [PR#900](https://github.com/microsoft/vscode-java-debug/pull/900).
