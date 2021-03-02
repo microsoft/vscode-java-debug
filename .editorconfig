@@ -10,7 +10,7 @@ indent_size = 4
 
 # The indent size used in the `package.json` file cannot be changed
 # https://github.com/npm/npm/pull/3180#issuecomment-16336516
-[{.travis.yml,npm-shrinkwrap.json,package.json}]
+[{.github/workflows/build.yml,npm-shrinkwrap.json,package.json}]
 indent_size = 2
 
 [vendor/**.js]
