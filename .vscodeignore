@@ -11,7 +11,6 @@ images/docs/**
 testprojects/**
 TestPlan.md
 .github/**
-.travis.yml
 tsconfig.json
 tslint.json
 packages
