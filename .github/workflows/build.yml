@@ -71,7 +71,7 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce gulp typescript
+      run: npm install -g vsce gulp typescript --force
 
     - name: Lint
       run: gulp tslint
