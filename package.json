@@ -60,12 +60,12 @@
       },
       {
         "command": "java.debug.runJavaFile",
-        "title": "Run with Java Debugger",
+        "title": "Run Java",
         "icon": "$(play)"
       },
       {
         "command": "java.debug.debugJavaFile",
-        "title": "Debug with Java Debugger",
+        "title": "Debug Java",
         "icon": "$(debug-alt-small)"
       },
       {
