@@ -14,7 +14,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.49.0"
+    "vscode": "^1.54.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -60,12 +60,12 @@
       },
       {
         "command": "java.debug.runJavaFile",
-        "title": "Run",
+        "title": "Run with Java Debugger",
         "icon": "$(play)"
       },
       {
         "command": "java.debug.debugJavaFile",
-        "title": "Debug",
+        "title": "Debug with Java Debugger",
         "icon": "$(debug-alt-small)"
       },
       {
@@ -136,16 +136,16 @@
           "group": "javadebug@2"
         }
       ],
-      "editor/title": [
+      "editor/title/run": [
         {
           "command": "java.debug.runJavaFile",
           "when": "resourceExtname == .java",
-          "group": "1_run@10"
+          "group": "1_javadebug@10"
         },
         {
           "command": "java.debug.debugJavaFile",
           "when": "resourceExtname == .java",
-          "group": "1_run@20"
+          "group": "1_javadebug@20"
         }
       ],
       "debug/toolBar": [
@@ -768,7 +768,7 @@
     "@types/mocha": "^5.2.7",
     "@types/node": "^14.14.10",
     "@types/uuid": "^8.3.0",
-    "@types/vscode": "1.49.0",
+    "@types/vscode": "1.54.0",
     "cross-env": "^5.2.0",
     "gulp": "^4.0.2",
     "gulp-tslint": "^8.1.4",
