@@ -4,6 +4,15 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.32.0 - 2021-03-12
+### Added
+- Adopt TAS client for A/B testing. [PR#959](https://github.com/microsoft/vscode-java-debug/pull/959).
+
+### Changed
+- Update to new product logo. [PR#952](https://github.com/microsoft/vscode-java-debug/pull/952).
+- Adopt new 'run' menu in editor title. [PR#956](https://github.com/microsoft/vscode-java-debug/pull/956),[PR#960](https://github.com/microsoft/vscode-java-debug/pull/960).
+- Engineering - Enable GitHub Actions. [PR#951](https://github.com/microsoft/vscode-java-debug/pull/951).
+
 ## 0.31.0 - 2021-02-02
 ### Added
 - Support envFile option in launch.json. [#523](https://github.com/microsoft/vscode-java-debug/issues/523).
