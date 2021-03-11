@@ -12,6 +12,7 @@ import { JavaDebugConfigurationProvider } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
+import { initExpService } from "./experimentationService";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { logJavaException, logJavaInfo } from "./javaLogger";
@@ -36,6 +37,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     // Deprecated
     logger.initialize(context, true);
 
+    initExpService(context);
     registerDebugEventListener(context);
     context.subscriptions.push(logger);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
