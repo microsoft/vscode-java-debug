@@ -60,12 +60,12 @@
       },
       {
         "command": "java.debug.runJavaFile",
-        "title": "Run Java",
+        "title": "Run with Java Debugger",
         "icon": "$(play)"
       },
       {
         "command": "java.debug.debugJavaFile",
-        "title": "Debug Java",
+        "title": "Debug with Java Debugger",
         "icon": "$(debug-alt-small)"
       },
       {
@@ -140,12 +140,12 @@
         {
           "command": "java.debug.runJavaFile",
           "when": "resourceExtname == .java",
-          "group": "javadebug@10"
+          "group": "1_javadebug@10"
         },
         {
           "command": "java.debug.debugJavaFile",
           "when": "resourceExtname == .java",
-          "group": "javadebug@20"
+          "group": "1_javadebug@20"
         }
       ],
       "debug/toolBar": [
