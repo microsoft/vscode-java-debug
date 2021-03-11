@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update to new product logo. [PR#952](https://github.com/microsoft/vscode-java-debug/pull/952).
 - Adopt new 'run' menu in editor title. [PR#956](https://github.com/microsoft/vscode-java-debug/pull/956),[PR#960](https://github.com/microsoft/vscode-java-debug/pull/960).
-- Engineering - Enable GitHub actions. [PR#951](https://github.com/microsoft/vscode-java-debug/pull/951).
+- Engineering - Enable GitHub Actions. [PR#951](https://github.com/microsoft/vscode-java-debug/pull/951).
 
 ## 0.31.0 - 2021-02-02
 ### Added
