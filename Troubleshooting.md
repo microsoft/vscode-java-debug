@@ -61,7 +61,7 @@ The compiled classes are not compatible with the runtime JDK.
 
 The class file version `57.65535` stands for Java 13 preview, where the major version `57` stands for Java 13, the minor version `65535` stands for preview feature. Similarly `58.65535` stands for Java 14 preview.
 
-The error says the compiled class is `57.65535`, but the runtime JDK only recognizes class file versoin `58.65535`. That's because the preview feature is not backward compatible, i.e. JVM 14 doesn't support 13 preview feature. The [openjdk](https://openjdk.java.net/jeps/12) website has claimed the reason that it would be costly for JDK 14 to support preview features from JDK 13 which were changed or dropped in response to feedback.
+The error says the compiled class is `57.65535`, but the runtime JDK only recognizes class file version `58.65535`. That's because the preview feature is not backward compatible, i.e. JVM 14 doesn't support 13 preview feature. The [openjdk](https://openjdk.java.net/jeps/12) website has claimed the reason that it would be costly for JDK 14 to support preview features from JDK 13 which were changed or dropped in response to feedback.
 
 One possible root cause for this error is your runtime JDK is the latest JDK but the upstream [Language Support for Java](https://marketplace.visualstudio.com/items?itemName=redhat.java) extension doesn't catch up the support yet.
 
