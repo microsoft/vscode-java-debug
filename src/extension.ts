@@ -30,6 +30,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
         firstParty: true,
     });
+    await initExpService(context);
     return instrumentOperation("activation", initializeExtension)(context);
 }
 
@@ -37,7 +38,6 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     // Deprecated
     logger.initialize(context, true);
 
-    initExpService(context);
     registerDebugEventListener(context);
     context.subscriptions.push(logger);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
