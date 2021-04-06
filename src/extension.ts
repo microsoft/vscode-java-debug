@@ -27,10 +27,10 @@ import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
-    await initExpService(context);
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
         firstParty: true,
     });
+    await initExpService(context);
     return instrumentOperation("activation", initializeExtension)(context);
 }
 
