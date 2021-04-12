@@ -116,3 +116,41 @@ export async function resolveClassFilters(patterns: string[]): Promise<string[]>
 export async function resolveSourceUri(line: string): Promise<string> {
     return <string> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_SOURCE_URI, line);
 }
+
+export async function resolveInlineVariables(inlineParams: InlineParams): Promise<InlineVariable[]> {
+    return <InlineVariable[]> await commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_INLINE_VARIABLES, JSON.stringify(inlineParams));
+}
+
+// tslint:disable-next-line:interface-name
+export interface LSPPosition {
+    line: number;
+    character: number;
+}
+
+// tslint:disable-next-line:interface-name
+export interface LSPRange {
+    start: LSPPosition;
+    end: LSPPosition;
+}
+
+// tslint:disable-next-line:interface-name
+export interface InlineParams {
+    uri: string;
+    viewPort?: LSPRange;
+    stoppedLocation: LSPRange;
+}
+
+// tslint:disable-next-line:interface-name
+export enum InlineKind {
+    VariableLookup = 0,
+    Evaluation = 1,
+}
+
+// tslint:disable-next-line:interface-name
+export interface InlineVariable {
+    range: LSPRange;
+    name: string;
+    kind: InlineKind;
+    expression: string;
+    declaringClass: string;
+}

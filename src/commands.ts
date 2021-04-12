@@ -44,6 +44,8 @@ export const JAVA_RESOLVE_CLASSFILTERS = "vscode.java.resolveClassFilters";
 
 export const JAVA_RESOLVE_SOURCE_URI = "vscode.java.resolveSourceUri";
 
+export const JAVA_RESOLVE_INLINE_VARIABLES = "vscode.java.resolveInlineVariables";
+
 export function executeJavaLanguageServerCommand(...rest: any[]) {
     return executeJavaExtensionCommand(JAVA_EXECUTE_WORKSPACE_COMMAND, ...rest);
 }

@@ -14,7 +14,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.54.0"
+    "vscode": "^1.55.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -768,7 +768,7 @@
     "@types/mocha": "^5.2.7",
     "@types/node": "^14.14.10",
     "@types/uuid": "^8.3.0",
-    "@types/vscode": "1.54.0",
+    "@types/vscode": "1.55.0",
     "cross-env": "^5.2.0",
     "gulp": "^4.0.2",
     "gulp-tslint": "^8.1.4",
