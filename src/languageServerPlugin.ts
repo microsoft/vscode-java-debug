@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
-import { Range } from "vscode-languageclient/lib/client";
+import { Range } from "vscode-languageserver-types";
 
 import * as commands from "./commands";
 
