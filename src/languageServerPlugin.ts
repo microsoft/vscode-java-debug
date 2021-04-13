@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import * as vscode from "vscode";
+import { Range } from "vscode-languageclient/lib/client";
 
 import * as commands from "./commands";
 
@@ -122,22 +123,10 @@ export async function resolveInlineVariables(inlineParams: InlineParams): Promis
 }
 
 // tslint:disable-next-line:interface-name
-export interface LSPPosition {
-    line: number;
-    character: number;
-}
-
-// tslint:disable-next-line:interface-name
-export interface LSPRange {
-    start: LSPPosition;
-    end: LSPPosition;
-}
-
-// tslint:disable-next-line:interface-name
 export interface InlineParams {
     uri: string;
-    viewPort?: LSPRange;
-    stoppedLocation: LSPRange;
+    viewPort?: Range;
+    stoppedLocation: Range;
 }
 
 // tslint:disable-next-line:interface-name
@@ -148,7 +137,7 @@ export enum InlineKind {
 
 // tslint:disable-next-line:interface-name
 export interface InlineVariable {
-    range: LSPRange;
+    range: Range;
     name: string;
     kind: InlineKind;
     expression: string;
