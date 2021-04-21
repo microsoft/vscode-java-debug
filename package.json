@@ -403,7 +403,7 @@
                 "description": "%java.debugger.attach.hostName.description%"
               },
               "port": {
-                "type": "number",
+                "type": ["number", "string"],
                 "description": "%java.debugger.attach.port.description%"
               },
               "processId": {
