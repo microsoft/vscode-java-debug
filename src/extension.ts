@@ -15,6 +15,7 @@ import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvi
 import { initExpService } from "./experimentationService";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
+import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
 import { logJavaException, logJavaInfo } from "./javaLogger";
 import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { logger, Type } from "./logger";
@@ -78,6 +79,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     initializeCodeLensProvider(context);
     initializeThreadOperations(context);
 
+    context.subscriptions.push(vscode.languages.registerInlineValuesProvider("java", new JavaInlineValuesProvider()));
     return {
         progressProvider,
     };

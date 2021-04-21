@@ -36,6 +36,7 @@
             true,
             "log",
             "error"
-        ]
+        ],
+        "no-submodule-imports": false
     }
 }
