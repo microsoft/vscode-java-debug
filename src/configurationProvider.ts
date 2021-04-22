@@ -313,7 +313,8 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     }
                 }
             } else if (config.request === "attach") {
-                if (config.hostName && config.port) {
+                if (config.hostName && config.port && Number.isInteger(Number(config.port))) {
+                    config.port = Number(config.port);
                     config.processId = undefined;
                     // Continue if the hostName and port are configured.
                 } else if (config.processId !== undefined) {
