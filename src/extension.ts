@@ -26,6 +26,7 @@ import { progressProvider } from "./progressImpl";
 import { JavaTerminalLinkProvder } from "./terminalLinkProvider";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
+import { registerVariableMenuCommands } from "./variableMenu";
 
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
@@ -40,6 +41,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     logger.initialize(context, true);
 
     registerDebugEventListener(context);
+    registerVariableMenuCommands(context);
     context.subscriptions.push(logger);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
