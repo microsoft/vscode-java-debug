@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopt new APIs from vscode-tas-client. [#974](https://github.com/microsoft/vscode-java-debug/pull/974).
 
 ### Fixed
-- Breakpoint inside record methods don't work. [#973](https://github.com/microsoft/vscode-java-debug/issues/973).
+- Breakpoints inside record methods don't work. [#973](https://github.com/microsoft/vscode-java-debug/issues/973).
 - Support environment variable for port number in launch.json debug configuration. [#962](https://github.com/microsoft/vscode-java-debug/issues/962).
 - Thanks for the contribution from [ZingBlue](https://github.com/ZingBlue): Spelling fix. [#968](https://github.com/microsoft/vscode-java-debug/pull/968).
 
