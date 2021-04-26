@@ -535,7 +535,10 @@
                 "description": "%java.debugger.attach.hostName.description%"
               },
               "port": {
-                "type": ["number", "string"],
+                "type": [
+                  "number",
+                  "string"
+                ],
                 "description": "%java.debugger.attach.port.description%"
               },
               "processId": {
@@ -917,7 +920,6 @@
     "compare-versions": "^3.6.0",
     "lodash": "^4.17.20",
     "uuid": "^8.3.1",
-    "vscode-extension-telemetry": "^0.1.6",
     "vscode-extension-telemetry-wrapper": "^0.9.0",
     "vscode-languageclient": "6.0.0-next.9",
     "vscode-languageserver-types": "3.16.0",
