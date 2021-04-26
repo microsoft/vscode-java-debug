@@ -18,7 +18,6 @@ import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorF
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
 import { logJavaException, logJavaInfo } from "./javaLogger";
 import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
-import { logger, Type } from "./logger";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
 import { IProgressReporter } from "./progressAPI";
@@ -37,12 +36,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
 }
 
 function initializeExtension(_operationId: string, context: vscode.ExtensionContext): any {
-    // Deprecated
-    logger.initialize(context, true);
-
     registerDebugEventListener(context);
     registerVariableMenuCommands(context);
-    context.subscriptions.push(logger);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("java", new JavaDebugAdapterDescriptorFactory()));
@@ -115,9 +110,6 @@ function registerDebugEventListener(context: vscode.ExtensionContext) {
                     } else {
                         logJavaInfo(commonProperties, measureProperties);
                     }
-
-                    // Deprecated
-                    logger.log(entry.scope === "exception" ? Type.EXCEPTION : Type.USAGEDATA, commonProperties, measureProperties);
                 });
             }
         });
