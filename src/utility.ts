@@ -4,8 +4,8 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
+import { Type } from "./javaLogger";
 import { IMainClassOption, resolveMainClass } from "./languageServerPlugin";
-import { logger, Type } from "./logger";
 import { IProgressReporter } from "./progressAPI";
 
 const TROUBLESHOOTING_LINK = "https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md";
@@ -64,9 +64,6 @@ function logMessage(message: ILoggingMessage): void {
     } else {
         sendInfo("", { message: message.message });
     }
-
-    // Deprecated
-    logger.log(message.type, { message: message.message, stack: message.stack || "" });
 }
 
 export async function showInformationMessage(message: ILoggingMessage, ...items: string[]): Promise<string | undefined> {
@@ -111,12 +108,6 @@ function handleTroubleshooting(message: string, choice?: string, anchor?: string
 export function openTroubleshootingPage(message: string, anchor?: string) {
     vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(anchor ? `${TROUBLESHOOTING_LINK}#${anchor}` : TROUBLESHOOTING_LINK));
     sendInfo("", {
-        troubleshooting: "yes",
-        troubleshootingMessage: message,
-    });
-
-    // Deprecated
-    logger.log(Type.USAGEDATA, {
         troubleshooting: "yes",
         troubleshootingMessage: message,
     });

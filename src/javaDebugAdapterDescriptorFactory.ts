@@ -2,9 +2,8 @@
 // Licensed under the MIT license.
 
 import { DebugAdapterDescriptor, DebugAdapterDescriptorFactory, DebugAdapterExecutable, DebugAdapterServer, DebugSession } from "vscode";
-
+import { Type } from "./javaLogger";
 import { startDebugSession } from "./languageServerPlugin";
-import { Type } from "./logger";
 import { convertErrorToMessage, showErrorMessageWithTroubleshooting } from "./utility";
 
 export class JavaDebugAdapterDescriptorFactory implements DebugAdapterDescriptorFactory {

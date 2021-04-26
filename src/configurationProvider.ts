@@ -11,9 +11,9 @@ import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
 import { populateStepFilters, substituteFilterVariables } from "./classFilter";
 import * as commands from "./commands";
+import { Type } from "./javaLogger";
 import * as lsPlugin from "./languageServerPlugin";
 import { addMoreHelpfulVMArgs, getJavaVersion, getShortenApproachForCLI, validateRuntimeCompatibility } from "./launchCommand";
-import { logger, Type } from "./logger";
 import { mainClassPicker } from "./mainClassPicker";
 import { resolveJavaProcess } from "./processPicker";
 import { IProgressReporter } from "./progressAPI";
@@ -474,12 +474,6 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     "Please select main class<project name>.", false);
                 if (selectedFix) {
                     sendInfo("", {
-                        fix: "yes",
-                        fixMessage: errors.join(os.EOL),
-                    });
-
-                    // Deprecated
-                    logger.log(Type.USAGEDATA, {
                         fix: "yes",
                         fixMessage: errors.join(os.EOL),
                     });

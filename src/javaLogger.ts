@@ -3,6 +3,13 @@
 
 import { sendInfo, sendOperationError } from "vscode-extension-telemetry-wrapper";
 
+export enum Type {
+    EXCEPTION = "exception",
+    USAGEDATA = "usageData",
+    USAGEERROR = "usageError",
+    ACTIVATEEXTENSION = "activateExtension", // TODO: Activation belongs to usage data, remove this category.
+}
+
 export function logJavaException(errorProperties: any): void {
     /**
      *  A sample errorProperties from Java code.
