@@ -4,11 +4,12 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.33.0 - 2021-04-29
+## 0.33.0 - 2021-04-28
 ### Added
 - Support inline values feature. [PR#977](https://github.com/microsoft/vscode-java-debug/pull/977).
 - Show VARIABLES with different data views. [PR#982](https://github.com/microsoft/vscode-java-debug/pull/982).
 - Adopt new APIs from vscode-tas-client. [#974](https://github.com/microsoft/vscode-java-debug/pull/974).
+- Adopt workspaceTrust in package.json. [PR#988](https://github.com/microsoft/vscode-java-debug/pull/988).
 
 ### Changed
 - Engineering: Clean up deprecated logs. [PR#987](https://github.com/microsoft/vscode-java-debug/pull/987).
