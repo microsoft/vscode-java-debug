@@ -7,6 +7,10 @@
   "preview": true,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
   "icon": "logo.png",
+  "workspaceTrust": {
+    "request": "onDemand",
+    "description": "Extension may require your trust on workspace for code execution."
+  },
   "keywords": [
     "java",
     "debug",
