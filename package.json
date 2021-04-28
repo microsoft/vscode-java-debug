@@ -298,52 +298,52 @@
       "debug/variables/context": [
         {
           "command": "java.debug.variables.showHex",
-          "when": "debugConfigurationType == 'java' && javadebug:showHex == 'off'",
+          "when": "debugType == 'java' && javadebug:showHex == 'off'",
           "group": "1_view@1"
         },
         {
           "command": "java.debug.variables.notShowHex",
-          "when": "debugConfigurationType == 'java' && javadebug:showHex == 'on'",
+          "when": "debugType == 'java' && javadebug:showHex == 'on'",
           "group": "1_view@1"
         },
         {
           "command": "java.debug.variables.showQualifiedNames",
-          "when": "debugConfigurationType == 'java' && javadebug:showQualifiedNames == 'off'",
+          "when": "debugType == 'java' && javadebug:showQualifiedNames == 'off'",
           "group": "1_view@2"
         },
         {
           "command": "java.debug.variables.notShowQualifiedNames",
-          "when": "debugConfigurationType == 'java' && javadebug:showQualifiedNames == 'on'",
+          "when": "debugType == 'java' && javadebug:showQualifiedNames == 'on'",
           "group": "1_view@2"
         },
         {
           "command": "java.debug.variables.showStaticVariables",
-          "when": "debugConfigurationType == 'java' && javadebug:showStaticVariables == 'off'",
+          "when": "debugType == 'java' && javadebug:showStaticVariables == 'off'",
           "group": "1_view@3"
         },
         {
           "command": "java.debug.variables.notShowStaticVariables",
-          "when": "debugConfigurationType == 'java' && javadebug:showStaticVariables == 'on'",
+          "when": "debugType == 'java' && javadebug:showStaticVariables == 'on'",
           "group": "1_view@3"
         },
         {
           "command": "java.debug.variables.showLogicalStructure",
-          "when": "debugConfigurationType == 'java' && javadebug:showLogicalStructure == 'off'",
+          "when": "debugType == 'java' && javadebug:showLogicalStructure == 'off'",
           "group": "1_view@4"
         },
         {
           "command": "java.debug.variables.notShowLogicalStructure",
-          "when": "debugConfigurationType == 'java' && javadebug:showLogicalStructure == 'on'",
+          "when": "debugType == 'java' && javadebug:showLogicalStructure == 'on'",
           "group": "1_view@4"
         },
         {
           "command": "java.debug.variables.showToString",
-          "when": "debugConfigurationType == 'java' && javadebug:showToString == 'off'",
+          "when": "debugType == 'java' && javadebug:showToString == 'off'",
           "group": "1_view@5"
         },
         {
           "command": "java.debug.variables.notShowToString",
-          "when": "debugConfigurationType == 'java' && javadebug:showToString == 'on'",
+          "when": "debugType == 'java' && javadebug:showToString == 'on'",
           "group": "1_view@5"
         }
       ]
