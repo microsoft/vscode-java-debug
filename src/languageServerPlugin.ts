@@ -46,8 +46,8 @@ export function startDebugSession() {
     return commands.executeJavaLanguageServerCommand(commands.JAVA_START_DEBUGSESSION);
 }
 
-export function resolveClasspath(mainClass: string, projectName: string) {
-    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
+export function resolveClasspath(mainClass: string, projectName: string, scope?: string) {
+    return commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName, scope);
 }
 
 export function resolveMainClass(workspaceUri?: vscode.Uri): Promise<IMainClassOption[]> {

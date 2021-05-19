@@ -397,7 +397,23 @@
               "modulePaths": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "$Auto",
+                        "$Runtime",
+                        "$Test",
+                        "!<path>"
+                      ],
+                      "enumDescriptions": [
+                        "%java.debugger.launch.modulePaths.auto%",
+                        "%java.debugger.launch.modulePaths.runtime%",
+                        "%java.debugger.launch.modulePaths.test%",
+                        "%java.debugger.launch.modulePaths.exclude%"
+                      ]
+                    },
+                    "string"
+                  ]
                 },
                 "description": "%java.debugger.launch.modulePaths.description%",
                 "default": []
@@ -405,7 +421,23 @@
               "classPaths": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "$Auto",
+                        "$Runtime",
+                        "$Test",
+                        "!<path>"
+                      ],
+                      "enumDescriptions": [
+                        "%java.debugger.launch.classPaths.auto%",
+                        "%java.debugger.launch.classPaths.runtime%",
+                        "%java.debugger.launch.classPaths.test%",
+                        "%java.debugger.launch.classPaths.exclude%"
+                      ]
+                    },
+                    "string"
+                  ]
                 },
                 "description": "%java.debugger.launch.classPaths.description%",
                 "default": []

@@ -11,6 +11,7 @@ import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
 import { populateStepFilters, substituteFilterVariables } from "./classFilter";
 import * as commands from "./commands";
+import { ClasspathVariable } from "./constants";
 import { Type } from "./javaLogger";
 import * as lsPlugin from "./languageServerPlugin";
 import { addMoreHelpfulVMArgs, getJavaVersion, getShortenApproachForCLI, validateRuntimeCompatibility } from "./launchCommand";
@@ -263,10 +264,16 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 if (progressReporter.isCancelled()) {
                     return undefined;
                 }
+
                 if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
                     const result = <any[]>(await lsPlugin.resolveClasspath(config.mainClass, config.projectName));
                     config.modulePaths = result[0];
                     config.classPaths = result[1];
+                } else {
+                    config.modulePaths = await this.resolvePath(folder, config.modulePaths, config.mainClass,
+                        config.projectName, true /*isModulePath*/);
+                    config.classPaths = await this.resolvePath(folder, config.classPaths, config.mainClass,
+                        config.projectName, false /*isModulePath*/);
                 }
                 if (_.isEmpty(config.classPaths) && _.isEmpty(config.modulePaths)) {
                     throw new utility.UserError({
@@ -379,6 +386,88 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         } finally {
             progressReporter.done();
         }
+    }
+
+    private async resolvePath(folder: vscode.WorkspaceFolder | undefined, pathArray: string[], mainClass: string,
+                              projectName: string, isModulePath: boolean): Promise<string[]> {
+        if (_.isEmpty(pathArray)) {
+            return [];
+        }
+
+        const pathVariables: string[] = [ClasspathVariable.Auto, ClasspathVariable.Runtime, ClasspathVariable.Test];
+        const containedVariables: string[] = pathArray.filter((cp: string) => pathVariables.includes(cp));
+        if (_.isEmpty(containedVariables)) {
+            return this.filterExcluded(folder, pathArray);
+        }
+
+        const scope: string | undefined = this.mergeScope(containedVariables);
+        const response: any[] = <any[]> await lsPlugin.resolveClasspath(mainClass, projectName, scope);
+        const resolvedPaths: string[] = isModulePath ? response?.[0] : response?.[1];
+        if (!resolvedPaths) {
+            // tslint:disable-next-line:no-console
+            console.log("The Java Language Server failed to resolve the classpaths/modulepaths");
+        }
+        const paths: string[] = [];
+        let replaced: boolean = false;
+        for (const p of pathArray) {
+            if (pathVariables.includes(p)) {
+                if (!replaced) {
+                    paths.push(...resolvedPaths);
+                    replaced = true;
+                }
+                continue;
+            }
+            paths.push(p);
+        }
+        return this.filterExcluded(folder, paths);
+    }
+
+    private async filterExcluded(folder: vscode.WorkspaceFolder | undefined, paths: string[]): Promise<string[]> {
+        const result: string[] = [];
+        const excludes: Map<string, boolean> = new Map<string, boolean>();
+        for (const p of paths) {
+            if (p.startsWith("!")) {
+                let exclude = p.substr(1);
+                if (!path.isAbsolute(exclude)) {
+                    exclude = path.join(folder?.uri.fsPath || "", exclude);
+                }
+                // use Uri to normalize the fs path
+                excludes.set(vscode.Uri.file(exclude).fsPath, this.isFile(exclude));
+                continue;
+            }
+
+            result.push(vscode.Uri.file(p).fsPath);
+        }
+
+        return result.filter((r) => {
+            for (const [excludedPath, isFile] of excludes.entries()) {
+                if (isFile && r === excludedPath) {
+                    return false;
+                }
+
+                if (!isFile && r.startsWith(excludedPath)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    private mergeScope(scopes: string[]): string | undefined {
+        if (scopes.includes(ClasspathVariable.Test)) {
+            return "test";
+        }
+
+        if (scopes.includes(ClasspathVariable.Auto)) {
+            return undefined;
+        }
+
+        if (scopes.includes(ClasspathVariable.Runtime)) {
+            return "runtime";
+        }
+
+        return undefined;
     }
 
     /**
