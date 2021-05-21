@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.34.0 - 2021-05-26
+### Changed
+- Allow customizing the "classPaths" and "modulePaths" configurations via launch.json. See [#93](https://github.com/microsoft/vscode-java-debug/issues/93), [#980](https://github.com/microsoft/vscode-java-debug/issues/980).
+
 ## 0.33.1 - 2021-04-30
 ### Fixed
 - HotFix: After upgrade from vscode-java v0.77.0 to v0.78.0 can't debug tests. [#995](https://github.com/microsoft/vscode-java-debug/issues/995).
