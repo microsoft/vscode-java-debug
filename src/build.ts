@@ -56,7 +56,7 @@ async function handleBuildFailure(operationId: string, err: any, progressReporte
     });
     setErrorCode(error, Number(err));
     sendOperationError(operationId, "build", error);
-    if (!onBuildFailureProceed && (err === lsPlugin.CompileWorkspaceStatus.WITHERROR || err === lsPlugin.CompileWorkspaceStatus.FAILED)) {
+    if (!onBuildFailureProceed && err) {
         if (checkErrorsReportedByJavaExtension()) {
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
