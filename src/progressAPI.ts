@@ -10,6 +10,11 @@ export interface IProgressReporter {
     getId(): string;
 
     /**
+     * Returns the progress location.
+     */
+    getProgressLocation(): ProgressLocation | { viewId: string };
+
+    /**
      * Reports a progress message update.
      * @param message the message to update
      * @param increment use `increment` to report discrete progress. Each call with a `increment`
