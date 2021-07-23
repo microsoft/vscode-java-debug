@@ -55,6 +55,10 @@ class ProgressReporter implements IProgressReporter {
         return this._id;
     }
 
+    public getProgressLocation(): ProgressLocation | { viewId: string } {
+        return this._progressLocation;
+    }
+
     public report(message: string, increment?: number): void {
         if (this._statusBarItem) {
             const text = message ? `${this._jobName} - ${message}` : `${this._jobName}...`;

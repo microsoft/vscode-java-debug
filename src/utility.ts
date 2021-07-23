@@ -229,8 +229,10 @@ export enum ServerMode {
  * and return true if the final status is on Standard mode.
  */
 export async function waitForStandardMode(progressReporter: IProgressReporter): Promise<boolean> {
+    const importMessage = progressReporter?.getProgressLocation() === vscode.ProgressLocation.Notification ?
+        "Importing projects, [check details](command:java.show.server.task.status)" : "Importing projects...";
     if (await isImportingProjects()) {
-        progressReporter.report("Importing projects...");
+        progressReporter.report(importMessage);
     }
 
     const api = await getJavaExtensionAPI(progressReporter);
@@ -246,7 +248,7 @@ export async function waitForStandardMode(progressReporter: IProgressReporter): 
                 return true;
             }
 
-            progressReporter?.report("Importing projects...");
+            progressReporter?.report(importMessage);
             return new Promise<boolean>((resolve) => {
                 progressReporter.getCancellationToken().onCancellationRequested(() => {
                     resolve(false);
@@ -263,7 +265,7 @@ export async function waitForStandardMode(progressReporter: IProgressReporter): 
 
         return false;
     } else if (api && api.serverMode === ServerMode.HYBRID) {
-        progressReporter.report("Importing projects...");
+        progressReporter.report(importMessage);
         return new Promise<boolean>((resolve) => {
             progressReporter.getCancellationToken().onCancellationRequested(() => {
                 resolve(false);
