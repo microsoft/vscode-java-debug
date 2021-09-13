@@ -6,7 +6,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import { instrumentOperation, sendInfo } from "vscode-extension-telemetry-wrapper";
+import { instrumentOperation, sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
 import { populateStepFilters, substituteFilterVariables } from "./classFilter";
@@ -539,16 +539,43 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
+    private getValidationErrorMessage(error: lsPlugin.IValidationResult): string {
+        switch (error.kind) {
+            case lsPlugin.CONFIGERROR_INVALID_CLASS_NAME:
+                return "ConfigError: mainClass was configured with an invalid class name.";
+            case lsPlugin.CONFIGERROR_MAIN_CLASS_NOT_EXIST:
+                return "ConfigError: mainClass does not exist.";
+            case lsPlugin.CONFIGERROR_MAIN_CLASS_NOT_UNIQUE:
+                return "ConfigError: mainClass is not unique in the workspace";
+            case lsPlugin.CONFIGERROR_INVALID_JAVA_PROJECT:
+                return "ConfigError: could not find a Java project with the configured projectName.";
+        }
+
+        return "ConfigError: Invalid mainClass/projectName configs.";
+    }
+
     private async fixMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
                                validationResponse: lsPlugin.ILaunchValidationResponse, progressReporter: IProgressReporter):
         Promise<lsPlugin.IMainClassOption | undefined> {
         const errors: string[] = [];
         if (!validationResponse.mainClass.isValid) {
             errors.push(String(validationResponse.mainClass.message));
+            const errorLog: Error = {
+                name: "error",
+                message: this.getValidationErrorMessage(validationResponse.mainClass),
+            };
+            setUserError(errorLog);
+            sendError(errorLog);
         }
 
         if (!validationResponse.projectName.isValid) {
             errors.push(String(validationResponse.projectName.message));
+            const errorLog: Error = {
+                name: "error",
+                message: this.getValidationErrorMessage(validationResponse.projectName),
+            };
+            setUserError(errorLog);
+            sendError(errorLog);
         }
 
         if (validationResponse.proposals && validationResponse.proposals.length) {
@@ -557,6 +584,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 message: errors.join(os.EOL),
                 type: Type.USAGEERROR,
                 anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
+                bypassLog: true, // Avoid logging the raw user input in the logger for privacy.
             }, "Fix");
             if (answer === "Fix") {
                 const selectedFix = await mainClassPicker.showQuickPick(validationResponse.proposals,
@@ -564,7 +592,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 if (selectedFix) {
                     sendInfo("", {
                         fix: "yes",
-                        fixMessage: errors.join(os.EOL),
+                        fixMessage: "Fix the configs of mainClass and projectName",
                     });
                     await this.persistMainClassOption(folder, config, selectedFix);
                 }
@@ -579,6 +607,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             message: errors.join(os.EOL),
             type: Type.USAGEERROR,
             anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
+            bypassLog: true, // Avoid logging the raw user input in the logger for privacy.
         });
     }
 
