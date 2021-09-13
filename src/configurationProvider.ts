@@ -584,7 +584,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 message: errors.join(os.EOL),
                 type: Type.USAGEERROR,
                 anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
-                bypassLog: true, // Avoid logging sensitive user privacy in the logger.
+                bypassLog: true, // Avoid logging the raw user input in the logger for privacy.
             }, "Fix");
             if (answer === "Fix") {
                 const selectedFix = await mainClassPicker.showQuickPick(validationResponse.proposals,
@@ -607,7 +607,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             message: errors.join(os.EOL),
             type: Type.USAGEERROR,
             anchor: anchor.FAILED_TO_RESOLVE_CLASSPATH,
-            bypassLog: true, // Avoid logging sensitive user privacy in the logger.
+            bypassLog: true, // Avoid logging the raw user input in the logger for privacy.
         });
     }
 
