@@ -40,6 +40,7 @@ interface ILoggingMessage {
     type?: Type;
     message: string;
     stack?: string;
+    bypassLog?: boolean;
 }
 
 interface ITroubleshootingMessage extends ILoggingMessage {
@@ -47,7 +48,7 @@ interface ITroubleshootingMessage extends ILoggingMessage {
 }
 
 function logMessage(message: ILoggingMessage): void {
-    if (!message.type) {
+    if (!message.type || message.bypassLog) {
         return;
     }
 

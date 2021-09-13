@@ -23,9 +23,14 @@ export interface IMainMethod extends IMainClassOption {
     range: vscode.Range;
 }
 
+export const CONFIGERROR_INVALID_CLASS_NAME = 1;
+export const CONFIGERROR_MAIN_CLASS_NOT_EXIST = 2;
+export const CONFIGERROR_MAIN_CLASS_NOT_UNIQUE = 3;
+export const CONFIGERROR_INVALID_JAVA_PROJECT = 4;
 export interface IValidationResult {
     readonly isValid: boolean;
     readonly message?: string;
+    readonly kind?: number;
 }
 
 export interface ILaunchValidationResponse {
