@@ -33,7 +33,8 @@ class ProgressReporter implements IProgressReporter {
         }
 
         if (this._progressLocation === ProgressLocation.Window) {
-            this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 1);
+            this._statusBarItem = window.createStatusBarItem(this._id, StatusBarAlignment.Left, 1);
+            this._statusBarItem.name = "Progress Message for " + this._jobName;
             this._statusBarItem.text = `$(sync~spin) ${this._jobName}...`;
             this._statusBarItem.command = {
                 title: "Check Java Build Status",
