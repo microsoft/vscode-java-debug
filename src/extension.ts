@@ -55,7 +55,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
         // tslint:disable-next-line
         return javaProcess ? String(javaProcess.pid) : "${command:PickJavaProcess}";
     }));
-    const hcrStatusBar: NotificationBar = new NotificationBar();
+    const hcrStatusBar: NotificationBar = new NotificationBar("java.hcrStatusBar", "Java HotCodeReplace");
     context.subscriptions.push(hcrStatusBar);
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("java.debug.hotCodeReplace", async () => {
         await applyHCR(hcrStatusBar);

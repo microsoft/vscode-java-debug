@@ -1,17 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as compareVersions from "compare-versions";
 import { debug, InlineValue, InlineValueContext, InlineValueEvaluatableExpression, InlineValuesProvider, InlineValueText, InlineValueVariableLookup,
-    Range, TextDocument, version } from "vscode";
+    Range, TextDocument } from "vscode";
 import { instrumentOperation, instrumentOperationStep, sendInfo } from "vscode-extension-telemetry-wrapper";
 import * as CodeConverter from "vscode-languageclient/lib/codeConverter";
 import * as ProtocolConverter from "vscode-languageclient/lib/protocolConverter";
 import { InlineKind, InlineVariable, resolveInlineVariables } from "./languageServerPlugin";
-
-// In VS Code 1.55.0, viewport doesn't change while scrolling the editor and it's fixed in 1.56.0.
-// So dynamically enable viewport support based on the user's VS Code version.
-const isViewPortSupported = compareVersions(version.replace(/-insider$/i, ""), "1.56.0") >= 0;
 
 const protoConverter: ProtocolConverter.Converter = ProtocolConverter.createConverter();
 const codeConverter: CodeConverter.Converter = CodeConverter.createConverter();
@@ -23,7 +18,7 @@ export class JavaInlineValuesProvider implements InlineValuesProvider {
             const resolveInlineVariablesStep = instrumentOperationStep(operationId, "resolveInlineVariables", async () => {
                 return <InlineVariable[]> (await resolveInlineVariables({
                     uri: document.uri.toString(),
-                    viewPort: isViewPortSupported ? codeConverter.asRange(viewPort) : undefined,
+                    viewPort: codeConverter.asRange(viewPort),
                     stoppedLocation: codeConverter.asRange(context.stoppedLocation),
                 }));
             });
