@@ -4,6 +4,16 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.36.0 - 2021-09-23
+### Changed
+- Adopt new createStatusBarItem API for id and name properties. [#1020](https://github.com/microsoft/vscode-java-debug/issues/1020).
+
+### Fixed
+- Unicode character in class name will fail to run. [#780](https://github.com/microsoft/vscode-java-debug/issues/780).
+- Launching apps which require both a modulepath and a classpath doesn't work with shortenCommandLine="argfile". [#1047](https://github.com/microsoft/vscode-java-debug/issues/1047).
+- Debugger fails to load variable values due to java.lang.OutOfMemoryError. [#1044](https://github.com/microsoft/vscode-java-debug/issues/1044).
+- Fix privacy in the logger. [PR#1048](https://github.com/microsoft/vscode-java-debug/pull/1048).
+
 ## 0.35.0 - 2021-07-28
 ### Changed
 - Add link to check detatils while reporting debugging progress. [PR#1034](https://github.com/microsoft/vscode-java-debug/pull/1034).
