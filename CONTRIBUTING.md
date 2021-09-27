@@ -38,11 +38,11 @@ npm install
 
 ### Build and Run
 #### Build the Debug Server
-For convenience, there is task `build_server` defined in `gulpfile.js`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
+For convenience, there is a build script `buildJdtlsExt.js` defined in `scripts/build`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
 ```bash
-npx gulp build_server
+npm run build-server
 ```
-**NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [gulpfile.js](https://github.com/Microsoft/vscode-java-debug/blob/master/gulpfile.js#L5).
+**NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [buildJdtlsExt.js](https://github.com/Microsoft/vscode-java-debug/blob/master/scripts/build/buildJdtlsExt.js#L8).
 
 #### Debug the Extension
 Open folder `vscode-java-debug` in VS Code, or simply execute following commands if you have `code` in your system PATH.

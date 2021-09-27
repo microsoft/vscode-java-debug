@@ -35,10 +35,10 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce gulp typescript
+      run: npm install -g vsce typescript
 
     - name: Lint
-      run: gulp tslint
+      run: npm run tslint
 
     - name: Package
       run: vsce package
@@ -71,10 +71,10 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce gulp typescript --force
+      run: npm install -g vsce typescript --force
 
     - name: Lint
-      run: gulp tslint
+      run: npm run tslint
 
     - name: Package
       run: vsce package
@@ -107,10 +107,10 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce gulp typescript
+      run: npm install -g vsce typescript
 
     - name: Lint
-      run: gulp tslint
+      run: npm run tslint
 
     - name: Package
       run: vsce package
