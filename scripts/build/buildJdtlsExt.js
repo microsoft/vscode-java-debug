@@ -7,7 +7,7 @@ const fs = require('fs');
 
 const server_dir = path.resolve('../java-debug');
 
-cp.execSync(mvnw() + ' clean package -DskipTests', {
+cp.execSync(mvnw() + ' clean package', {
     cwd: server_dir,
     stdio: [0, 1, 2]
 });
