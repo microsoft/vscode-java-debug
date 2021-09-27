@@ -5,7 +5,7 @@ test/**
 src/**
 **/*.map
 tsconfig.json
-gulpfile.js
+scripts/build/**
 .gitignore
 images/docs/**
 testprojects/**
