@@ -42,7 +42,7 @@ For convenience, there is a build script `buildJdtlsExt.js` defined in `scripts/
 ```bash
 npm run build-server
 ```
-**NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [buildJdtlsExt.js](https://github.com/Microsoft/vscode-java-debug/blob/master/scripts/build/buildJdtlsExt.js#L3).
+**NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [buildJdtlsExt.js](https://github.com/Microsoft/vscode-java-debug/blob/master/scripts/build/buildJdtlsExt.js#L8).
 
 #### Debug the Extension
 Open folder `vscode-java-debug` in VS Code, or simply execute following commands if you have `code` in your system PATH.
