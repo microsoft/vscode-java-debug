@@ -12,7 +12,7 @@ cp.execSync(mvnw() + ' clean package', {
     stdio: [0, 1, 2]
 });
 copy(path.join(server_dir, 'com.microsoft.java.debug.plugin/target'), path.resolve('server'), (file) => {
-    return file.startsWith('com.microsoft.java.debug') && path.extname(file) === '.jar';
+    return /^com.microsoft.java.debug.*.jar$/.test(file);
 });
 
 function copy(sourceFolder, targetFolder, fileFilter) {
