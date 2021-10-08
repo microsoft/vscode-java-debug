@@ -6,6 +6,8 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 
+import * as dotenv from 'dotenv'
+
 import { instrumentOperation, sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
 import { buildWorkspace } from "./build";
@@ -721,20 +723,7 @@ function readEnvFile(file: string): { [key: string]: string } {
     }
 
     const buffer = stripBOM(fs.readFileSync(file, "utf8"));
-    const env: { [key: string]: string } = {};
-    for (const line of buffer.split("\n")) {
-        const r = line.match(/^\s*([\w\.\-]+)\s*=\s*(.*)?\s*$/);
-        if (!r) {
-            continue;
-        }
-
-        let value = r[2] || "";
-        // .env variables never overwrite existing variables (see #21169)
-        if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
-            value = value.replace(/\\n/gm, "\n");
-        }
-        env[r[1]] = value.replace(/(^['"]|['"]$)/g, "");
-    }
+    const env = dotenv.parse(Buffer.from(buffer));
 
     return env;
 }
