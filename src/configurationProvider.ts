@@ -6,7 +6,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 
-import * as dotenv from 'dotenv'
+import * as dotenv from 'dotenv';
 
 import { instrumentOperation, sendError, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as anchor from "./anchor";
