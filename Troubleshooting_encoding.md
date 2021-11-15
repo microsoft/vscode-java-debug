@@ -1,0 +1,77 @@
+# Troubleshooting Guide for Encoding Issues
+
+## 1. Background
+macOS and Linux use UTF-8 everywhere and encoding is not a problem for them. For Windows, however, the default charset is not UTF-8 and is platform-dependent, which can lead to inconsistent encoding of I/O channels. This document provides a guideline for Windows users to troubleshoot common Java encoding issues.
+
+Computers can only understand the binary data such as 0 and 1, and it uses charset to encode/decode the data into real-world characters. When two processes interact with each other for I/O, there will be garbled characters if they don't use the same charset for encoding and decoding.
+
+The following diagram shows the parts of encoding that may be involved when writing and running Java in VS Code.
+![image](https://user-images.githubusercontent.com/14052197/140934909-20ce8482-d39c-4c8b-a92b-2878861a5b08.png)
+
+During the compilation phase, VS Code Java extension uses the file encoding from VS Code settings to read .java source files and compile .class files. Encoding is consistent between editor and Java extension.
+
+During the run/debug phase, Java extension launches the application in the terminal by default. Most encoding problems occur because the terminal and JVM use incompatible charsets for data processing, or use charsets that do not support the target unicode characters.
+
+## 2. Common Problems
+Below are the typical encoding problems when running a Java program on Windows terminal.
+
+2.1) The file or directory name contains unicode characters, Java launcher cannot find the corresponding classpath or main class well.
+```
+C:\Test>java -cp 中文目录 Hello
+Error: Could not find or load main class Hello
+```
+
+```
+C:\Test>java -cp ./Exercises 练习
+Error: Could not find or load main class ??
+Caused by: java.lang.ClassNotFoundException: ??
+```
+
+2.2) The string literals with unicode characters appear garbled when printed to the terminal.
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("你好！");
+    }
+}
+```
+
+```
+C:\Test>java -cp ./Exercises Hello
+??!
+```
+
+2.3) Garbled characters when Java program interacts with terminal for I/O.
+
+```java
+import java.util.Scanner;
+
+public class Hello {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println(scanner.nextLine());
+    }
+}
+```
+
+```
+C:\Test>chcp
+65001
+
+C:\Test>java -Dfile.encoding=UTF-8 -cp ./Exercises Hello
+你好
+��
+```
+
+## 3.Troubleshooting Suggestions
+The straightforward idea is to use UTF-8 in all toolchains, but unfortunately Windows terminals (such as cmd) do not support UTF-8 perfectly. Therefore, the alternative idea is to let the terminal and JVM use compatible character sets for data processing.
+
+- <b>JVM</b> - Uses a default charset compatible with the system locale of Windows platform, and you can change it by using the JVM argument `"-Dfile.encoding"`. Also Java debugger extension support `"encoding"` setting for it in launch.json.
+- <b>Windows Terminals</b> - Uses code page to handle encoding, and you can use `"chcp"` command to view and change the code page.
+
+### 3.1) Fix Suggestion : Change system locale to the target language.
+
+On Windows, when you change the system locale, the default Java charset will be changed to one compatible with the system locale, and the terminal's (e.g. cmd) code page will be automatically updated to be consistent as well. Therefore, changing system locale to the target language can solve most encoding issues on Windows. This is also suggested by Java site https://www.java.com/en/download/help/locale.html.
+
+The following screenshot shows how to change the system locale in Windows. for example, if I want to use a terminal to enter Chinese characters into a Java program, I can set the Windows system locale to Chinese. The default Java charset will be `"GBK"` and the cmd codepage will be `"936"`, which will support Chinese characters nicely.
+![image](https://user-images.githubusercontent.com/14052197/138408027-da71d3f4-7f64-4bfb-8b34-89d0605606f5.png)
