@@ -1,16 +1,9 @@
 # Troubleshooting Guide for Encoding Issues
 
 ## 1. Background
-macOS and Linux use UTF-8 everywhere and encoding is not a problem for them. For Windows, however, the default charset is not UTF-8 and is platform-dependent, which can lead to inconsistent encoding of I/O channels. This document provides a guideline for Windows users to troubleshoot common Java encoding issues.
+Computers can only understand the binary data such as 0 and 1, and it uses charset to encode/decode the data into real-world characters. When two processes interact with each other for I/O, they have to use the compatible charset for encoding and decoding, otherwise garbled characters will probably appear.
 
-Computers can only understand the binary data such as 0 and 1, and it uses charset to encode/decode the data into real-world characters. When two processes interact with each other for I/O, there will be garbled characters if they don't use the same charset for encoding and decoding.
-
-The following diagram shows the parts of encoding that may be involved when writing and running Java in VS Code.
-![image](https://user-images.githubusercontent.com/14052197/140934909-20ce8482-d39c-4c8b-a92b-2878861a5b08.png)
-
-During the compilation phase, VS Code Java extension uses the file encoding from VS Code settings to read .java source files and compile .class files. Encoding is consistent between editor and Java extension.
-
-During the run/debug phase, Java extension launches the application in the terminal by default. Most encoding problems occur because the terminal and JVM use incompatible charsets for data processing, or use charsets that do not support the target unicode characters.
+macOS and Linux use UTF-8 everywhere and encoding is not a problem for them. For Windows, however, the default charset is not UTF-8 and is platform-dependent, which can lead to inconsistent encoding between different tools. This document provides a guide for Windows users to solve common Java encoding issues.
 
 ## 2. Common Problems
 Below are the typical encoding problems when running a Java program on Windows terminal.
@@ -64,10 +57,16 @@ C:\Test>java -Dfile.encoding=UTF-8 -cp ./Exercises Hello
 ```
 
 ## 3.Troubleshooting Suggestions
-The straightforward idea is to use UTF-8 in all toolchains, but unfortunately Windows terminals (such as cmd) do not support UTF-8 perfectly. Therefore, the alternative idea is to let the terminal and JVM use compatible character sets for data processing.
+The following diagram shows the parts of encoding that may be involved when writing and running Java in VS Code.
+![image](https://user-images.githubusercontent.com/14052197/140934909-20ce8482-d39c-4c8b-a92b-2878861a5b08.png)
 
-- <b>JVM</b> - Uses a default charset compatible with the system locale of Windows platform, and you can change it by using the JVM argument `"-Dfile.encoding"`. Also Java debugger extension support `"encoding"` setting for it in launch.json.
-- <b>Windows Terminals</b> - Uses code page to handle encoding, and you can use `"chcp"` command to view and change the code page.
+- During the compilation phase, VS Code Java extension uses the file encoding from VS Code settings to read .java source files and compile .class files. Encoding is consistent between editor and Java extension.
+
+- During the run/debug phase, Java extension launches the application in the terminal by default. Most encoding problems occur because the terminal and JVM use incompatible charsets for data processing, or use charsets that do not support the target unicode characters.
+  - <b>JVM</b> - Uses a default charset compatible with the system locale of Windows platform, and you can change it by using the JVM argument `"-Dfile.encoding"`, or by using `"encoding"` setting in launch.json when running through Java debugger extension.
+  - <b>Windows Terminals</b> - Uses code page to handle encoding, and you can use `"chcp"` command to view and change the code page.
+
+To solve the encoding problems, the straightforward idea is to use UTF-8 in all toolchains. But unfortunately Windows terminals (such as cmd) do not support UTF-8 perfectly. Therefore, the alternative idea is to let the terminal and JVM use compatible character sets for data processing.
 
 ### 3.1) Fix Suggestion : Change system locale to the target language.
 
