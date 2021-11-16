@@ -1,9 +1,9 @@
 # Troubleshooting Guide for Encoding Issues
 
-## 1. Background
-Computers can only understand the binary data such as 0 and 1, and it uses charset to encode/decode the data into real-world characters. When two processes interact with each other for I/O, they have to use the compatible charset for encoding and decoding, otherwise garbled characters will probably appear.
+This document provides a guide mostly for Windows users to solve common Java encoding issues.
 
-macOS and Linux use UTF-8 everywhere and encoding is not a problem for them. For Windows, however, the default charset is not UTF-8 and is platform-dependent, which can lead to inconsistent encoding between different tools. This document provides a guide for Windows users to solve common Java encoding issues.
+## 1. Background
+Computers can only understand the binary data such as 0 and 1, and it uses charset to encode/decode the data into real-world characters. When two processes interact with each other for I/O, they have to use the compatible charset for encoding and decoding, otherwise garbled characters will probably appear. macOS and Linux use UTF-8 everywhere and encoding is not a problem for them. For Windows, however, the default charset is not UTF-8 and is platform-dependent, which can lead to inconsistent encoding between different tools. 
 
 ## 2. Common Problems
 Below are the typical encoding problems when running a Java program on Windows terminal.
