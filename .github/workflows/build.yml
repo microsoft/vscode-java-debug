@@ -35,7 +35,7 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce typescript
+      run: npm install -g "vsce@<2" typescript
 
     - name: Lint
       run: npm run tslint
@@ -71,7 +71,7 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce typescript --force
+      run: npm install -g vsce@">1.0 <2.0" typescript --force
 
     - name: Lint
       run: npm run tslint
@@ -107,7 +107,7 @@ jobs:
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce typescript
+      run: npm install -g "vsce@<2" typescript
 
     - name: Lint
       run: npm run tslint

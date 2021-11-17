@@ -127,7 +127,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.
 
 ## Troubleshooting
-Reference the [troubleshooting guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for common errors.
+Reference the [Troubleshooting Guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for common errors.  
+Reference the [Troubleshooting Guide for Encoding Issues](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting_encoding.md) for encoding issues.
 
 ## Feedback and Questions
 You can find the full list of issues at [Issue Tracker](https://github.com/Microsoft/vscode-java-debug/issues). You can submit a [bug or feature suggestion](https://github.com/Microsoft/vscode-java-debug/issues/new), and participate community driven [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)
