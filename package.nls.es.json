@@ -6,7 +6,7 @@
     "java.debugger.launch.modulePaths.description": "Los modulepaths para el lanzamiento de la JVM.  Si no se especifica, el depurador se resolverá automáticamente a partir del proyecto actual.",
     "java.debugger.launch.classPaths.description": "Los classpath para el lanzamiento de la JVM. Si no se especifica, el depurador se resolverá automáticamente a partir del proyecto actual.",
     "java.debugger.launch.sourcePaths.description": "Los directorios de fuentes extras del programa. El depurador busca el código fuente de los ajustes del proyecto por defecto. Esta opción permite al depurador buscar el código fuente en directorios extra.",
-    "java.debugger.launch.encoding.description": "La configuración de codificación de archivos para la JVM. Si no se especifica, se usará 'UTF-8'. Los posibles valores se pueden encontrar en https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
+    "java.debugger.launch.encoding.description": "La configuración de codificación de archivos para la JVM. Los posibles valores se pueden encontrar en https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
     "java.debugger.launch.cwd.description": "El directorio de trabajo del programa. Por defecto es la raíz del área de trabajo actual.",
     "java.debugger.launch.env.description": "Las variables de entorno adicionales para el programa.",
     "java.debugger.launch.stopOnEntry.description": "Pausar automáticamente el programa después del lanzamiento.",

@@ -14,7 +14,7 @@
     "java.debugger.launch.classPaths.test": "The classpaths within 'test' scope of current project.",
     "java.debugger.launch.classPaths.exclude": "The path after '!' will be excluded from the classpaths.",
     "java.debugger.launch.sourcePaths.description": "The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.",
-    "java.debugger.launch.encoding.description": "The file.encoding setting for the JVM. If not specified, 'UTF-8' will be used. Possible values can be found in https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
+    "java.debugger.launch.encoding.description": "The file.encoding setting for the JVM. Possible values can be found in https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
     "java.debugger.launch.cwd.description": "The working directory of the program. Defaults to the current workspace root.",
     "java.debugger.launch.env.description": "The extra environment variables for the program.",
     "java.debugger.launch.envFile.description": "Absolute path to a file containing environment variable definitions.",

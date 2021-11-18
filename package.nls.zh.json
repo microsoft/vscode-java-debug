@@ -14,7 +14,7 @@
     "java.debugger.launch.classPaths.test": "当前工程中属于 test 作用域的类路径。",
     "java.debugger.launch.classPaths.exclude": "'!' 之后的路径将会从类路径中去除。",
     "java.debugger.launch.sourcePaths.description": "应用程序的额外源代码目录。调试器默认从工程配置中查找源代码。此选项允许调试器在额外目录中查找源代码。",
-    "java.debugger.launch.encoding.description": "JVM的file.encoding设置。如果未指定，将使用“UTF-8”。可以在http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html中找到可能的值。",
+    "java.debugger.launch.encoding.description": "JVM的file.encoding设置。可以在http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html中找到可能的值。",
     "java.debugger.launch.cwd.description": "应用程序的工作目录。默认为当前工作空间根目录。",
     "java.debugger.launch.env.description": "启动应用程序时自定义的环境变量。",
     "java.debugger.launch.envFile.description": "环境变量文件绝对路径。",
