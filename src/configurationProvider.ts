@@ -315,11 +315,9 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.shortenCommandLine = await getShortenApproachForCLI(config, targetJavaVersion);
                 }
 
-                if (process.platform === "win32" && config.console !== "internalConsole") {
-                    const launcherScript: string = utility.getLauncherScriptPath();
-                    if (!launcherScript.includes(" ") || !utility.isGitBash(config.console === "integratedTerminal")) {
-                        config.launcherScript = launcherScript;
-                    }
+                // VS Code internal console uses UTF-8 to display output by default.
+                if (config.console === "internalConsole" && !config.encoding) {
+                    config.encoding = "UTF-8";
                 }
             } else if (config.request === "attach") {
                 if (config.hostName && config.port && Number.isInteger(Number(config.port))) {
