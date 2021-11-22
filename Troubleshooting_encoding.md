@@ -59,7 +59,7 @@ C:\Test>java -Dfile.encoding=UTF-8 -cp ./Exercises Hello
 ## 3.Troubleshooting Suggestions
 The following diagram shows the parts of encoding that may be involved when writing and running Java in VS Code.
 <p align="center">
-  <img alt="encoding_diagram" src="https://user-images.githubusercontent.com/14052197/142807897-201231d7-e4b1-4534-a75f-31d61b54cdc0.png">
+  <img alt="encoding_diagram" src="https://user-images.githubusercontent.com/14052197/142844414-360765c9-8e7d-4825-a5b9-7360c624fa8d.png">
   <br>
     <em>Encoding on Windows</em>
 </p>
