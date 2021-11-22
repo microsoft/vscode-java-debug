@@ -58,7 +58,11 @@ C:\Test>java -Dfile.encoding=UTF-8 -cp ./Exercises Hello
 
 ## 3.Troubleshooting Suggestions
 The following diagram shows the parts of encoding that may be involved when writing and running Java in VS Code.
-![encoding_diagram](https://user-images.githubusercontent.com/14052197/142807897-201231d7-e4b1-4534-a75f-31d61b54cdc0.png)
+<p align="center">
+  <img alt="encoding_diagram" src="https://user-images.githubusercontent.com/14052197/142807897-201231d7-e4b1-4534-a75f-31d61b54cdc0.png">
+  <br>
+    <em>Encoding on Windows</em>
+</p>
 
 - During the compilation phase, VS Code Java extension uses the file encoding from VS Code settings to read .java source files and compile .class files. Encoding is consistent between editor and Java extension.
 
@@ -73,4 +77,8 @@ To solve the encoding problems, the straightforward idea is to use UTF-8 in all 
 On Windows, when you change the system locale, the default Java charset will be changed to one compatible with the system locale, and the terminal's (e.g. cmd) code page will be automatically updated to be consistent as well. Therefore, changing system locale to the target language can solve most encoding issues on Windows. This is also suggested by Java site https://www.java.com/en/download/help/locale.html.
 
 The following screenshot shows how to change the system locale in Windows. for example, if I want to use a terminal to enter Chinese characters into a Java program, I can set the Windows system locale to Chinese. The default Java charset will be `"GBK"` and the cmd codepage will be `"936"`, which will support Chinese characters nicely.
-![image](https://user-images.githubusercontent.com/14052197/138408027-da71d3f4-7f64-4bfb-8b34-89d0605606f5.png)
+<p align="center">
+  <img alt="change_system_locale" src="https://user-images.githubusercontent.com/14052197/138408027-da71d3f4-7f64-4bfb-8b34-89d0605606f5.png">
+  <br>
+    <em>Change System Locale</em>
+</p>
