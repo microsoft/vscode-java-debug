@@ -4,6 +4,21 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.37.0 - 2021-11-24
+### Added
+- Troubleshooting Guide for Encoding Issues on Windows. See [Troubleshooting_encoding](https://github.com/microsoft/vscode-java-debug/blob/main/Troubleshooting_encoding.md).
+
+### Fixed
+- Address encoding issues on Windows. [#1077](https://github.com/microsoft/vscode-java-debug/pull/1077).
+- Encoding - launcher.bat could not pass on redirected input into the java program being debugged. [microsoft/vscode-java-pack#756](https://github.com/microsoft/vscode-java-pack/issues/756).
+- Encoding - Launching BAT for UTF-8 fix is incompatible with Security Policies disallowing BAT execution. [#646](https://github.com/microsoft/vscode-java-debug/issues/646).
+- Encoding - Non-ASCII char support for Windows terminals. [#622](https://github.com/microsoft/vscode-java-debug/issues/622).
+- Encoding - [Windows non-ASCII folder] Error: Could not find or load main class. [#623](https://github.com/microsoft/vscode-java-debug/issues/623).
+- Contribution from [
+John Grant](https://github.com/cyrfer): Support multiline values in envFile. [#1061](https://github.com/microsoft/vscode-java-debug/issues/1061).
+- Contribution from [
+Adrien Piquerez](https://github.com/adpi2). Fix NPE when using step filter. [microsoft/java-debug#387](https://github.com/microsoft/java-debug/pull/387).
+
 ## 0.36.0 - 2021-09-23
 ### Changed
 - Adopt new createStatusBarItem API for id and name properties. [#1020](https://github.com/microsoft/vscode-java-debug/issues/1020).

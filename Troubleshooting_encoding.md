@@ -58,7 +58,7 @@ C:\Test>java -Dfile.encoding=UTF-8 -cp ./Exercises Hello
 
 ## 3.Troubleshooting Suggestions
 The following diagram shows the parts of encoding that may be involved when writing and running Java in VS Code.
-![image](https://user-images.githubusercontent.com/14052197/140934909-20ce8482-d39c-4c8b-a92b-2878861a5b08.png)
+![encoding_diagram](https://user-images.githubusercontent.com/14052197/142807897-201231d7-e4b1-4534-a75f-31d61b54cdc0.png)
 
 - During the compilation phase, VS Code Java extension uses the file encoding from VS Code settings to read .java source files and compile .class files. Encoding is consistent between editor and Java extension.
 
