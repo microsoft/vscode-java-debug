@@ -663,9 +663,9 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
         try {
             const stepFilters = {
                 skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.stepping.skipClasses),
-                skipSynthetics: debugSettingsRoot.settings.skipSynthetics,
-                skipStaticInitializers: debugSettingsRoot.settings.skipStaticInitializers,
-                skipConstructors: debugSettingsRoot.settings.skipConstructors,
+                skipSynthetics: debugSettingsRoot.settings.stepping.skipSynthetics,
+                skipStaticInitializers: debugSettingsRoot.settings.stepping.skipStaticInitializers,
+                skipConstructors: debugSettingsRoot.settings.stepping.skipConstructors,
             };
             const exceptionFilters = {
                 skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),

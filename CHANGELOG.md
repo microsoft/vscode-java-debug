@@ -14,10 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Encoding - Launching BAT for UTF-8 fix is incompatible with Security Policies disallowing BAT execution. [#646](https://github.com/microsoft/vscode-java-debug/issues/646).
 - Encoding - Non-ASCII char support for Windows terminals. [#622](https://github.com/microsoft/vscode-java-debug/issues/622).
 - Encoding - [Windows non-ASCII folder] Error: Could not find or load main class. [#623](https://github.com/microsoft/vscode-java-debug/issues/623).
+- Step filter in the settings.json is not working. [#1085](https://github.com/microsoft/vscode-java-debug/issues/1085).
 - Contribution from [
 John Grant](https://github.com/cyrfer): Support multiline values in envFile. [#1061](https://github.com/microsoft/vscode-java-debug/issues/1061).
 - Contribution from [
 Adrien Piquerez](https://github.com/adpi2). Fix NPE when using step filter. [microsoft/java-debug#387](https://github.com/microsoft/java-debug/pull/387).
+- Contribution from [Douglas M. Barcellos](https://github.com/dougmbarcellos). Update telemetry setting declaration in README. [#1084](https://github.com/microsoft/vscode-java-debug/pull/1084).
 
 ## 0.36.0 - 2021-09-23
 ### Changed
