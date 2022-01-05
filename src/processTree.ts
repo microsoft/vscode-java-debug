@@ -170,7 +170,7 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 		proc.on('close', (code, signal) => {
 			if (code === 0) {
 				resolve();
-			} else if (code > 0) {
+			} else if (code !== null && code > 0) {
 				reject(new Error(`process terminated with exit code: ${code}`));
 			}
 			if (signal) {
