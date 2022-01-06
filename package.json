@@ -82,7 +82,8 @@
       },
       {
         "command": "java.debug.debugFromProjectView",
-        "title": "Debug"
+        "title": "Debug",
+        "icon": "$(debug-alt-small)"
       },
       {
         "command": "java.debug.continueAll",
@@ -144,9 +145,9 @@
     "menus": {
       "view/item/context": [
         {
-          "command": "java.debug.runFromProjectView",
+          "command": "java.debug.debugFromProjectView",
           "when": "view == javaProjectExplorer && viewItem =~ /java:project(?=.*?\\b\\+java\\b)(?=.*?\\b\\+uri\\b)/",
-          "group": "inline@run_0"
+          "group": "inline@100"
         },
         {
           "command": "java.debug.runFromProjectView",
