@@ -62,6 +62,10 @@ export function resolveMainClass(workspaceUri?: vscode.Uri): Promise<IMainClassO
     return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS);
 }
 
+export function resolveMainClassFromProject(projectName: string): Promise<IMainClassOption[]> {
+    return <Promise<IMainClassOption[]>>commands.executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, projectName);
+}
+
 export function validateLaunchConfig(mainClass: string, projectName: string, containsExternalClasspaths: boolean, workspaceUri?: vscode.Uri):
     Promise<ILaunchValidationResponse> {
     return <Promise<ILaunchValidationResponse>>commands.executeJavaLanguageServerCommand(commands.JAVA_VALIDATE_LAUNCHCONFIG,

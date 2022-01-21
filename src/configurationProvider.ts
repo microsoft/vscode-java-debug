@@ -432,7 +432,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     exclude = path.join(folder?.uri.fsPath || "", exclude);
                 }
                 // use Uri to normalize the fs path
-                excludes.set(vscode.Uri.file(exclude).fsPath, this.isFile(exclude));
+                excludes.set(vscode.Uri.file(exclude).fsPath, this.isFilePath(exclude));
                 continue;
             }
 
@@ -496,10 +496,30 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async resolveAndValidateMainClass(folder: vscode.Uri | undefined, config: vscode.DebugConfiguration,
                                               progressReporter: IProgressReporter): Promise<lsPlugin.IMainClassOption | undefined> {
-        if (!config.mainClass || this.isFile(config.mainClass)) {
-            const currentFile = config.mainClass || _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
-            if (currentFile) {
-                const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
+        // Validate it if the mainClass is already set in launch configuration.
+        if (config.mainClass && !this.isFilePath(config.mainClass)) {
+            const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
+            const validationResponse = await lsPlugin.validateLaunchConfig(config.mainClass, config.projectName, containsExternalClasspaths, folder);
+            if (progressReporter.isCancelled()) {
+                return undefined;
+            } else if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
+                return this.fixMainClass(folder, config, validationResponse, progressReporter);
+            }
+
+            return {
+                mainClass: config.mainClass,
+                projectName: config.projectName,
+            };
+        }
+
+        return this.resolveMainClass(config, progressReporter);
+    }
+
+    private async resolveMainClass(config: vscode.DebugConfiguration, progressReporter: IProgressReporter):
+        Promise<lsPlugin.IMainClassOption | undefined> {
+        if (config.projectName) {
+            if (this.isFilePath(config.mainClass)) {
+                const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(config.mainClass));
                 if (progressReporter.isCancelled()) {
                     return undefined;
                 } else if (mainEntries.length) {
@@ -510,27 +530,34 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                 }
             }
 
-            const hintMessage = currentFile ?
-                `The file '${path.basename(currentFile)}' is not executable, please select a main class you want to run.` :
-                "Please select a main class you want to run.";
-            return this.promptMainClass(folder, progressReporter, hintMessage);
+            return this.promptMainClassUnderProject(config.projectName, progressReporter, "Please select a main class you wan to run");
         }
 
-        const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
-        const validationResponse = await lsPlugin.validateLaunchConfig(config.mainClass, config.projectName, containsExternalClasspaths, folder);
-        if (progressReporter.isCancelled()) {
-            return undefined;
-        } else if (!validationResponse.mainClass.isValid || !validationResponse.projectName.isValid) {
-            return this.fixMainClass(folder, config, validationResponse, progressReporter);
+        // Try to resolve main class from current file
+        const currentFile = config.mainClass || _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
+        if (currentFile) {
+            const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
+            if (progressReporter.isCancelled()) {
+                return undefined;
+            } else if (mainEntries.length) {
+                if (!mainClassPicker.isAutoPicked(mainEntries)) {
+                    progressReporter.hide(true);
+                }
+                return mainClassPicker.showQuickPick(mainEntries, "Please select a main class you want to run.");
+            }
         }
 
-        return {
-            mainClass: config.mainClass,
-            projectName: config.projectName,
-        };
+        const hintMessage = currentFile ?
+        `The file '${path.basename(currentFile)}' is not executable, please select a main class you want to run.` :
+        "Please select a main class you want to run.";
+        return this.promptMainClassUnderPath(undefined, progressReporter, hintMessage);
     }
 
-    private isFile(filePath: string): boolean {
+    private isFilePath(filePath: string): boolean {
+        if (!filePath) {
+            return false;
+        }
+
         try {
             return fs.lstatSync(filePath).isFile();
         } catch (error) {
@@ -631,7 +658,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
     }
 
-    private async promptMainClass(folder: vscode.Uri | undefined, progressReporter: IProgressReporter, hintMessage?: string):
+    private async promptMainClassUnderPath(folder: vscode.Uri | undefined, progressReporter: IProgressReporter, hintMessage?: string):
         Promise<lsPlugin.IMainClassOption | undefined> {
         const res = await lsPlugin.resolveMainClass(folder);
         if (progressReporter.isCancelled()) {
@@ -640,6 +667,25 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             const workspaceFolder = folder ? vscode.workspace.getWorkspaceFolder(folder) : undefined;
             throw new utility.UserError({
                 message: `Cannot find a class with the main method${ workspaceFolder ? " in the folder '" + workspaceFolder.name + "'" : ""}.`,
+                type: Type.USAGEERROR,
+                anchor: anchor.CANNOT_FIND_MAIN_CLASS,
+            });
+        }
+
+        if (!mainClassPicker.isAutoPicked(res)) {
+            progressReporter.hide(true);
+        }
+        return mainClassPicker.showQuickPickWithRecentlyUsed(res, hintMessage || "Select main class<project name>");
+    }
+
+    private async promptMainClassUnderProject(projectName: string, progressReporter: IProgressReporter, hintMessage?: string):
+        Promise<lsPlugin.IMainClassOption | undefined> {
+        const res = await lsPlugin.resolveMainClassFromProject(projectName);
+        if (progressReporter.isCancelled()) {
+            return undefined;
+        } else if (res.length === 0) {
+            throw new utility.UserError({
+                message: `Cannot find a class with the main method in the project '${projectName}'.`,
                 type: Type.USAGEERROR,
                 anchor: anchor.CANNOT_FIND_MAIN_CLASS,
             });
