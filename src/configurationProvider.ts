@@ -534,7 +534,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
 
         // Try to resolve main class from current file
-        const currentFile = config.mainClass || _.get(vscode.window.activeTextEditor, "document.uri.fsPath");
+        const currentFile = config.mainClass || vscode.window.activeTextEditor?.document.uri.fsPath;
         if (currentFile) {
             const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(currentFile));
             if (progressReporter.isCancelled()) {
