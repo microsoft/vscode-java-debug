@@ -4,6 +4,18 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.38.0 - 2022-01-26
+### Added
+- Thanks for the contribution from [Mu-Tsun Tsai](https://github.com/MuTsunTsai). Add zh-tw locale. [#1087](https://github.com/microsoft/vscode-java-debug/pull/1087).
+
+### Changed
+- Change the inline button to debug icon. [#1108](https://github.com/microsoft/vscode-java-debug/pull/1108).
+
+### Fixed
+- Improve the search performance of resolving main class. [java-debug#395](https://github.com/microsoft/java-debug/pull/395).
+- If mainClass not specified, it will find main classes not belonging to current workspace. [#1098](https://github.com/microsoft/vscode-java-debug/issues/1098).
+- Update CONTRIBUTING docs. [#1105](https://github.com/microsoft/vscode-java-debug/issues/1105).
+
 ## 0.37.0 - 2021-11-24
 ### Added
 - Troubleshooting Guide for Encoding Issues on Windows. See [Troubleshooting_encoding](https://github.com/microsoft/vscode-java-debug/blob/main/Troubleshooting_encoding.md).
