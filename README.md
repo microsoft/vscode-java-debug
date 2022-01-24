@@ -131,8 +131,7 @@ Reference the [Troubleshooting Guide](https://github.com/Microsoft/vscode-java-d
 Reference the [Troubleshooting Guide for Encoding Issues](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting_encoding.md) for encoding issues.
 
 ## Contributing
-If you are interested in fixing issues and contributing directly to the code base,
-please see the document [How to Contribute](https://github.com/microsoft/vscode-java-debug/blob/main/CONTRIBUTING.md).
+If you are interested in fixing issues and contributing directly to the code base, please see the document [How to Contribute](https://github.com/microsoft/vscode-java-debug/blob/main/CONTRIBUTING.md).
 
 ## Feedback and Questions
 You can find the full list of issues at [Issue Tracker](https://github.com/Microsoft/vscode-java-debug/issues). You can submit a [bug or feature suggestion](https://github.com/Microsoft/vscode-java-debug/issues/new), and participate community driven [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)
