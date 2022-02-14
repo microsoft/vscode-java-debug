@@ -284,8 +284,10 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     });
                 }
 
-                config.javaExec = await lsPlugin.resolveJavaExecutable(config.mainClass, config.projectName);
-                // Add the default launch options to the config.
+				if (!config.javaExec)
+                	config.javaExec = await lsPlugin.resolveJavaExecutable(config.mainClass, config.projectName);
+
+				// Add the default launch options to the config.
                 config.cwd = config.cwd || _.get(folder, "uri.fsPath");
                 if (Array.isArray(config.args)) {
                     config.args = this.concatArgs(config.args);
