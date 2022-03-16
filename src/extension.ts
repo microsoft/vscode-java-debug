@@ -9,7 +9,7 @@ import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentO
     instrumentOperationAsVsCodeCommand, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider } from "./configurationProvider";
-import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
+import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT, LOGPOINT_EVENT } from "./constants";
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { initExpService } from "./experimentationService";
@@ -124,6 +124,8 @@ function registerDebugEventListener(context: vscode.ExtensionContext) {
             handleHotCodeReplaceCustomEvent(customEvent);
         } else if (customEvent.event === USER_NOTIFICATION_EVENT) {
             handleUserNotification(customEvent);
+        } else if (customEvent.event === LOGPOINT_EVENT) {
+            handleLogPoint(customEvent);
         }
     }));
 }
@@ -140,6 +142,10 @@ function handleUserNotification(customEvent: vscode.DebugSessionCustomEvent) {
     } else {
         vscode.window.showInformationMessage(customEvent.body.message);
     }
+}
+
+function handleLogPoint(customEvent: vscode.DebugSessionCustomEvent) {
+    vscode.debug.activeDebugConsole.appendLine(customEvent.body.message);
 }
 
 function fetchUsageData() {
