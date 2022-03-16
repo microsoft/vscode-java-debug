@@ -35,6 +35,9 @@ module.exports = function (env, argv) {
           'applicationinsights-native-metrics': 'commonjs applicationinsights-native-metrics', // ignored because we don't ship native module
           vscode: 'commonjs vscode'
         },
-        devtool: 'source-map'
+        devtool: 'source-map',
+        infrastructureLogging: {
+          level: 'log'
+        }
       }];
 };
