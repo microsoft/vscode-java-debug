@@ -4,7 +4,11 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.39.0 - 2022-03-30
+## 0.40.0 - 2022-03-28
+### Fixed
+- Fix extension version. [#1146](https://github.com/microsoft/vscode-java-debug/pull/1146).
+
+## 0.39.0 - 2022-03-28
 ### Added
 - Support lazy loading object values from toString(). [java-debug#401](https://github.com/microsoft/java-debug/pull/401).
 - API - Provide an api to query the processId of the debugging Java process. [java-debug#399](https://github.com/microsoft/java-debug/pull/399).
