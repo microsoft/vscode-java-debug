@@ -4,6 +4,18 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.39.0 - 2022-03-30
+### Added
+- Support lazy loading object values from toString(). [java-debug#401](https://github.com/microsoft/java-debug/pull/401).
+- API - Provide an api to query the processId of the debugging Java process. [java-debug#399](https://github.com/microsoft/java-debug/pull/399).
+
+### Changed
+- Print logpoints to debug console. [#710](https://github.com/microsoft/vscode-java-debug/issues/710). Thanks to [James Clark](https://github.com/sbj42) for contribution.
+
+### Fixed
+- VM launch failure doesn't report a useful error. [java-debug#397](https://github.com/microsoft/java-debug/issues/397). Thanks to [Karl von Randow](https://github.com/karlvr) for contribution.
+- Engineering - Fix problemMatcher patterns for the watch task. [#1137](https://github.com/microsoft/vscode-java-debug/pull/1137). Thanks to [James Clark](https://github.com/sbj42) for contribution. 
+
 ## 0.38.0 - 2022-01-26
 ### Added
 - Thanks for the contribution from [Mu-Tsun Tsai](https://github.com/MuTsunTsai). Add zh-tw locale. [#1087](https://github.com/microsoft/vscode-java-debug/pull/1087).
