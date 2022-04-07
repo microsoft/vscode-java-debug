@@ -9,11 +9,11 @@ import * as utility from "./utility";
 
 const suppressedReasons: Set<string> = new Set();
 
-const YES_BUTTON: string = "Yes";
+export const YES_BUTTON: string = "Yes";
 
-const NO_BUTTON: string = "No";
+export const NO_BUTTON: string = "No";
 
-const NEVER_BUTTON: string = "Not show again";
+const NEVER_BUTTON: string = "Do not show again";
 
 enum HcrChangeType {
     ERROR = "ERROR",
@@ -38,7 +38,7 @@ export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
     }));
 }
 
-export function handleHotCodeReplaceCustomEvent(hcrEvent) {
+export function handleHotCodeReplaceCustomEvent(hcrEvent: vscode.DebugSessionCustomEvent) {
     if (hcrEvent.body.changeType === HcrChangeType.BUILD_COMPLETE) {
         if (getHotReloadFlag() === "auto") {
             return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, (progress) => {
@@ -62,6 +62,7 @@ export function handleHotCodeReplaceCustomEvent(hcrEvent) {
             });
         }
     }
+    return undefined;
 }
 
 function getHotReloadFlag(): string {

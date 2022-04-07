@@ -6,3 +6,4 @@ node_modules
 vscode-java-debug-*.vsix
 packages/
 dist
+.DS_Store

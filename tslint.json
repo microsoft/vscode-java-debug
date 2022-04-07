@@ -7,10 +7,11 @@
         ],
         "no-unused-expression": true,
         "no-duplicate-variable": true,
-        "max-classes-per-file": [
-            false
+        "max-classes-per-file": false,
+        "no-implicit-dependencies": [
+            false,
+            "dev"
         ],
-        "no-implicit-dependencies": [true, "dev"],
         "no-empty": false,
         "object-literal-sort-keys": false,
         "curly": true,
@@ -24,15 +25,18 @@
             "check-separator",
             "check-type"
         ],
-        "semicolon": [
-            "always"
-        ],
+        "semicolon": true,
         "triple-equals": true,
         "max-line-length": [
             true,
             150
-        ], 
+        ],
         "no-angle-bracket-type-assertion": false,
-        "no-console": ["log","error"]
+        "no-console": [
+            true,
+            "log",
+            "error"
+        ],
+        "no-submodule-imports": false
     }
 }

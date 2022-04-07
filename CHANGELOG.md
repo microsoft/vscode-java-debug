@@ -1,8 +1,266 @@
 # Change Log
 All notable changes to the "vscode-java-debugger" extension will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 0.40.0 - 2022-03-28
+### Fixed
+- Fix extension version. [#1146](https://github.com/microsoft/vscode-java-debug/pull/1146).
+
+## 0.39.0 - 2022-03-28
+### Added
+- Support lazy loading object values from toString(). [java-debug#401](https://github.com/microsoft/java-debug/pull/401).
+- API - Provide an api to query the processId of the debugging Java process. [java-debug#399](https://github.com/microsoft/java-debug/pull/399).
+
+### Changed
+- Print logpoints to debug console. [#710](https://github.com/microsoft/vscode-java-debug/issues/710). Thanks to [James Clark](https://github.com/sbj42) for contribution.
+
+### Fixed
+- VM launch failure doesn't report a useful error. [java-debug#397](https://github.com/microsoft/java-debug/issues/397). Thanks to [Karl von Randow](https://github.com/karlvr) for contribution.
+- Engineering - Fix problemMatcher patterns for the watch task. [#1137](https://github.com/microsoft/vscode-java-debug/pull/1137). Thanks to [James Clark](https://github.com/sbj42) for contribution. 
+
+## 0.38.0 - 2022-01-26
+### Added
+- Thanks for the contribution from [Mu-Tsun Tsai](https://github.com/MuTsunTsai). Add zh-tw locale. [#1087](https://github.com/microsoft/vscode-java-debug/pull/1087).
+
+### Changed
+- Change the inline button to debug icon. [#1108](https://github.com/microsoft/vscode-java-debug/pull/1108).
+
+### Fixed
+- Improve the search performance of resolving main class. [java-debug#395](https://github.com/microsoft/java-debug/pull/395).
+- If mainClass not specified, it will find main classes not belonging to current workspace. [#1098](https://github.com/microsoft/vscode-java-debug/issues/1098).
+- Update CONTRIBUTING docs. [#1105](https://github.com/microsoft/vscode-java-debug/issues/1105).
+
+## 0.37.0 - 2021-11-24
+### Added
+- Troubleshooting Guide for Encoding Issues on Windows. See [Troubleshooting_encoding](https://github.com/microsoft/vscode-java-debug/blob/main/Troubleshooting_encoding.md).
+
+### Fixed
+- Address encoding issues on Windows. [#1077](https://github.com/microsoft/vscode-java-debug/pull/1077).
+- Encoding - launcher.bat could not pass on redirected input into the java program being debugged. [microsoft/vscode-java-pack#756](https://github.com/microsoft/vscode-java-pack/issues/756).
+- Encoding - Launching BAT for UTF-8 fix is incompatible with Security Policies disallowing BAT execution. [#646](https://github.com/microsoft/vscode-java-debug/issues/646).
+- Encoding - Non-ASCII char support for Windows terminals. [#622](https://github.com/microsoft/vscode-java-debug/issues/622).
+- Encoding - [Windows non-ASCII folder] Error: Could not find or load main class. [#623](https://github.com/microsoft/vscode-java-debug/issues/623).
+- Step filter in the settings.json is not working. [#1085](https://github.com/microsoft/vscode-java-debug/issues/1085).
+- Contribution from [
+John Grant](https://github.com/cyrfer): Support multiline values in envFile. [#1061](https://github.com/microsoft/vscode-java-debug/issues/1061).
+- Contribution from [
+Adrien Piquerez](https://github.com/adpi2). Fix NPE when using step filter. [microsoft/java-debug#387](https://github.com/microsoft/java-debug/pull/387).
+- Contribution from [Douglas M. Barcellos](https://github.com/dougmbarcellos). Update telemetry setting declaration in README. [#1084](https://github.com/microsoft/vscode-java-debug/pull/1084).
+
+## 0.36.0 - 2021-09-23
+### Changed
+- Adopt new createStatusBarItem API for id and name properties. [#1020](https://github.com/microsoft/vscode-java-debug/issues/1020).
+
+### Fixed
+- Unicode character in class name will fail to run. [#780](https://github.com/microsoft/vscode-java-debug/issues/780).
+- Launching apps which require both a modulepath and a classpath doesn't work with shortenCommandLine="argfile". [#1047](https://github.com/microsoft/vscode-java-debug/issues/1047).
+- Debugger fails to load variable values due to java.lang.OutOfMemoryError. [#1044](https://github.com/microsoft/vscode-java-debug/issues/1044).
+- Fix privacy in the logger. [PR#1048](https://github.com/microsoft/vscode-java-debug/pull/1048).
+
+## 0.35.0 - 2021-07-28
+### Changed
+- Add link to check detatils while reporting debugging progress. [PR#1034](https://github.com/microsoft/vscode-java-debug/pull/1034).
+
+### Fixed
+- Catch up build errors before running a Java application. [#949](https://github.com/microsoft/vscode-java-debug/issues/949).
+
+## 0.34.0 - 2021-05-26
+### Changed
+- Allow customizing the "classPaths" and "modulePaths" configurations via launch.json. See [#93](https://github.com/microsoft/vscode-java-debug/issues/93), [#980](https://github.com/microsoft/vscode-java-debug/issues/980).
+
+## 0.33.1 - 2021-04-30
+### Fixed
+- HotFix: After upgrade from vscode-java v0.77.0 to v0.78.0 can't debug tests. [#995](https://github.com/microsoft/vscode-java-debug/issues/995).
+
+## 0.33.0 - 2021-04-28
+### Added
+- Support inline values feature. [PR#977](https://github.com/microsoft/vscode-java-debug/pull/977).
+- Show VARIABLES with different data views. [PR#982](https://github.com/microsoft/vscode-java-debug/pull/982).
+- Adopt new APIs from vscode-tas-client. [#974](https://github.com/microsoft/vscode-java-debug/pull/974).
+- Adopt workspaceTrust in package.json. [PR#988](https://github.com/microsoft/vscode-java-debug/pull/988).
+
+### Changed
+- Engineering: Clean up deprecated logs. [PR#987](https://github.com/microsoft/vscode-java-debug/pull/987).
+
+### Fixed
+- Breakpoints inside record methods don't work. [#973](https://github.com/microsoft/vscode-java-debug/issues/973).
+- Support environment variable for port number in launch.json debug configuration. [#962](https://github.com/microsoft/vscode-java-debug/issues/962).
+- Thanks for the contribution from [ZingBlue](https://github.com/ZingBlue): Spelling fix. [#968](https://github.com/microsoft/vscode-java-debug/pull/968).
+
+## 0.32.1 - 2021-03-23
+### Fixed
+- Cannot launch debug session using JDK 16. [#970](https://github.com/microsoft/vscode-java-debug/issues/970).
+
+## 0.32.0 - 2021-03-12
+### Added
+- Adopt TAS client for A/B testing. [PR#959](https://github.com/microsoft/vscode-java-debug/pull/959).
+
+### Changed
+- Update to new product logo. [PR#952](https://github.com/microsoft/vscode-java-debug/pull/952).
+- Adopt new 'run' menu in editor title. [PR#956](https://github.com/microsoft/vscode-java-debug/pull/956),[PR#960](https://github.com/microsoft/vscode-java-debug/pull/960).
+- Engineering - Enable GitHub Actions. [PR#951](https://github.com/microsoft/vscode-java-debug/pull/951).
+
+## 0.31.0 - 2021-02-02
+### Added
+- Support envFile option in launch.json. [#523](https://github.com/microsoft/vscode-java-debug/issues/523).
+
+### Fixed
+- Git bash failed to execute Run/Debug when Windows username have blank space. [#678](https://github.com/microsoft/vscode-java-debug/issues/678).
+- TEMP folder with spaces breaks debugger process. [#822](https://github.com/microsoft/vscode-java-debug/issues/822).
+- The sort of completion list in DEBUG CONSOLE is different from that in editor. [#909](https://github.com/microsoft/vscode-java-debug/issues/909).
+- The program failed to run in terminal if clicking run button several times in succession. [#924](https://github.com/microsoft/vscode-java-debug/issues/924).
+- Fix vulnerabilities. [#935](https://github.com/microsoft/vscode-java-debug/issues/935), [#936](https://github.com/microsoft/vscode-java-debug/issues/936).
+
+## 0.30.0 - 2020-12-16
+### Added
+- Add run button as inline button in Java Project Explorer. [PR#900](https://github.com/microsoft/vscode-java-debug/pull/900).
+- Use progress to hint the current build status whenever you trigger the Run and Debug features. [PR#919](https://github.com/microsoft/vscode-java-debug/pull/919).
+- Thanks for the contribution from [pablojimpas](https://github.com/pablojimpas): Spanish localization support. [PR#904](https://github.com/microsoft/vscode-java-debug/pull/904).
+
+### Changed
+- Make the run buttons in editor toolbar more context-aware. [PR#898](https://github.com/microsoft/vscode-java-debug/pull/898).
+- Update the group name of the Run and Debug menus registered in the Java Project Explorer. [PR#908](https://github.com/microsoft/vscode-java-debug/pull/908).
+- Simplify the name label of the launch configuration. [PR#921](https://github.com/microsoft/vscode-java-debug/pull/921).
+- Debt: Enable more tslint rules. [PR#914](https://github.com/microsoft/vscode-java-debug/pull/914),[PR#918](https://github.com/microsoft/vscode-java-debug/pull/918).
+
+### Fixed
+- Find Java version from release file. [#910](https://github.com/microsoft/vscode-java-debug/issues/910).
+
+## 0.29.0 - 2020-10-16
+### Added
+- Jump to source when clicking the stack trace printed to the terminal. [PR#890](https://github.com/microsoft/vscode-java-debug/pull/890).
+- Contribute `Run` and `Debug` menus to Project Explorer. [#878](https://github.com/microsoft/vscode-java-debug/pull/878).
+- Provide a user setting `java.debug.settings.vmArgs` to set the default VM arguments to launch your program. [#220](https://github.com/microsoft/vscode-java-debug/issues/220),[#876](https://github.com/microsoft/vscode-java-debug/issues/876).
+- Provide a user setting `java.debug.settings.onBuildFailureProceed` to force the debug session to proceed when build fails. [#888](https://github.com/microsoft/vscode-java-debug/issues/888).
+
+### Changed
+- Allow cancelling the outdated codelens job. [PR#881](https://github.com/microsoft/vscode-java-debug/pull/881).
+
+### Fixed
+- Fix the wrong auto-completion result when typing the evaluation expression in DEBUG CONSOLE. [#880](https://github.com/microsoft/vscode-java-debug/issues/880).
+- Fix the error 'UNC path is missing sharename: \\\\java'. [#882](https://github.com/microsoft/vscode-java-debug/issues/882).
+- Use the correct runtime to validate the JVM versions between the debugger and debuggee. [PR#353](https://github.com/microsoft/java-debug/pull/353).
+
+## 0.28.0 - 2020-08-27
+### Added
+- Add run/debug buttons to editor title bar for single file debugging. [#834](https://github.com/microsoft/vscode-java-debug/issues/834).
+- Add user settings `java.debug.settings.jdwp.limitOfVariablesPerJdwpRequest` and `java.debug.settings.jdwp.requestTimeout` to control JDWP request. [#862](https://github.com/microsoft/vscode-java-debug/pull/862),[#863](https://github.com/microsoft/vscode-java-debug/pull/863).
+
+### Changed
+- Reduce the frequency of JDWP requests to improve performance when expanding VARIABLES view. [#347](https://github.com/microsoft/java-debug/pull/347).
+- Migrate the legacy log to the telemetry wrapper. [#866](https://github.com/microsoft/vscode-java-debug/pull/866).
+
+### Fixed
+- Fix Hot Code Replace error "Cannot find any changed classes for hot replace!". [#855](https://github.com/microsoft/vscode-java-debug/issues/855).
+
+## 0.27.1 - 2020-07-21
+### Fixed
+- Hot Code Replace always reports "Cannot find any changed classes for hot replace!". [#850](https://github.com/microsoft/vscode-java-debug/issues/850).
+
+## 0.27.0 - 2020-07-17
+### Added
+- Break on exception for "just my code". [#756](https://github.com/microsoft/vscode-java-debug/issues/756).
+- Support step "just my code". [#628](https://github.com/microsoft/vscode-java-debug/issues/628).
+- Show return value of a method. [#660](https://github.com/microsoft/vscode-java-debug/issues/660).
+- Support "copy value" from Variable viewlet. [#819](https://github.com/microsoft/vscode-java-debug/issues/819).
+- From upstream jdt: support using lambda and reference expressions in debug evaluation. [#281](https://github.com/microsoft/vscode-java-debug/issues/281).
+- From upstream jdt: support evaluating local variables in the lambda body. [#754](https://github.com/microsoft/vscode-java-debug/issues/754).
+
+### Changed
+- Always give UI feedback whenever you click ⚡ button to apply code changes. [#833](https://github.com/microsoft/vscode-java-debug/pull/833).
+- Automatically add -XX:+ShowCodeDetailsInExceptionMessages when launching your program with Java 14. [#797](https://github.com/microsoft/vscode-java-debug/issues/797).
+- Adopt the new resolveVariable API. [#750](https://github.com/microsoft/vscode-java-debug/issues/750).
+- Adopt DebugAdapterDescriptorFactor API. [#751](https://github.com/microsoft/vscode-java-debug/issues/751).
+
+### Fixed
+- Give a response when you trigger debugging in LightWeight mode. [#841](https://github.com/microsoft/vscode-java-debug/issues/841).
+- Failed to get variables. Reason: com.sun.jdi.InvalidStackFrameException. [#767](https://github.com/microsoft/vscode-java-debug/issues/767).
+- Render the source link for stack trace from Java modules. [#824](https://github.com/microsoft/vscode-java-debug/issues/824).
+
+## 0.26.0 - 2020-05-13
+### Added
+- Support picking a Java process to auto attach. [#759](https://github.com/microsoft/vscode-java-debug/issues/759).
+
+### Fixed
+- When running the Gradle application, the test scope is not filtered out. [#715](https://github.com/microsoft/vscode-java-debug/issues/715).
+- Conditional breakpoint fails in the multi thread scenario. [#782](https://github.com/microsoft/vscode-java-debug/issues/782).
+- Show a warning message about the Unsupported JDK error. [#789](https://github.com/microsoft/vscode-java-debug/issues/789).
+- vmArgs in launch.json does not accept an array of strings. [#778](https://github.com/microsoft/vscode-java-debug/issues/778).
+- Activate the extension before execute Java extension commands. [#775](https://github.com/microsoft/vscode-java-debug/pull/775).
+
+### Changed
+- Contribution from [Mathias Fußenegger](https://github.com/mfussenegger): Extend readme with basic low level usage instructions. [java-debug#327](https://github.com/microsoft/java-debug/pull/327).
+
+Thank [Mathias Fußenegger](https://github.com/mfussenegger) for contribution.
+
+## 0.25.1 - 2020-03-06
+### Fixed
+- Fix the Error: Could not find or load main class @x.y.z.argfile. [#769](https://github.com/microsoft/vscode-java-debug/issues/769).
+- Cannot hit breakpoint at the class using Java 13 Text Blocks. [#773](https://github.com/microsoft/vscode-java-debug/issues/773).
+
+## 0.25.0 - 2020-02-20
+### Added
+- Provide context menu to continue/pause all/other threads. [#748](https://github.com/microsoft/vscode-java-debug/pull/748).
+- Contribution from [bhoppeadoy](https://github.com/bhoppeadoy): Add user setting `java.debug.settings.numericPrecision` to set the numeric precision when formatting doubles in "Variables" or "Debug Console" viewlet. [#745](https://github.com/microsoft/vscode-java-debug/issues/745).
+
+### Fixed
+- Use project's Java runtime to launch the application. [#753](https://github.com/microsoft/vscode-java-debug/issues/753).
+- Restart stop but not start the program. [#752](https://github.com/microsoft/vscode-java-debug/issues/752).
+- Contribution from [xiaoyinl](https://github.com/xiaoyinl): Use HTTPS wherever possible. [#732](https://github.com/microsoft/vscode-java-debug/pull/732).
+
+## 0.24.0 - 2019-12-25
+### Added
+- Support breaking when value changes (a.k.a. Data Breakpoints). [#654](https://github.com/microsoft/vscode-java-debug/issues/654).
+
+### Changed
+- Improve "Run Java" experience: `F5` will run the current file without generating launch.json. [#724](https://github.com/microsoft/vscode-java-debug/issues/724).
+
+### Fixed
+- Debug console will hang on Java exception stack trace. [#719](https://github.com/microsoft/vscode-java-debug/issues/719).
+- Debug console won't automatically append `()` if selecting a method in completion list. [#711](https://github.com/microsoft/vscode-java-debug/issues/711), [#691](https://github.com/microsoft/vscode-java-debug/issues/691).
+- Cannot pass `vmArgs` array to Java 13 project. [#703](https://github.com/microsoft/vscode-java-debug/issues/703).
+
+## 0.23.0 - 2019-10-29
+### Added
+- Provide "Fix..." suggestions when "Build failed" occurs during launching the application. [#358](https://github.com/microsoft/vscode-java-debug/issues/358).
+- Prompt to add the folder to source path if the running file isn't on classpath. [#470](https://github.com/microsoft/vscode-java-debug/issues/470).
+- Provide samples for the commonly used debug configuration. See the [doc](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md).
+
+### Fixed
+- It's safe to keep running the run/debug codelens if the debug configuration fails to save into the launch.json. [PR#673](https://github.com/microsoft/vscode-java-debug/pull/673).
+- Improve the error handling when running the file via the context "run" or "debug" menu. [PR#679](https://github.com/microsoft/vscode-java-debug/pull/679).
+- Support searching main classes from the workspace invisible project. [PR#305](https://github.com/microsoft/java-debug/pull/305).
+
+### Changed
+- Update troubleshooting doc for class not found error. See the [doc](https://github.com/microsoft/vscode-java-debug/blob/master/Troubleshooting.md#program-error-could-not-find-or-load-main-class-x).
+- Update troubleshooting doc for build failed error. See the [doc](https://github.com/microsoft/vscode-java-debug/blob/master/Troubleshooting.md#build-failed-do-you-want-to-continue).
+
+## 0.22.0 - 2019-09-24
+### Added
+- Show Run/Debug buttons when hover on a main method. [#657](https://github.com/microsoft/vscode-java-debug/issues/657).
+
+### Fixed
+- Debugger just broken with git bash as the default shell on Windows. [#642](https://github.com/microsoft/vscode-java-debug/issues/642).
+- [Mac] Failed to launch debuggee in terminal with TimeoutException. [#637](https://github.com/microsoft/vscode-java-debug/issues/637), [#651](https://github.com/microsoft/vscode-java-debug/issues/651).
+- Pop an error message when click ⚡ HCR button in the Run mode. [PR#665](https://github.com/microsoft/vscode-java-debug/pull/665).
+- Don't escape single quote of the program args. [PR#668](https://github.com/microsoft/vscode-java-debug/pull/668).
+
+## 0.21.0 - 2019-08-26
+### Added
+- Add menu entries to `Run` and `Debug` a Java application when you right click a Java file in file explorer or opened editor. [#626](https://github.com/microsoft/vscode-java-debug/issues/626).
+
+### Changed
+- Remove hard dependency of redhat.java. [PR#617](https://github.com/microsoft/vscode-java-debug/pull/617).
+- Change the default console to integrated terminal. [#605](https://github.com/microsoft/vscode-java-debug/issues/605).
+
+### Fixed
+- Java language server is activated by mistake when debugging a non-Java project. [#238](https://github.com/microsoft/vscode-java-debug/issues/238).
+- [Windows] `integratedTerminal` console does not showing unicode characters. [#524](https://github.com/microsoft/vscode-java-debug/issues/524).
+- Contribution from [pi1024e](https://github.com/pi1024e): Fix UI typos. [PR#630](https://github.com/microsoft/vscode-java-debug/pull/630).
+
+Thank [pi1024e](https://github.com/pi1024e) for contribution.
 
 ## 0.20.0 - 2019-07-01
 ### Fixed

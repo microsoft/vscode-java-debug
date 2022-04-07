@@ -25,10 +25,10 @@ javaDebugger/
 ```
 
 ### Prerequisites
-- [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html), (version 1.8.0 or later)
-- [VS Code](https://code.visualstudio.com/), (version 1.19.0 or later)
-- [Node.JS](https://nodejs.org/en/), (>= 8.9.1, < 9.0.0)
-- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java), (version 0.14.0 or later)
+- [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html), (version 11 or later)
+- [VS Code](https://code.visualstudio.com/), (version 1.44.0 or later)
+- [Node.JS](https://nodejs.org/en/), (>= 12.8.1)
+- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java), (version 0.60.0 or later)
 
 Install all the dependencies using `npm` (supposed to be installed together with [Node.JS](https://nodejs.org/en/)).
 ```bash
@@ -38,11 +38,11 @@ npm install
 
 ### Build and Run
 #### Build the Debug Server
-For convenience, there is task `build_server` defined in `gulpfile.js`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
+For convenience, there is a build script `buildJdtlsExt.js` defined in `scripts/build`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
 ```bash
-npx gulp build_server
+npm run build-server
 ```
-**NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [gulpfile.js](https://github.com/Microsoft/vscode-java-debug/blob/master/gulpfile.js#L5).
+**NOTE**: If you didn't follow the steps to check out [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug) and [java-debug](https://github.com/Microsoft/java-debug) in the same folder, please specify a correct `server_dir` in your [buildJdtlsExt.js](https://github.com/Microsoft/vscode-java-debug/blob/master/scripts/build/buildJdtlsExt.js#L8).
 
 #### Debug the Extension
 Open folder `vscode-java-debug` in VS Code, or simply execute following commands if you have `code` in your system PATH.
@@ -61,4 +61,4 @@ Since we have checked in a valid [launch.json](https://github.com/Microsoft/java
 
 ## Pull Requests
 Before we can accept a pull request from you, you'll need to sign a [Contributor License Agreement (CLA)](https://github.com/Microsoft/vscode/wiki/Contributor-License-Agreement). It is an automated process and you only need to do it once.
-To enable us to quickly review and accept your pull requests, always create one pull request per issue and [link the issue in the pull request](https://github.com/blog/957-introducing-issue-mentions). 
+To enable us to quickly review and accept your pull requests, always create one pull request per issue and [link the issue in the pull request](https://github.com/blog/957-introducing-issue-mentions).
