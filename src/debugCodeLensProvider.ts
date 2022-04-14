@@ -219,7 +219,7 @@ async function addToClasspath(uri: vscode.Uri): Promise<boolean> {
     if (ans === "Skip") {
         return true;
     } else if (ans === "Add to Source Path") {
-        vscode.commands.executeCommand("java.project.addToSourcePath", parentUri);
+        vscode.commands.executeCommand("java.project.addToSourcePath.command", parentUri);
     }
 
     return false;

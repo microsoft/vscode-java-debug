@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.40.1- 2022-04-15
+### Fixed
+- Update command id to 'java.project.addToSourcePath.command'. [#1152](https://github.com/microsoft/vscode-java-debug/issues/1152).
+
 ## 0.40.0 - 2022-03-28
 ### Fixed
 - Fix extension version. [#1146](https://github.com/microsoft/vscode-java-debug/pull/1146).
