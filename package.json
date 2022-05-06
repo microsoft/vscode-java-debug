@@ -945,17 +945,17 @@
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
-    "@types/lodash": "^4.14.180",
-    "@types/mocha": "^9.1.0",
-    "@types/node": "^14.18.12",
+    "@types/lodash": "^4.14.182",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "^14.18.16",
     "@types/uuid": "^8.3.4",
-    "@types/vscode": "^1.65.0",
+    "@types/vscode": "1.65.0",
     "mocha": "^9.2.2",
-    "ts-loader": "^9.2.8",
+    "ts-loader": "^9.3.0",
     "tslint": "^6.1.3",
-    "typescript": "^4.6.2",
+    "typescript": "^4.6.4",
     "vscode-test": "^1.6.1",
-    "webpack": "^5.70.0",
+    "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
@@ -966,6 +966,6 @@
     "vscode-extension-telemetry-wrapper": "^0.12.0",
     "vscode-languageclient": "6.0.0-next.9",
     "vscode-languageserver-types": "3.16.0",
-    "vscode-tas-client": "^0.1.31"
+    "vscode-tas-client": "^0.1.47"
   }
 }
