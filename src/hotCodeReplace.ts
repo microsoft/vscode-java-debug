@@ -30,6 +30,14 @@ export function initializeHotCodeReplace(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand("setContext", "javaHotReload", getHotReloadFlag());
         }
     });
+    vscode.debug.onDidStartDebugSession((session) => {
+        if (session?.configuration.noDebug && !vscode.debug.activeDebugSession) {
+            vscode.commands.executeCommand("setContext", "javaHotReloadOn", false);
+        }
+    });
+    vscode.debug.onDidChangeActiveDebugSession((session) => {
+        vscode.commands.executeCommand("setContext", "javaHotReloadOn", session && !session.configuration.noDebug);
+    });
     context.subscriptions.push(vscode.debug.onDidTerminateDebugSession((session) => {
         const t = session ? session.type : undefined;
         if (t === JAVA_LANGID) {
