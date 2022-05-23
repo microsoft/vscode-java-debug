@@ -200,7 +200,7 @@
         {
           "command": "java.debug.hotCodeReplace",
           "group": "navigation@100",
-          "when": "inDebugMode && debugType == java && javaHotReload == 'manual'"
+          "when": "inDebugMode && debugType == java && javaHotReload == 'manual' && javaHotReloadOn"
         }
       ],
       "debug/callstack/context": [
