@@ -15,10 +15,6 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
      * @return A list of terminal links for the given line.
      */
     public provideTerminalLinks(context: TerminalLinkContext, _token: CancellationToken): ProviderResult<IJavaTerminalLink[]> {
-        if (context.terminal.name !== "Java Debug Console" && context.terminal.name !== "Java Process Console") {
-            return [];
-        }
-
         const regex = new RegExp("(\\sat\\s+)([\\w$\\.]+\\/)?(([\\w$]+\\.)+[<\\w$>]+)\\(([\\w-$]+\\.java:\\d+)\\)");
         const result: RegExpExecArray | null = regex.exec(context.line);
         if (result && result.length) {
