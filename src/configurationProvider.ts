@@ -33,8 +33,19 @@ const platformName = platformNameMappings[process.platform];
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
     constructor() {
+        const packageJson: {[key: string]: any} = require("../package.json");
+        const debugConfigNames = Object.keys(packageJson?.contributes?.configuration?.properties || {});
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (event.affectsConfiguration("java.debug")) {
+                for (const key of debugConfigNames) {
+                    if (event.affectsConfiguration(key)) {
+                        sendInfo("", {
+                            operationName: "changeJavaDebugSettings",
+                            configName: key,
+                        });
+                    }
+                }
+
                 if (vscode.debug.activeDebugSession) {
                     this.isUserSettingsDirty = false;
                     return updateDebugSettings(event);
