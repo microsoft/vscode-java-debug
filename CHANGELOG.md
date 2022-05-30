@@ -4,6 +4,16 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.41.0- 2022-06-01
+### Added
+- Provide "Stop Java" button when triggering "Run Java" action. [#1166](https://github.com/microsoft/vscode-java-debug/issues/1166).
+- [API] Support DAP request `processId` and event `processid` to get the exact pid of current running Java process. [java-debug#413](https://github.com/microsoft/java-debug/pull/413).
+
+### Changed
+- Naming Java terminals with different names. [#1164](https://github.com/microsoft/vscode-java-debug/issues/1164).
+- Enable Java terminal link provider on all terminals. [#1168](https://github.com/microsoft/vscode-java-debug/pull/1168).
+- Disable HCR button when running Java without debugging. [#1167](https://github.com/microsoft/vscode-java-debug/pull/1167).
+
 ## 0.40.1- 2022-04-15
 ### Fixed
 - Update command id to 'java.project.addToSourcePath.command'. [#1152](https://github.com/microsoft/vscode-java-debug/issues/1152).
