@@ -3,6 +3,7 @@
 
 import { CancellationToken, commands, Position, ProviderResult, Range, TerminalLink, TerminalLinkContext,
     TerminalLinkProvider, Uri, window } from "vscode";
+import { sendInfo } from "vscode-extension-telemetry-wrapper";
 import { resolveSourceUri } from "./languageServerPlugin";
 
 export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTerminalLink> {
@@ -15,6 +16,7 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
      * @return A list of terminal links for the given line.
      */
     public provideTerminalLinks(context: TerminalLinkContext, _token: CancellationToken): ProviderResult<IJavaTerminalLink[]> {
+        const isDebuggerTerminal: boolean = context.terminal.name.startsWith("Run:") || context.terminal.name.startsWith("Debug:");
         const regex = new RegExp("(\\sat\\s+)([\\w$\\.]+\\/)?(([\\w$]+\\.)+[<\\w$>]+)\\(([\\w-$]+\\.java:\\d+)\\)");
         const result: RegExpExecArray | null = regex.exec(context.line);
         if (result && result.length) {
@@ -26,6 +28,7 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
                 methodName: result[3],
                 stackTrace,
                 lineNumber: sourceLineNumber,
+                isDebuggerTerminal,
             }];
         }
 
@@ -36,6 +39,10 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
      * Handle an activated terminal link.
      */
     public async handleTerminalLink(link: IJavaTerminalLink): Promise<void> {
+        sendInfo("", {
+            operationName: "handleJavaTerminalLink",
+            isDebuggerTerminal: String(link.isDebuggerTerminal),
+        });
         const uri = await resolveSourceUri(link.stackTrace);
         if (uri) {
             const lineNumber = Math.max(link.lineNumber - 1, 0);
@@ -56,4 +63,5 @@ interface IJavaTerminalLink extends TerminalLink {
     methodName: string;
     stackTrace: string;
     lineNumber: number;
+    isDebuggerTerminal: boolean;
 }
