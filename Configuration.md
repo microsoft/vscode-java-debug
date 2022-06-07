@@ -36,6 +36,9 @@ When you run the program via `Run|Debug` CodeLens or `Run`/`Debug` context menu,
 ![runMenu](https://user-images.githubusercontent.com/14052197/67181889-715bb380-f410-11e9-9aef-c27ce697daa0.gif)
 
 ## Modify the launch.json
+If you don't see `.vscode/launch.json` in your VS Code window, you can go to "Run and Debug" viewlet to create an initial launch.json.
+![create launch.json](https://user-images.githubusercontent.com/14052197/172300183-7758eb9b-5e61-485b-b238-a63a98a9fb11.png)
+
 On the other hand, the debugger provides multiple configuration templates to help you to easily add a new configuration. When you type `"java"` or `""` in launch.json, it will trigger auto-completion suggestions.
 ![launchConfig](https://user-images.githubusercontent.com/14052197/67182212-3908a500-f411-11e9-9467-48ba2f6e0e39.gif)
 
@@ -59,7 +62,7 @@ In case you want to manually edit the configuration, below are the explanation a
   * When you open a gradle project, the project name is the `baseName` or the root folder name.
   * When you open other Java files, leave the launch.json empty and allow the debugger auto generates the project name for you.
 
-  Pro Tip: The easiest way to get the project name is to install [Java Dependency Viewer](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-dependency) extension, the top node in the JAVA DEPENDENCIES view is your project name.  
+  > Pro Tip: The easiest way to get the project name is to install [Java Dependency Viewer](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-dependency) extension, the top node in the JAVA DEPENDENCIES view is your project name.  
 ![java-dependency-viewer](https://user-images.githubusercontent.com/14052197/67185034-7cfea880-f417-11e9-8a3b-a3af1a9e86bb.png)
 
 ### Arguments
@@ -96,15 +99,35 @@ In case you want to manually edit the configuration, below are the explanation a
 
 - `env` - The extra environment variables for the program. It's accessible via `System.getenv(key)`. It accepts key-value pairs.
   ```json
-    "env": {
-        "HOST": "127.0.0.1",
-        "PORT": 8080
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "java",
+                "name": "Launch Hello",
+                "request": "launch",
+                "env": {
+                    "HOST": "127.0.0.1",
+                    "PORT": 8080
+                }
+            }
+        ]
     }
   ```
 
 - `envFile` - Absolute path to a file containing environment variable definitions.
   ```json
-    "envFile": "${workspaceFolder}/.env"
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "java",
+                "name": "Launch Hello",
+                "request": "launch",
+                "envFile": "${workspaceFolder}/.env"
+            }
+        ]
+    }
   ```
 
 ### Don't step into the specified classes or methods
@@ -112,9 +135,19 @@ In case you want to manually edit the configuration, below are the explanation a
 - `stepFilters` - Skip the specified classes or methods you don't want to step into. Class names should be fully qualified. Wildcard is supported.
   - Skip the class loader.
     ```json
-    "stepFilters": {
-        "classNameFilters": [
-            "java.lang.ClassLoader",
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "java",
+                "name": "Launch Hello",
+                "request": "launch",
+                "stepFilters": {
+                    "skipClasses": [
+                        "java.lang.ClassLoader",
+                    ]
+                }
+            }
         ]
     }
     ```
@@ -122,14 +155,19 @@ In case you want to manually edit the configuration, below are the explanation a
 
   - Skip the JDK classes.
     ```json
-    "stepFilters": {
-        "classNameFilters": [
-            "java.*",
-            "javax.*",
-            "com.sun.*",
-            "sun.*",
-            "sunw.*",
-            "org.omg.*"
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "java",
+                "name": "Launch Hello",
+                "request": "launch",
+                "stepFilters": {
+                    "skipClasses": [
+                        "$JDK"
+                    ]
+                }
+            }
         ]
     }
     ```
@@ -137,10 +175,20 @@ In case you want to manually edit the configuration, below are the explanation a
 
   - Skip the constructors and the synthetic methods.
     ```json
-    "stepFilters": {
-        "skipSynthetics": true,
-        "skipStaticInitializers": true,
-        "skipConstructors": true
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "java",
+                "name": "Launch Hello",
+                "request": "launch",
+                "stepFilters": {
+                    "skipSynthetics": true,
+                    "skipStaticInitializers": true,
+                    "skipConstructors": true
+                }
+            }
+        ]
     }
     ```
     ![skipMethods](https://user-images.githubusercontent.com/14052197/67255209-83daf900-f4b3-11e9-8533-70f6ff941e8d.gif)
