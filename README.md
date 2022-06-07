@@ -48,11 +48,27 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 
 ### Launch
 
-- `mainClass` (required) - The fully qualified class name (e.g. [java module name/]com.xyz.MainApp) or the java file path of the program entry.
-- `args` - The command line arguments passed to the program. Use `"${command:SpecifyProgramArgs}"` to prompt for program arguments. It accepts a string or an array of string.
+- `mainClass` - The fully qualified name of the class containing the main method. If not specified, the debugger automatically resolves the possible main class from current project.
+  - `${file}` - Current Java file.
+  - `com.mypackage.Main` - The fully qualified class name.
+  - `com.java9.mymodule/com.mypackage.Main` - The fully qualified module name and class name.
+  - `/path/to/Main.java` - The file path of the main class.
+- `args` - The command line arguments passed to the program.
+  - `"${command:SpecifyProgramArgs}"` - Prompt user for program arguments.
+  - A space-separated string or an array of string.
 - `sourcePaths` - The extra source directories of the program. The debugger looks for source code from project settings by default. This option allows the debugger to look for source code in extra directories.
-- `modulePaths` - The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
-- `classPaths` - The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.
+- `modulePaths` - The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project. If multiple values are specified, the debugger will merge them together.
+  - `$Auto` - Automatically resolve the modulepaths of current project.
+  - `$Runtime` - The modulepaths within 'runtime' scope of current project.
+  - `$Test` - The modulepaths within 'test' scope of current project.
+  - `!/path/to/exclude` - Exclude the specified path from modulepaths.
+  - `/path/to/append` - Append the specified path to the modulepaths.
+- `classPaths` - The classpaths for launching the JVM. If not specified, the debugger will automatically resolve from current project. If multiple values are specified, the debugger will merge them together.
+  - `$Auto` - Automatically resolve the classpaths of current project.
+  - `$Runtime` - The classpaths within 'runtime' scope of current project.
+  - `$Test` - The classpaths within 'test' scope of current project.
+  - `!/path/to/exclude` - Exclude the specified path from classpaths.
+  - `/path/to/append` - Append the specified path to the classpaths.
 - `encoding` - The `file.encoding` setting for the JVM. Possible values can be found in https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.
 - `vmArgs` - The extra options and system properties for the JVM (e.g. -Xms\<size\> -Xmx\<size\> -D\<name\>=\<value\>), it accepts a string or an array of string.
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required when the workspace has multiple java projects, otherwise the expression evaluation and conditional breakpoint may not work.
@@ -71,7 +87,11 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `auto` - Automatically detect the command line length and determine whether to shorten the command line via an appropriate approach.
 - `stepFilters` - Skip specified classes or methods when stepping.
   - `classNameFilters` - [**Deprecated** - replaced by `skipClasses`] Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
-  - `skipClasses` - Skip the specified classes when stepping. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
+  - `skipClasses` - Skip the specified classes when stepping.
+    - `$JDK` - Skip the JDK classes from the default system bootstrap classpath, such as rt.jar, jrt-fs.jar.
+    - `$Libraries` - Skip the classes from application libraries, such as Maven, Gradle dependencies.
+    - `java.*` - Skip the specified classes. Wildcard is supported.
+    - `java.lang.ClassLoader` - Skip the classloaders.
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
@@ -88,7 +108,11 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. It is required when the workspace has multiple java projects, otherwise the expression evaluation and conditional breakpoint may not work.
 - `stepFilters` - Skip specified classes or methods when stepping.
   - `classNameFilters` - [**Deprecated** - replaced by `skipClasses`] Skip the specified classes when stepping. Class names should be fully qualified. Wildcard is supported.
-  - `skipClasses` - Skip the specified classes when stepping. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
+  - `skipClasses` - Skip the specified classes when stepping.
+    - `$JDK` - Skip the JDK classes from the default system bootstrap classpath, such as rt.jar, jrt-fs.jar.
+    - `$Libraries` - Skip the classes from application libraries, such as Maven, Gradle dependencies.
+    - `java.*` - Skip the specified classes. Wildcard is supported.
+    - `java.lang.ClassLoader` - Skip the classloaders.
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
@@ -104,9 +128,9 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 - `java.debug.settings.numericPrecision`: the precision when formatting doubles in "Variables" or "Debug Console" viewlet.
 - `java.debug.settings.hotCodeReplace`: Reload the changed Java classes during debugging, defaults to `manual`. Make sure `java.autobuild.enabled` is not disabled for [VSCode Java](https://github.com/redhat-developer/vscode-java). See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
-  - manual - Click the toolbar to apply the changes.
-  - auto - Automatically apply the changes after compilation.
-  - never - Never apply the changes.
+  - `manual` - Click the toolbar to apply the changes.
+  - `auto` - Automatically apply the changes after compilation.
+  - `never` - Never apply the changes.
 - `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
 - `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`.
 - `java.debug.settings.onBuildFailureProceed`: Force to proceed when build fails, defaults to false.
@@ -114,8 +138,16 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
-- `java.debug.settings.exceptionBreakpoint.skipClasses`: Skip the specified classes when breaking on exception. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
-- `java.debug.settings.stepping.skipClasses`: Skip the specified classes when stepping. You could use the built-in variables such as '$JDK' and '$Libraries' to skip a group of classes, or add a specific class name expression, e.g. java.*, *.Foo
+- `java.debug.settings.exceptionBreakpoint.skipClasses`: Skip the specified classes when breaking on exception.
+  - `$JDK` - Skip the JDK classes from the default system bootstrap classpath, such as rt.jar, jrt-fs.jar.
+  - `$Libraries` - Skip the classes from application libraries, such as Maven, Gradle dependencies.
+  - `java.*` - Skip the specified classes. Wildcard is supported.
+  - `java.lang.ClassLoader` - Skip the classloaders.
+- `java.debug.settings.stepping.skipClasses`: Skip the specified classes when stepping.
+  - `$JDK` - Skip the JDK classes from the default system bootstrap classpath, such as rt.jar, jrt-fs.jar.
+  - `$Libraries` - Skip the classes from application libraries, such as Maven, Gradle dependencies.
+  - `java.*` - Skip the specified classes. Wildcard is supported.
+  - `java.lang.ClassLoader` - Skip the classloaders.
 - `java.debug.settings.stepping.skipSynthetics`: Skip synthetic methods when stepping.
 - `java.debug.settings.stepping.skipStaticInitializers`: Skip static initializer methods when stepping.
 - `java.debug.settings.stepping.skipConstructors`: Skip constructor methods when stepping.
