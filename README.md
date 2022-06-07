@@ -35,12 +35,9 @@ ext install vscode-java-debug
 ## Use
 
 - Launch VS Code
-- Open a Java project (Maven/Gradle/Eclipse)
+- Open a Java project (Maven/Gradle/Eclipse/Single Java file)
 - Open a Java file to activate the extensions
-- Add debug configurations and edit launch.json
-    - To launch: specify `mainClass`
-    - To attach: specify `hostName` and `port`
-- Press F5
+- Press `F5`
 
 Please also check the documentation of [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) if you have trouble setting up your project.
 
@@ -156,7 +153,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.vmArgs`: The default VM arguments to launch the Java program. Eg. Use '-Xmx1G -ea' to increase the heap size to 1GB and enable assertions. If you want to customize the VM arguments for a specific debug session, please modify the 'vmArgs' config in launch.json.
 - `java.silentNotification`: Controls whether notifications can be used to report progress. If true, use status bar to report progress instead. Defaults to `false`.
 
-Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.
+> Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.
 
 ## Troubleshooting
 Reference the [Troubleshooting Guide](https://github.com/Microsoft/vscode-java-debug/blob/master/Troubleshooting.md) for common errors.  
