@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import * as path from "path";
 import * as vscode from "vscode";
 import { instrumentOperation, sendInfo, sendOperationError, setErrorCode } from "vscode-extension-telemetry-wrapper";
 
@@ -56,8 +55,9 @@ async function handleBuildFailure(operationId: string, err: any, progressReporte
     });
     setErrorCode(error, Number(err));
     sendOperationError(operationId, "build", error);
+    const errorDiagnostics = traceErrorTypes(operationId);
     if (!onBuildFailureProceed && err) {
-        if (checkErrorsReportedByJavaExtension()) {
+        if (errorDiagnostics) {
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
 
@@ -79,18 +79,28 @@ async function handleBuildFailure(operationId: string, err: any, progressReporte
     return true;
 }
 
-function checkErrorsReportedByJavaExtension(): boolean {
+function traceErrorTypes(operationId: string): boolean {
     const problems = vscode.languages.getDiagnostics() || [];
+    const errorTypes: {[key: string]: number} = {};
+    let errorCount = 0;
     for (const problem of problems) {
-        const fileName = path.basename(problem[0].fsPath || "");
-        if (fileName.endsWith(".java") || fileName === "pom.xml" || fileName.endsWith(".gradle")) {
-            if (problem[1].filter((diagnostic) => diagnostic.severity === vscode.DiagnosticSeverity.Error).length) {
-                return true;
+        for (const diagnostic of problem[1]) {
+            if (diagnostic.severity === vscode.DiagnosticSeverity.Error && diagnostic.source === "Java") {
+                const errorCode = typeof diagnostic.code === 'object' ? String(diagnostic.code.value) : String(diagnostic.code);
+                errorTypes[errorCode] = (errorTypes[errorCode] || 0) + 1;
+                errorCount++;
             }
         }
     }
 
-    return false;
+    if (errorCount) {
+        sendInfo(operationId, {
+            buildErrorTypes: JSON.stringify(errorTypes),
+            buildErrorCount: errorCount,
+        });
+    }
+
+    return errorCount > 0;
 }
 
 async function showFixSuggestions(operationId: string) {
