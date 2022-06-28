@@ -4,6 +4,16 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.42.0 - 2022-06-29
+### Added
+- Support function breakpoints, see [#258](https://github.com/microsoft/vscode-java-debug/issues/258). The current version support adding a function breakpoint with the syntax as `FullyQualifiedClassName#methodName` (e.g. `java.util.ArrayList#add`). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+
+### Changed
+- Mark native frames and unavailable methods as subtle. [java-debug#409](https://github.com/microsoft/java-debug/pull/409). Thanks to [Mathias Fußenegger](https://github.com/mfussenegger) for contribution.
+
+### Fixed
+- fix artifactId typo in Troubleshooting.md. [#1180](https://github.com/microsoft/vscode-java-debug/pull/1180). Thanks to [btoo](https://github.com/btoo) for contribution.
+
 ## 0.41.0- 2022-06-01
 ### Added
 - Provide "Stop Java" button when triggering "Run Java" action. [#1166](https://github.com/microsoft/vscode-java-debug/issues/1166).
