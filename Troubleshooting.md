@@ -126,7 +126,7 @@ In launch mode, the debugger resolves the classpaths automatically based on the 
 
 ### Try:
 1. Check whether the class name specified in `mainClass` exists and is in the right form. The debugger only works with fully qualified class names, e.g. `com.microsoft.app.Main`.
-2. Check whether the `projectName` is correct. The actual project name is not always the same to the folder name you see in the File Explorer. Please check the value specified by `projectDescription/name` in the *.project* file, or the `artificatId` in the *pom.xml* for maven project, or the folder name for gradle project.
+2. Check whether the `projectName` is correct. The actual project name is not always the same to the folder name you see in the File Explorer. Please check the value specified by `projectDescription/name` in the *.project* file, or the `artifactId` in the *pom.xml* for maven project, or the folder name for gradle project.
 3. If the problem persists, please try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
 
 ## Request type "xyz" is not supported. Only "launch" and "attach" are supported.
