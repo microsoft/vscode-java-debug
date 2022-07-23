@@ -52,7 +52,7 @@
     "java.debugger.snippet.attachRemote.description": "Add a new configuration for attaching to a remote java program.",
     "java.debugger.configuration.title": "Java Debugger",
     "java.debugger.configuration.logLevel.description": "Minimum level of debugger logs that are sent to VS Code.",
-    "java.debugger.configuration.showHex.description": "Show numbers in hex format in \"Variables\" viewlet.",
+    "java.debugger.configuration.formatType.description": "Show numbers in specified format in \"Variables\" viewlet.",
     "java.debugger.configuration.showStaticVariables.description": "Show static variables in \"Variables\" viewlet.",
     "java.debugger.configuration.showQualifiedNames.description": "Show fully qualified class names in \"Variables\" viewlet.",
     "java.debugger.configuration.showLogicalStructure.description": "Show the logical structure for the Collection and Map classes in \"Variables\" viewlet.",

@@ -52,7 +52,6 @@
     "java.debugger.snippet.attachRemote.description": "附加到远程java程序。",
     "java.debugger.configuration.title": "Java调试器",
     "java.debugger.configuration.logLevel.description": "Java调试器的日志级别。",
-    "java.debugger.configuration.showHex.description": "在“变量”视图中以十六进制格式显示数值。",
     "java.debugger.configuration.showStaticVariables.description": "在“变量”视图中显示静态变量。",
     "java.debugger.configuration.showQualifiedNames.description": "在“变量”视图中显示类的全名。",
     "java.debugger.configuration.showLogicalStructure.description": "在“变量”视图中显示Collection和Map类的逻辑结构。",
