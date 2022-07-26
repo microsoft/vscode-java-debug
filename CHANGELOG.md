@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.43.0 - 2022-07-27
+### Added
+- Support adding function breakpoints from the editor gutter. [java-debug#426](https://github.com/microsoft/java-debug/pull/426). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+
+### Changed
+- Show target VM exceptions as result in evaluate requests. [java-debug#428](https://github.com/microsoft/java-debug/pull/428). Thanks to [Mathias Fußenegger](https://github.com/mfussenegger) for contribution.
+
 ## 0.42.0 - 2022-06-29
 ### Added
 - Support function breakpoints, see [#258](https://github.com/microsoft/vscode-java-debug/issues/258). The current version support adding a function breakpoint with the syntax as `FullyQualifiedClassName#methodName` (e.g. `java.util.ArrayList#add`). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
