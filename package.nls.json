@@ -1,6 +1,7 @@
 {
     "java.debugger.launch.projectName.description": "The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required for expression evaluation.",
     "java.debugger.launch.mainClass.description": "The fully qualified class name (e.g. [java module name/]com.xyz.MainApp) or the java file path of the program entry.",
+    "java.debugger.launch.javaExec.description": "The path to java executable to use. If unset project JDK's java executable is used.",
     "java.debugger.launch.args.description": "The command line arguments passed to the program.",
     "java.debugger.launch.vmArgs.description": "The extra options and system properties for the JVM (e.g. -Xms<size> -Xmx<size> -D<name>=<value>).",
     "java.debugger.launch.modulePaths.description": "The modulepaths for launching the JVM. If not specified, the debugger will automatically resolve from current project.",
