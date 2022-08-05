@@ -295,7 +295,17 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     });
                 }
 
-                config.javaExec = await lsPlugin.resolveJavaExecutable(config.mainClass, config.projectName);
+                if (_.isEmpty(config.javaExec)) {
+                    config.javaExec = await lsPlugin.resolveJavaExecutable(config.mainClass, config.projectName);
+                } else {
+                    if (!fs.existsSync(config.javaExec)) {
+                        throw new utility.UserError({
+                            message: "Java executable file path cannot be accessed, please specify a valid path in the launch.json.",
+                            type: Type.USAGEERROR,
+                        });
+                    }
+                }
+
                 // Add the default launch options to the config.
                 config.cwd = config.cwd || _.get(folder, "uri.fsPath");
                 if (Array.isArray(config.args)) {

@@ -379,6 +379,11 @@
                 "description": "%java.debugger.launch.mainClass.description%",
                 "default": ""
               },
+              "javaExec": {
+                "type": "string",
+                "description": "%java.debugger.launch.javaExec.description%",
+                "default": ""
+              },
               "args": {
                 "type": [
                   "array",
