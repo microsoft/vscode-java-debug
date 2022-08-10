@@ -4,7 +4,7 @@
 import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
-import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { instrumentOperationAsVsCodeCommand, sendInfo } from "vscode-extension-telemetry-wrapper";
 
 import { JAVA_LANGID } from "./constants";
 import { initializeHoverProvider } from "./hoverProvider";
@@ -219,6 +219,7 @@ async function addToClasspath(uri: vscode.Uri): Promise<boolean> {
     if (ans === "Skip") {
         return true;
     } else if (ans === "Add to Source Path") {
+        sendInfo("", {operationName: "addToSourcePath"});
         vscode.commands.executeCommand("java.project.addToSourcePath.command", parentUri);
     }
 
