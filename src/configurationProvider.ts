@@ -739,7 +739,7 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
             };
 
             let asyncJDWP: string = debugSettingsRoot.settings.jdwp.async;
-            if (asyncJDWP === "auto" && vscode?.env?.appName === "Visual Studio Code - Insiders") {
+            if (asyncJDWP === "auto" && vscode.env?.appName === "Visual Studio Code - Insiders") {
                 asyncJDWP = "on";
             }
             const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
