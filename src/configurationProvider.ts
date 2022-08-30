@@ -737,6 +737,11 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
             const exceptionFilters = {
                 skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),
             };
+
+            let asyncJDWP: string = debugSettingsRoot.settings.jdwp.async;
+            if (asyncJDWP === "auto" && vscode?.env?.appName === "Visual Studio Code - Insiders") {
+                asyncJDWP = "on";
+            }
             const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
                 {
                     ...debugSettingsRoot.settings,
@@ -747,6 +752,7 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                     exceptionFiltersUpdated: event && event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.skipClasses"),
                     limitOfVariablesPerJdwpRequest: Math.max(debugSettingsRoot.settings.jdwp.limitOfVariablesPerJdwpRequest, 1),
                     jdwpRequestTimeout: Math.max(debugSettingsRoot.settings.jdwp.requestTimeout, 100),
+                    asyncJDWP,
                 }));
             if (logLevel === "FINE") {
                 // tslint:disable-next-line:no-console
