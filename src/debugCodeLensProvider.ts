@@ -4,7 +4,7 @@
 import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
-import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { instrumentOperationAsVsCodeCommand, sendInfo } from "vscode-extension-telemetry-wrapper";
 
 import { JAVA_LANGID } from "./constants";
 import { initializeHoverProvider } from "./hoverProvider";
@@ -214,11 +214,13 @@ async function addToClasspath(uri: vscode.Uri): Promise<boolean> {
     if (parentPath === parentUri.fsPath) {
         parentPath = path.basename(parentFsPath);
     }
+    sendInfo("", {operationName: "notOnClasspath"});
     const ans = await vscode.window.showWarningMessage(`The file ${fileName} isn't on the classpath, the runtime may throw class not found error. `
         + `Do you want to add the parent folder "${parentPath}" to Java source path?`, "Add to Source Path", "Skip");
     if (ans === "Skip") {
         return true;
     } else if (ans === "Add to Source Path") {
+        sendInfo("", {operationName: "addToSourcePath"});
         vscode.commands.executeCommand("java.project.addToSourcePath.command", parentUri);
     }
 
