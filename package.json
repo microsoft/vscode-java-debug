@@ -922,6 +922,16 @@
           "default": 3000,
           "minimum": 100
         },
+        "java.debug.settings.jdwp.async": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
+          "description": "%java.debugger.configuration.jdwp.async.description%",
+          "default": "auto"
+        },
         "java.debug.settings.vmArgs": {
           "type": "string",
           "description": "%java.debugger.configuration.vmArgs.description%",
