@@ -4,6 +4,12 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.44.0 - 2022-09-01
+### Added
+- **Experimental**: Support processing JDWP commands asynchronously to improve response speed of remote debugging. It's only enabled by default on VS Code Insiders. You can also opt-in by setting `java.debug.settings.jdwp.async`. See [#1208](https://github.com/microsoft/vscode-java-debug/pull/1208) and [java-debug#436](https://github.com/microsoft/java-debug/pull/436).
+- Add support to specify Java executable via the property `javaExec` in launch.json. See [#1198](https://github.com/microsoft/vscode-java-debug/pull/1198). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+- Add support for lambda breakpoints. See [java-debug#427](https://github.com/microsoft/java-debug/pull/427). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+
 ## 0.43.0 - 2022-07-27
 ### Added
 - Support adding function breakpoints from the editor gutter. [java-debug#426](https://github.com/microsoft/java-debug/pull/426). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
