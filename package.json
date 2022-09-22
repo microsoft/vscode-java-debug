@@ -945,11 +945,7 @@
       }
     }
   },
-  "resolutions": {
-    "glob-parent": "^5.1.2"
-  },
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
     "vscode:prepublish": "npm run build",
     "compile": "tsc -p . && webpack --config webpack.config.js",
     "watch": "webpack --config webpack.config.js --watch",
