@@ -181,7 +181,9 @@ async function launchJsonExists(workspace?: vscode.Uri): Promise<boolean> {
     }
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(workspace);
-    const results: vscode.Uri[] = await vscode.workspace.findFiles(".vscode/launch.json");
+    // Excluding "**/node_modules/**" as a common cause of excessive CPU usage.
+    // https://github.com/microsoft/vscode/issues/75314#issuecomment-503195666
+    const results: vscode.Uri[] = await vscode.workspace.findFiles(".vscode/launch.json", "**/node_modules/**");
     return !!results.find((launchJson) => vscode.workspace.getWorkspaceFolder(launchJson) === workspaceFolder);
 }
 
