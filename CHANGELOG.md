@@ -4,6 +4,18 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.45.0 - 2022-10-12
+### Added
+- Visualize the inline breakpoint locations. See [#1193](https://github.com/microsoft/vscode-java-debug/issues/1193).
+- Show an extra column cursor when an inline breakpoint is hit. See [#1202](https://github.com/microsoft/vscode-java-debug/issues/1202).
+- Support JEP 425: Virtual Threads (JDK 19). See [#1159](https://github.com/microsoft/vscode-java-debug/issues/1159).
+
+### Changed
+- Enable async jdwp based on network latency for auto mode. See [java-debug#447](https://github.com/microsoft/java-debug/pull/447).
+
+### Fixed
+- NPE when stopping JDT.LS. See [java-debug#448](https://github.com/microsoft/java-debug/issues/448).
+
 ## 0.44.0 - 2022-09-01
 ### Added
 - **Experimental**: Support processing JDWP commands asynchronously to improve response speed of remote debugging. It's only enabled by default on VS Code Insiders. You can also opt-in by setting `java.debug.settings.jdwp.async`. See [#1208](https://github.com/microsoft/vscode-java-debug/pull/1208) and [java-debug#436](https://github.com/microsoft/java-debug/pull/436).
