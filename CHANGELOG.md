@@ -4,6 +4,16 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.46.0 - 2022-11-02
+### Added
+- Add "Step Into Target" feature to allow stepping directly into a specific function call when paused on a line.Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+
+### Changed
+- Exclude **/node_modules/** from .vscode/launch.json searches. Thanks to [Brandon Cheng](https://github.com/gluxon) for contribution.
+
+### Fixed
+- Conditional Breakpoint got error code in reply:504. See [#1250](https://github.com/microsoft/vscode-java-debug/issues/1250).
+
 ## 0.45.0 - 2022-10-12
 ### Added
 - Visualize the inline breakpoint locations. See [#1193](https://github.com/microsoft/vscode-java-debug/issues/1193).
