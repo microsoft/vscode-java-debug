@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.46.0 - 2022-11-02
 ### Added
-- Add "Step Into Target" feature to allow stepping directly into a specific function call when paused on a line.Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+- Add "Step Into Target" feature to allow stepping directly into a specific function call when paused on a line. See [#1192](https://github.com/microsoft/vscode-java-debug/issues/1192). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
 
 ### Changed
-- Exclude **/node_modules/** from .vscode/launch.json searches. Thanks to [Brandon Cheng](https://github.com/gluxon) for contribution.
+- Exclude **/node_modules/** from .vscode/launch.json searches. See [#1234](https://github.com/microsoft/vscode-java-debug/pull/1234). Thanks to [Brandon Cheng](https://github.com/gluxon) for contribution.
 
 ### Fixed
 - Conditional Breakpoint got error code in reply:504. See [#1250](https://github.com/microsoft/vscode-java-debug/issues/1250).
