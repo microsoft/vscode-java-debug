@@ -96,7 +96,7 @@ class MainClassPicker {
         };
         const isFromActiveEditor = (option: IMainClassOption): boolean => {
             const activeEditor: TextEditor | undefined = window.activeTextEditor;
-            const currentActiveFile: string = _.get(activeEditor, "document.uri.fsPath");
+            const currentActiveFile: string | undefined = _.get(activeEditor, "document.uri.fsPath");
             if (option.filePath && currentActiveFile) {
                 return path.relative(option.filePath, currentActiveFile) === "";
             }
