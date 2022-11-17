@@ -248,26 +248,28 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     config.internalConsoleOptions = "neverOpen";
                 }
 
-                if (needsBuildWorkspace()) {
-                    progressReporter.report("Compiling...");
-                    const proceed = await buildWorkspace(progressReporter);
-                    if (!proceed) {
-                        return undefined;
-                    }
-                }
 
                 if (progressReporter.isCancelled()) {
                     return undefined;
                 }
-                if (!config.mainClass) {
-                    progressReporter.report("Resolving main class...");
-                } else {
-                    progressReporter.report("Resolving launch configuration...");
-                }
+
+                progressReporter.report("Resolving main class...");
                 const mainClassOption = await this.resolveAndValidateMainClass(folder && folder.uri, config, progressReporter);
                 if (!mainClassOption || !mainClassOption.mainClass) { // Exit silently if the user cancels the prompt fix by ESC.
                     // Exit the debug session.
                     return undefined;
+                }
+
+                if (needsBuildWorkspace()) {
+                    progressReporter.report("Compiling...");
+                    const proceed = await buildWorkspace({
+                            mainClass: mainClassOption.mainClass,
+                            projectName: mainClassOption.projectName,
+                            isFullBuild: false,
+                        }, progressReporter);
+                    if (!proceed) {
+                        return undefined;
+                    }
                 }
 
                 progressReporter.report("Resolving launch configuration...");
