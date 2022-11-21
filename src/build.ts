@@ -11,6 +11,7 @@ import * as utility from "./utility";
 
 const JAVA_DEBUG_CONFIGURATION = "java.debug.settings";
 const ON_BUILD_FAILURE_PROCEED = "onBuildFailureProceed";
+const CANCELLED_CODE = -32800;
 
 enum CompileWorkspaceStatus {
     FAILED = 0,
@@ -19,25 +20,44 @@ enum CompileWorkspaceStatus {
     CANCELLED = 3,
 }
 
-export async function buildWorkspace(progressReporter: IProgressReporter): Promise<boolean> {
+export interface BuildParams {
+    readonly mainClass: string;
+    readonly projectName?: string;
+    readonly filePath?: string;
+    readonly isFullBuild: boolean;
+}
+
+export async function buildWorkspace(params: BuildParams, progressReporter: IProgressReporter): Promise<boolean> {
+    const startAt = new Date().getTime();
     const buildResult = await instrumentOperation("build", async (operationId: string) => {
-        let error;
+        let status;
         try {
-            await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false, progressReporter.getCancellationToken());
+            status = await commands.executeJavaLanguageServerCommand(commands.JAVA_BUILD_WORKSPACE,
+                JSON.stringify(params),
+                progressReporter.getCancellationToken());
         } catch (err) {
-            error = err;
+            status = (err && err.code === CANCELLED_CODE) ? CompileWorkspaceStatus.CANCELLED : err;
         }
 
         return {
-            error,
+            status,
             operationId,
         };
     })();
 
-    if (progressReporter.isCancelled() || buildResult.error === CompileWorkspaceStatus.CANCELLED) {
+    if (progressReporter.isCancelled() || buildResult.status === CompileWorkspaceStatus.CANCELLED) {
         return false;
+    } else if (buildResult.status === CompileWorkspaceStatus.SUCCEED) {
+        return true;
     } else {
-        return handleBuildFailure(buildResult.operationId, buildResult.error, progressReporter);
+        const elapsed = new Date().getTime() - startAt;
+        const humanVisibleDelay = elapsed < 150 ? 150 : 0;
+        await new Promise(resolve => {
+            setTimeout(() => { // set a timeout so user still can see a compiling message.
+                resolve(null);
+            }, humanVisibleDelay);
+        });
+        return handleBuildFailure(buildResult.operationId, buildResult.status, progressReporter);
     }
 }
 
@@ -62,12 +82,16 @@ async function handleBuildFailure(operationId: string, err: any, progressReporte
         }
 
         progressReporter.hide(true);
-        const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Proceed", "Fix...", "Cancel");
+        const ans = await vscode.window.showErrorMessage("Build failed, do you want to continue?", "Continue", "Always Continue", "Fix...");
         sendInfo(operationId, {
             operationName: "build",
             choiceForBuildError: ans || "esc",
         });
-        if (ans === "Proceed") {
+        if (ans === "Continue") {
+            return true;
+        } else if (ans === "Always Continue") {
+            const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+            debugSettings?.update("onBuildFailureProceed", true);
             return true;
         } else if (ans === "Fix...") {
             showFixSuggestions(operationId);

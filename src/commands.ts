@@ -16,7 +16,7 @@ export const JAVA_RESOLVE_MAINCLASS = "vscode.java.resolveMainClass";
 
 export const JAVA_VALIDATE_LAUNCHCONFIG = "vscode.java.validateLaunchConfig";
 
-export const JAVA_BUILD_WORKSPACE = "java.workspace.compile";
+export const JAVA_BUILD_WORKSPACE = "vscode.java.buildWorkspace";
 
 export const JAVA_EXECUTE_WORKSPACE_COMMAND = "java.execute.workspaceCommand";
 
