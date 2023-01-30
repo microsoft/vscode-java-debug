@@ -1,7 +1,7 @@
 # Debugger for Java
 
 [![Gitter](https://badges.gitter.im/Microsoft/vscode-java-debug.svg)](https://gitter.im/Microsoft/vscode-java-debug)
-[![GitHub Actions](https://img.shields.io/github/workflow/status/microsoft/vscode-java-debug/CI/master)](https://github.com/microsoft/vscode-java-debug/actions?query=workflow%3ACI+branch%3Amaster)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/microsoft/vscode-java-debug/build.yml)](https://github.com/microsoft/vscode-java-debug/actions/workflows/build.yml?query=branch%3Amain)
 
 ## Overview
 A lightweight Java Debugger based on [Java Debug Server](https://github.com/Microsoft/java-debug) which extends the [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java). It allows users to debug Java code using Visual Studio Code (VS Code). Here's a list of features:
