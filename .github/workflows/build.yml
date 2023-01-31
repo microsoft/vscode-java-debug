@@ -29,13 +29,13 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 16
         
     - name: Install Node.js modules
       run: npm install
 
     - name: Install build tools
-      run: npm install -g "vsce@<2" typescript
+      run: npm install -g @vscode/vsce typescript
 
     - name: Lint
       run: npm run tslint
@@ -65,13 +65,13 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 16
         
     - name: Install Node.js modules
       run: npm install
 
     - name: Install build tools
-      run: npm install -g vsce@">1.0 <2.0" typescript --force
+      run: npm install -g @vscode/vsce typescript --force
 
     - name: Lint
       run: npm run tslint
@@ -101,13 +101,13 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 16
 
     - name: Install Node.js modules
       run: npm install
 
     - name: Install build tools
-      run: npm install -g "vsce@<2" typescript
+      run: npm install -g @vscode/vsce typescript
 
     - name: Lint
       run: npm run tslint
