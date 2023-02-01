@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.48.0 - 2023-02-01
+### Changed
+- Reject invalid DAP request. See [java-debug#466](https://github.com/microsoft/java-debug/pull/466).
+
+### Fixed
+- Prioritize lookup the project source code during debugging. See [#1215](https://github.com/microsoft/vscode-java-debug/issues/1215). Thanks to [mozhuanzuojing](https://github.com/mozhuanzuojing) for contribution.
+
 ## 0.47.0 - 2022-11-29
 ### Changed
 - Optimize the build error report of "Build failed, do you want to continue?". [#1214](https://github.com/microsoft/vscode-java-debug/issues/1214).
