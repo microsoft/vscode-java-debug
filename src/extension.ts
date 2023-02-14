@@ -188,17 +188,14 @@ async function applyHCR(hcrStatusBar: NotificationBar) {
 
     const autobuildConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.autobuild");
     if (!autobuildConfig.enabled) {
-        const ans = await vscode.window.showWarningMessage(
-            "The hot code replace feature requires you to enable the autobuild flag, do you want to enable it?",
-            "Yes", "No");
-        if (ans === "Yes") {
-            await autobuildConfig.update("enabled", true);
-            // Force an incremental build to avoid auto build is not finishing during HCR.
-            try {
-                await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, false);
-            } catch (err) {
-                // do nothing.
-            }
+        // If autobuild is disabled, force an incremental build before HCR.
+        try {
+            hcrStatusBar.show("$(sync~spin)Compiling...");
+            await commands.executeJavaExtensionCommand(commands.JAVA_BUILD_WORKSPACE, JSON.stringify({
+                isFullBuild: false
+            }));
+        } catch (err) {
+            // do nothing.
         }
     }
 
