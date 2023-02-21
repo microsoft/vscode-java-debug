@@ -52,6 +52,10 @@ class ProgressReporter implements IProgressReporter {
         this._disposables.push(this._tokenSource);
     }
 
+    public setJobName(jobName: string): void {
+        this._jobName = jobName;
+    }
+
     public getId(): string {
         return this._id;
     }

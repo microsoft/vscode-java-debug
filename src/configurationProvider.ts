@@ -108,7 +108,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             progressReporter.observe(token);
             const defaultLaunchConfig = {
                 type: "java",
-                name: "Launch Current File",
+                name: "Current File",
                 request: "launch",
                 // tslint:disable-next-line
                 mainClass: "${file}",
@@ -169,7 +169,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     }
 
     private constructLaunchConfigName(mainClass: string, cache: { [key: string]: any }) {
-        const name = `Launch ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`;
+        const name = `${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`;
         if (cache[name] === undefined) {
             cache[name] = 0;
             return name;
@@ -204,7 +204,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         if (!progressReporter && config.__progressId) {
             return undefined;
         } else if (!progressReporter) {
-            progressReporter = progressProvider.createProgressReporter(config.noDebug ? "Run" : "Debug");
+            progressReporter = progressProvider.createProgressReporter(utility.launchJobName(config.name, config.noDebug));
         }
 
         progressReporter.observe(token);
