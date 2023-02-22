@@ -5,6 +5,12 @@ import { CancellationToken, ProgressLocation } from "vscode";
 
 export interface IProgressReporter {
     /**
+     * Set the job name.
+     * @param jobName the job name
+     */
+    setJobName(jobName: string): void;
+
+    /**
      * Returns the id of the progress reporter.
      */
     getId(): string;

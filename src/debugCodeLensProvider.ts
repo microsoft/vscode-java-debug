@@ -152,7 +152,7 @@ async function constructDebugConfig(mainClass: string, projectName: string, work
     if (!debugConfig) {
         debugConfig = {
             type: "java",
-            name: `Launch ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
+            name: `${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
             request: "launch",
             mainClass,
             projectName,

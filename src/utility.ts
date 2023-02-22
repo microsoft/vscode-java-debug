@@ -313,3 +313,13 @@ function getJavaServerMode(): ServerMode {
     return vscode.workspace.getConfiguration().get("java.server.launchMode")
         || ServerMode.HYBRID;
 }
+
+export function launchJobName(configName: string, noDebug: boolean): string {
+    let jobName = noDebug ? "Run" : "Debug";
+    jobName += configName ? ` '${configName} '` : "";
+    return jobName;
+}
+
+export function launchJobNameByMainClass(mainClass: string, noDebug: boolean): string {
+    return launchJobName(mainClass.substr(mainClass.lastIndexOf(".") + 1), noDebug);
+}

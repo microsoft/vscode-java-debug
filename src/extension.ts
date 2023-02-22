@@ -330,6 +330,7 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         throw new utility.OperationCancelledError("");
     }
 
+    progressReporter.setJobName(utility.launchJobNameByMainClass(pick.mainClass, noDebug));
     progressReporter.report("Launching main class...");
     startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
@@ -366,6 +367,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
             throw new utility.OperationCancelledError("");
         }
 
+        progressReporter.setJobName(utility.launchJobNameByMainClass(pick.mainClass, noDebug));
         progressReporter.report("Launching main class...");
         const projectName: string | undefined = pick.projectName;
         const mainClass: string = pick.mainClass;
@@ -379,7 +381,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         });
         const debugConfig = existConfig || {
             type: "java",
-            name: `Launch ${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
+            name: `${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
             request: "launch",
             mainClass,
             projectName,
