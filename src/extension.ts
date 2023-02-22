@@ -254,7 +254,7 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
             // If current file is not a main class, "Run Java" will run previously used launch config.
             if (lastUsedLaunchConfig) {
                 progressReporter.setJobName(utility.launchJobName(lastUsedLaunchConfig.name, noDebug));
-                progressReporter.report("Resolving launch configuration...")
+                progressReporter.report("Resolving launch configuration...");
                 lastUsedLaunchConfig.noDebug = noDebug;
                 lastUsedLaunchConfig.__progressId = progressReporter.getId();
                 vscode.debug.startDebugging(lastUsedLaunchConfig.__workspaceFolder, lastUsedLaunchConfig);
