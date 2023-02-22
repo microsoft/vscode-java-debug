@@ -30,6 +30,8 @@ const platformNameMappings: { [key: string]: string } = {
 };
 const platformName = platformNameMappings[process.platform];
 
+export let lastUsedLaunchConfig: vscode.DebugConfiguration | undefined;
+
 export class JavaDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     private isUserSettingsDirty: boolean = true;
     constructor() {
@@ -75,6 +77,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             config.type = "java";
             config.name = "Java Debug";
             config.request = "launch";
+            config.__origin = "internal";
         }
 
         return config;
@@ -200,6 +203,15 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
     private async resolveAndValidateDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration,
                                                        token?: vscode.CancellationToken) {
+        let configCopy: vscode.DebugConfiguration | undefined;
+        const isConfigFromInternal = config.__origin === "internal" /** in-memory configuration from debugger */
+            || config.__configurationTarget /** configuration from launch.json */;
+        if (config.request === "launch" && isConfigFromInternal) {
+            configCopy = _.cloneDeep(config);
+            delete configCopy.__progressId;
+            delete configCopy.noDebug;
+        }
+
         let progressReporter = progressProvider.getProgressReporter(config.__progressId);
         if (!progressReporter && config.__progressId) {
             return undefined;
@@ -231,32 +243,23 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
 
             if (config.request === "launch") {
-                this.mergeEnvFile(config);
-
-                // If the user doesn't specify 'vmArgs' in launch.json, use the global setting to get the default vmArgs.
-                if (config.vmArgs === undefined) {
-                    const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
-                    config.vmArgs = debugSettings.vmArgs;
-                }
-                // If the user doesn't specify 'console' in launch.json, use the global setting to get the launch console.
-                if (!config.console) {
-                    const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
-                    config.console = debugSettings.console;
-                }
-                // If the console is integratedTerminal, don't auto switch the focus to DEBUG CONSOLE.
-                if (config.console === "integratedTerminal" && !config.internalConsoleOptions) {
-                    config.internalConsoleOptions = "neverOpen";
-                }
-
-
-                if (progressReporter.isCancelled()) {
-                    return undefined;
-                }
-
-                progressReporter.report("Resolving main class...");
                 const mainClassOption = await this.resolveAndValidateMainClass(folder && folder.uri, config, progressReporter);
                 if (!mainClassOption || !mainClassOption.mainClass) { // Exit silently if the user cancels the prompt fix by ESC.
                     // Exit the debug session.
+                    return undefined;
+                }
+
+                config.mainClass = mainClassOption.mainClass;
+                config.projectName = mainClassOption.projectName;
+                if (config.__workspaceFolder && config.__workspaceFolder !== folder) {
+                    folder = config.__workspaceFolder;
+                }
+                // Update the job name if the main class is changed during the resolving of configuration provider.
+                if (configCopy && configCopy.mainClass !== config.mainClass) {
+                    config.name = config.mainClass.substr(config.mainClass.lastIndexOf(".") + 1);
+                    progressReporter.setJobName(utility.launchJobName(config.name, config.noDebug));
+                }
+                if (progressReporter.isCancelled()) {
                     return undefined;
                 }
 
@@ -272,9 +275,26 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     }
                 }
 
+                if (progressReporter.isCancelled()) {
+                    return undefined;
+                }
+
                 progressReporter.report("Resolving launch configuration...");
-                config.mainClass = mainClassOption.mainClass;
-                config.projectName = mainClassOption.projectName;
+                this.mergeEnvFile(config);
+                // If the user doesn't specify 'vmArgs' in launch.json, use the global setting to get the default vmArgs.
+                if (config.vmArgs === undefined) {
+                    const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+                    config.vmArgs = debugSettings.vmArgs;
+                }
+                // If the user doesn't specify 'console' in launch.json, use the global setting to get the launch console.
+                if (!config.console) {
+                    const debugSettings: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+                    config.console = debugSettings.console;
+                }
+                // If the console is integratedTerminal, don't auto switch the focus to DEBUG CONSOLE.
+                if (config.console === "integratedTerminal" && !config.internalConsoleOptions) {
+                    config.internalConsoleOptions = "neverOpen";
+                }
 
                 if (progressReporter.isCancelled()) {
                     return undefined;
@@ -407,6 +427,14 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             utility.showErrorMessageWithTroubleshooting(utility.convertErrorToMessage(ex));
             return undefined;
         } finally {
+            if (configCopy && config.mainClass) {
+                configCopy.name = config.name;
+                configCopy.mainClass = config.mainClass;
+                configCopy.projectName = config.projectName;
+                configCopy.__workspaceFolder = folder;
+                lastUsedLaunchConfig = configCopy;
+            }
+
             progressReporter.done();
         }
     }
@@ -521,6 +549,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                                               progressReporter: IProgressReporter): Promise<lsPlugin.IMainClassOption | undefined> {
         // Validate it if the mainClass is already set in launch configuration.
         if (config.mainClass && !this.isFilePath(config.mainClass)) {
+            progressReporter.report("Resolving main class...");
             const containsExternalClasspaths = !_.isEmpty(config.classPaths) || !_.isEmpty(config.modulePaths);
             const validationResponse = await lsPlugin.validateLaunchConfig(config.mainClass, config.projectName, containsExternalClasspaths, folder);
             if (progressReporter.isCancelled()) {
@@ -541,6 +570,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
     private async resolveMainClass(config: vscode.DebugConfiguration, progressReporter: IProgressReporter):
         Promise<lsPlugin.IMainClassOption | undefined> {
         if (config.projectName) {
+            progressReporter.report("Resolving main class...");
             if (this.isFilePath(config.mainClass)) {
                 const mainEntries = await lsPlugin.resolveMainMethod(vscode.Uri.file(config.mainClass));
                 if (progressReporter.isCancelled()) {
@@ -570,6 +600,18 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
             }
         }
 
+        // If current file is not executable, run previously used launch config.
+        if (lastUsedLaunchConfig) {
+            Object.assign(config, lastUsedLaunchConfig);
+            progressReporter.setJobName(utility.launchJobName(config.name, config.noDebug));
+            progressReporter.report("Resolving main class...");
+            return {
+                mainClass: config.mainClass,
+                projectName: config.projectName,
+            };
+        }
+
+        progressReporter.report("Resolving main class...");
         const hintMessage = currentFile ?
         `The file '${path.basename(currentFile)}' is not executable, please select a main class you want to run.` :
         "Please select a main class you want to run.";

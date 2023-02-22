@@ -8,7 +8,7 @@ import * as vscode from "vscode";
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
     instrumentOperationAsVsCodeCommand, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
-import { JavaDebugConfigurationProvider } from "./configurationProvider";
+import { JavaDebugConfigurationProvider, lastUsedLaunchConfig } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
@@ -251,14 +251,23 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         const defaultPlaceHolder: string = "Select the main class to run";
 
         if (!hasMainMethods && !canRunTests) {
-            progressReporter.report("Resolving main class...");
-            const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
-            if (progressReporter.isCancelled()) {
-                throw new utility.OperationCancelledError("");
-            }
+            // If current file is not a main class, "Run Java" will run previously used launch config.
+            if (lastUsedLaunchConfig) {
+                progressReporter.setJobName(utility.launchJobName(lastUsedLaunchConfig.name, noDebug));
+                progressReporter.report("Resolving launch configuration...")
+                lastUsedLaunchConfig.noDebug = noDebug;
+                lastUsedLaunchConfig.__progressId = progressReporter.getId();
+                vscode.debug.startDebugging(lastUsedLaunchConfig.__workspaceFolder, lastUsedLaunchConfig);
+            } else {
+                progressReporter.report("Resolving main class...");
+                const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
+                if (progressReporter.isCancelled()) {
+                    throw new utility.OperationCancelledError("");
+                }
 
-            const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
-            await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
+                const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
+                await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
+            }
         } else if (hasMainMethods && !canRunTests) {
             await launchMain(mainMethods, uri, noDebug, progressReporter, defaultPlaceHolder);
         } else if (!hasMainMethods && canRunTests) {
@@ -388,6 +397,7 @@ async function runJavaProject(node: any, noDebug: boolean) {
         };
         debugConfig.noDebug = noDebug;
         debugConfig.__progressId = progressReporter.getId();
+        debugConfig.__origin = "internal";
         vscode.debug.startDebugging(workspaceFolder, debugConfig);
     } catch (ex) {
         progressReporter.done();

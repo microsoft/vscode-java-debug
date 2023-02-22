@@ -200,6 +200,7 @@ export async function startDebugging(mainClass: string, projectName: string, uri
     debugConfig.projectName = projectName;
     debugConfig.noDebug = noDebug;
     debugConfig.__progressId = progressReporter?.getId();
+    debugConfig.__origin = "internal";
 
     return vscode.debug.startDebugging(workspaceFolder, debugConfig);
 }
