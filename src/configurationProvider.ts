@@ -769,8 +769,8 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
 }
 
 function needsBuildWorkspace(): boolean {
-    const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
-    return debugSettingsRoot ? debugSettingsRoot.forceBuildBeforeLaunch : true;
+    const javaConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java");
+    return !javaConfig?.autobuild?.enabled || javaConfig?.debug?.settings?.forceBuildBeforeLaunch;
 }
 
 function convertLogLevel(commonLogLevel: string) {

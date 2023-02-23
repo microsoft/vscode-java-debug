@@ -124,12 +124,12 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.showToString`: show 'toString()' value for all classes that override 'toString' method in "Variables" viewlet, defaults to `true`.
 - `java.debug.settings.maxStringLength`: the maximum length of string displayed in "Variables" or "Debug Console" viewlet, the string longer than this length will be trimmed, defaults to `0` which means no trim is performed.
 - `java.debug.settings.numericPrecision`: the precision when formatting doubles in "Variables" or "Debug Console" viewlet.
-- `java.debug.settings.hotCodeReplace`: Reload the changed Java classes during debugging, defaults to `manual`. Make sure `java.autobuild.enabled` is not disabled for [VSCode Java](https://github.com/redhat-developer/vscode-java). See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
+- `java.debug.settings.hotCodeReplace`: Reload the changed Java classes during debugging, defaults to `manual`. See the [wiki page](https://github.com/Microsoft/vscode-java-debug/wiki/Hot-Code-Replace) for more information about usages and limitations.
   - `manual` - Click the toolbar to apply the changes.
-  - `auto` - Automatically apply the changes after compilation.
+  - `auto` - Automatically apply the changes after compilation. This only works when `'java.autobuild.enabled'` is on.
   - `never` - Never apply the changes.
 - `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
-- `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`.
+- `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`. If `'java.autobuild.enabled'` is disabled, this setting will be ignored and still force a build job before launching.
 - `java.debug.settings.onBuildFailureProceed`: Force to proceed when build fails, defaults to false.
 - `java.debug.settings.console`: The specified console to launch Java program, defaults to `integratedTerminal`. If you want to customize the console for a specific debug session, please modify the 'console' config in launch.json.
   - `internalConsole` - VS Code debug console (input stream not supported).
