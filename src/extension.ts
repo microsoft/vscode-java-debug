@@ -8,7 +8,7 @@ import * as vscode from "vscode";
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
     instrumentOperationAsVsCodeCommand, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
-import { JavaDebugConfigurationProvider } from "./configurationProvider";
+import { JavaDebugConfigurationProvider, lastUsedLaunchConfig } from "./configurationProvider";
 import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
@@ -251,14 +251,23 @@ async function runJavaFile(uri: vscode.Uri, noDebug: boolean) {
         const defaultPlaceHolder: string = "Select the main class to run";
 
         if (!hasMainMethods && !canRunTests) {
-            progressReporter.report("Resolving main class...");
-            const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
-            if (progressReporter.isCancelled()) {
-                throw new utility.OperationCancelledError("");
-            }
+            // If current file is not a main class, "Run Java" will run previously used launch config.
+            if (lastUsedLaunchConfig) {
+                progressReporter.setJobName(utility.launchJobName(lastUsedLaunchConfig.name, noDebug));
+                progressReporter.report("Resolving launch configuration...");
+                lastUsedLaunchConfig.noDebug = noDebug;
+                lastUsedLaunchConfig.__progressId = progressReporter.getId();
+                vscode.debug.startDebugging(lastUsedLaunchConfig.__workspaceFolder, lastUsedLaunchConfig);
+            } else {
+                progressReporter.report("Resolving main class...");
+                const mainClasses: IMainClassOption[] = await utility.searchMainMethods();
+                if (progressReporter.isCancelled()) {
+                    throw new utility.OperationCancelledError("");
+                }
 
-            const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
-            await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
+                const placeHolder: string = `The file '${path.basename(uri.fsPath)}' is not executable, please select a main class you want to run.`;
+                await launchMain(mainClasses, uri, noDebug, progressReporter, placeHolder, false /*autoPick*/);
+            }
         } else if (hasMainMethods && !canRunTests) {
             await launchMain(mainMethods, uri, noDebug, progressReporter, defaultPlaceHolder);
         } else if (!hasMainMethods && canRunTests) {
@@ -330,7 +339,13 @@ async function launchMain(mainMethods: IMainClassOption[], uri: vscode.Uri, noDe
         throw new utility.OperationCancelledError("");
     }
 
-    progressReporter.setJobName(utility.launchJobNameByMainClass(pick.mainClass, noDebug));
+    const existConfig: vscode.DebugConfiguration | undefined = findLaunchConfiguration(
+        pick.mainClass, pick.projectName, uri.fsPath);
+    if (existConfig) {
+        progressReporter.setJobName(utility.launchJobName(existConfig.name, noDebug));
+    } else {
+        progressReporter.setJobName(utility.launchJobNameByMainClass(pick.mainClass, noDebug));
+    }
     progressReporter.report("Launching main class...");
     startDebugging(pick.mainClass, pick.projectName || "", uri, noDebug, progressReporter);
 }
@@ -367,18 +382,12 @@ async function runJavaProject(node: any, noDebug: boolean) {
             throw new utility.OperationCancelledError("");
         }
 
-        progressReporter.setJobName(utility.launchJobNameByMainClass(pick.mainClass, noDebug));
-        progressReporter.report("Launching main class...");
         const projectName: string | undefined = pick.projectName;
         const mainClass: string = pick.mainClass;
         const filePath: string | undefined = pick.filePath;
         const workspaceFolder: vscode.WorkspaceFolder | undefined =
             filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
-        const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspaceFolder);
-        const existingConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
-        const existConfig: vscode.DebugConfiguration | undefined = _.find(existingConfigs, (config) => {
-            return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
-        });
+        const existConfig: vscode.DebugConfiguration | undefined = findLaunchConfiguration(mainClass, projectName, filePath);
         const debugConfig = existConfig || {
             type: "java",
             name: `${mainClass.substr(mainClass.lastIndexOf(".") + 1)}`,
@@ -388,6 +397,9 @@ async function runJavaProject(node: any, noDebug: boolean) {
         };
         debugConfig.noDebug = noDebug;
         debugConfig.__progressId = progressReporter.getId();
+        debugConfig.__origin = "internal";
+        progressReporter.setJobName(utility.launchJobName(debugConfig.name, noDebug));
+        progressReporter.report("Launching main class...");
         vscode.debug.startDebugging(workspaceFolder, debugConfig);
     } catch (ex) {
         progressReporter.done();
@@ -397,4 +409,16 @@ async function runJavaProject(node: any, noDebug: boolean) {
 
         throw ex;
     }
+}
+
+function findLaunchConfiguration(mainClass: string, projectName: string | undefined, filePath?: string): vscode.DebugConfiguration | undefined {
+    const workspaceFolder: vscode.WorkspaceFolder | undefined =
+            filePath ? vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) : undefined;
+    const launchConfigurations: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("launch", workspaceFolder);
+    const existingConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
+    const existConfig: vscode.DebugConfiguration | undefined = _.find(existingConfigs, (config) => {
+        return config.mainClass === mainClass && _.toString(config.projectName) === _.toString(projectName);
+    });
+
+    return existConfig;
 }
