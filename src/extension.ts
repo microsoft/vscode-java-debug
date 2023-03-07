@@ -312,7 +312,7 @@ async function canDelegateToJavaTestRunner(uri: vscode.Uri): Promise<boolean> {
 function launchTesting(uri: vscode.Uri, noDebug: boolean, progressReporter: IProgressReporter) {
     const command: string = noDebug ? "java.test.editor.run" : "java.test.editor.debug";
     vscode.commands.executeCommand(command, uri, progressReporter);
-    if (compareVersions(getTestExtensionVersion(), "0.26.1") <= 0) {
+    if (compareVersions.compare(getTestExtensionVersion(), "0.26.1", "<=")) {
         throw new utility.OperationCancelledError("");
     }
 }
