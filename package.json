@@ -21,7 +21,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.65.0"
+    "vscode": "^1.75.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -42,9 +42,7 @@
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs",
-    "onCommand:JavaDebug.PickJavaProcess",
-    "onCommand:java.debug.runJavaFile",
-    "onCommand:java.debug.debugJavaFile"
+    "onCommand:JavaDebug.PickJavaProcess"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -960,7 +958,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "^14.18.36",
     "@types/uuid": "^8.3.4",
-    "@types/vscode": "1.65.0",
+    "@types/vscode": "1.75.0",
     "@vscode/test-electron": "^2.2.3",
     "mocha": "^10.2.0",
     "ts-loader": "^9.4.2",
