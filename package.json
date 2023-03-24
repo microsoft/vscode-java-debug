@@ -138,6 +138,14 @@
       {
         "command": "java.debug.variables.notShowToString",
         "title": "Disable 'toString()' Object View"
+      },
+      {
+        "command": "java.debug.variables.autoExpandLazyVariables",
+        "title": "Auto Expand Lazy Variables"
+      },
+      {
+        "command": "java.debug.variables.manualExpandLazyVariables",
+        "title": "Manual Expand Lazy Variables"
       }
     ],
     "menus": {
@@ -295,6 +303,14 @@
         {
           "command": "java.debug.variables.notShowToString",
           "when": "false"
+        },
+        {
+          "command": "java.debug.variables.autoExpandLazyVariables",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.variables.manualExpandLazyVariables",
+          "when": "false"
         }
       ],
       "debug/variables/context": [
@@ -339,14 +355,14 @@
           "group": "1_view@4"
         },
         {
-          "command": "java.debug.variables.showToString",
-          "when": "debugType == 'java' && javadebug:showToString == 'off'",
-          "group": "1_view@5"
+          "command": "java.debug.variables.autoExpandLazyVariables",
+          "when": "debugType == 'java' && javadebug:expandLazyVariable == 'off'",
+          "group": "1_view@6"
         },
         {
-          "command": "java.debug.variables.notShowToString",
-          "when": "debugType == 'java' && javadebug:showToString == 'on'",
-          "group": "1_view@5"
+          "command": "java.debug.variables.manualExpandLazyVariables",
+          "when": "debugType == 'java' && javadebug:expandLazyVariable == 'on'",
+          "group": "1_view@6"
         }
       ]
     },
