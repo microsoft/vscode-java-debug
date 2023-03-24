@@ -6,7 +6,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 export function registerVariableMenuCommands(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration("java.debug.settings")) {
+        if (event.affectsConfiguration("java.debug.settings") || event.affectsConfiguration("debug.autoExpandLazyVariables")) {
             updateContextKeys();
         }
     });
@@ -33,9 +33,20 @@ export function registerVariableMenuCommands(context: vscode.ExtensionContext): 
         "java.debug.variables.showToString", () => updateVariableFormatter("showToString", true)));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand(
         "java.debug.variables.notShowToString", () => updateVariableFormatter("showToString", false)));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand(
+        "java.debug.variables.autoExpandLazyVariables", () => toggleLazyVariableSetting(true)));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand(
+        "java.debug.variables.manualExpandLazyVariables", () => toggleLazyVariableSetting(false)));
 }
 
-function updateVariableFormatter(key: string, value: any) {
+async function updateVariableFormatter(key: string, value: any) {
+    const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+    // Update the formatter to settings.json
+    await debugSettingsRoot.update(key, value, getConfigurationTarget("java.debug", "settings"));
+    refreshVariableView();
+}
+
+function refreshVariableView() {
     const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
     if (vscode.debug.activeDebugSession && vscode.debug.activeDebugSession.type === "java") {
         const formatter: any = {
@@ -45,19 +56,30 @@ function updateVariableFormatter(key: string, value: any) {
             showLogicalStructure: debugSettingsRoot.showLogicalStructure,
             showToString: debugSettingsRoot.showToString,
         };
-        formatter[key] = value;
         vscode.debug.activeDebugSession.customRequest("refreshVariables", formatter);
     }
+}
 
-    // Update the formatter to settings.json
-    const inspect = vscode.workspace.getConfiguration("java.debug").inspect("settings");
-    let configurationTarget = vscode.ConfigurationTarget.Global;
-    if (inspect && inspect.workspaceFolderValue !== undefined) {
-        configurationTarget = vscode.ConfigurationTarget.WorkspaceFolder;
-    } else if (inspect && inspect.workspaceValue !== undefined) {
-        configurationTarget = vscode.ConfigurationTarget.Workspace;
+async function toggleLazyVariableSetting(toggle: boolean) {
+    const javadDebugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
+    if (!javadDebugSettingsRoot.showToString) {
+        await javadDebugSettingsRoot.update("showToString", true, getConfigurationTarget("java.debug", "settings"));
     }
-    debugSettingsRoot.update(key, value, configurationTarget);
+
+    const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("debug");
+    await debugSettingsRoot.update("autoExpandLazyVariables", toggle, getConfigurationTarget("debug", "autoExpandLazyVariables"));
+    refreshVariableView();
+}
+
+function getConfigurationTarget(section: string, key: string): vscode.ConfigurationTarget {
+    const inspect = vscode.workspace.getConfiguration(section).inspect(key);
+    if (inspect && inspect.workspaceFolderValue !== undefined) {
+        return vscode.ConfigurationTarget.WorkspaceFolder;
+    } else if (inspect && inspect.workspaceValue !== undefined) {
+        return vscode.ConfigurationTarget.Workspace;
+    } else {
+        return vscode.ConfigurationTarget.Global;
+    }
 }
 
 function updateContextKeys() {
@@ -68,5 +90,10 @@ function updateContextKeys() {
         vscode.commands.executeCommand("setContext", "javadebug:showQualifiedNames", debugSettingsRoot.showQualifiedNames ? "on" : "off");
         vscode.commands.executeCommand("setContext", "javadebug:showStaticVariables", debugSettingsRoot.showStaticVariables ? "on" : "off");
         vscode.commands.executeCommand("setContext", "javadebug:showToString", debugSettingsRoot.showToString ? "on" : "off");
+    }
+
+    const globalDebugRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("debug");
+    if (globalDebugRoot) {
+        vscode.commands.executeCommand("setContext", "javadebug:expandLazyVariable", globalDebugRoot.autoExpandLazyVariables ? "on" : "off");
     }
 }
