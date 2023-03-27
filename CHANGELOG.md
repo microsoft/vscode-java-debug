@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.49.1 - 2023-03-28
+### Added
+- Add context menus "Auto/Manual Expand Lazy Variables" to Variables view to auto show 'toString()' value. See [#1316](https://github.com/microsoft/vscode-java-debug/pull/1316).
+
+### Fixed
+- Fix the error 'compareVersions is not a function'. See [#1307](https://github.com/microsoft/vscode-java-debug/pull/1307).
+
 ## 0.49.0 - 2023-02-28
 ### Added
 - Enable Hot Code Replace when autobuild is disabled. See [#1296](https://github.com/microsoft/vscode-java-debug/pull/1296), [#1302](https://github.com/microsoft/vscode-java-debug/pull/1302).
