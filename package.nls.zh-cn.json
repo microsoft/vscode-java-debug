@@ -62,6 +62,8 @@
     "java.debugger.configuration.enableRunDebugCodeLens.description": "在main方法上启用CodeLens标记。",
     "java.debugger.configuration.forceBuildBeforeLaunch": "在启动java程序之前强制编译整个工作空间。如果“java.autobuild.enabled”被禁掉，则会忽略该设置，在运行之前强制执行一次编译。",
     "java.debugger.configuration.console": "指定的控制台用于启动Java程序。如果要为特定的调试会话自定义控制台，请修改launch.json中的“console”配置。",
+    "java.debugger.configuration.exceptionBreakpoint.exceptionTypes": "指定要中断的一组异常类型，例如 java.lang.NullPointerException。可以为捕获的异常、未捕获的异常或两者都选择一个特定的异常类型及其子类。",
+    "java.debugger.configuration.exceptionBreakpoint.allowClasses": "指定允许异常断点中断的位置。支持通配符，例如 java.，.Foo",
     "java.debugger.configuration.exceptionBreakpoint.skipClasses": "当发生异常时，跳过指定的类。你可以使用内置变量，如'$JDK'和'$Libraries'来跳过一组类，或者添加一个特定的类名表达式，如java.*，*.Foo。",
     "java.debugger.configuration.jdwp.limitOfVariablesPerJdwpRequest.description": "一次JDWP请求中可以请求的变量或字段的最大数量。该值越高，在展开变量视图时，请求debuggee的频率就越低。同时数量过大也会导致JDWP请求超时。",
     "java.debugger.configuration.jdwp.requestTimeout.description": "调试器与目标JVM通信时JDWP请求的超时时间（ms）。",

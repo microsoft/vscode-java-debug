@@ -779,6 +779,8 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                 skipConstructors: debugSettingsRoot.settings.stepping.skipConstructors,
             };
             const exceptionFilters = {
+                exceptionTypes: debugSettingsRoot.settings.exceptionBreakpoint.exceptionTypes,
+                allowClasses: debugSettingsRoot.settings.exceptionBreakpoint.allowClasses,
                 skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),
             };
 
@@ -793,7 +795,10 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                     javaHome,
                     stepFilters,
                     exceptionFilters,
-                    exceptionFiltersUpdated: event && event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.skipClasses"),
+                    exceptionFiltersUpdated: event && 
+                        (event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.skipClasses")
+                        || event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.allowClasses")
+                        || event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.exceptionTypes")),
                     limitOfVariablesPerJdwpRequest: Math.max(debugSettingsRoot.settings.jdwp.limitOfVariablesPerJdwpRequest, 1),
                     jdwpRequestTimeout: Math.max(debugSettingsRoot.settings.jdwp.requestTimeout, 100),
                     asyncJDWP,
