@@ -135,6 +135,8 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `internalConsole` - VS Code debug console (input stream not supported).
   - `integratedTerminal` - VS Code integrated terminal.
   - `externalTerminal` - External terminal that can be configured in user settings.
+- `java.debug.settings.exceptionBreakpoint.exceptionTypes`: Specifies a set of exception types you want to break on, e.g. `java.lang.NullPointerException`. A specific exception type and its subclasses can be selected for caught exceptions, uncaught exceptions, or both can be selected.
+- `java.debug.settings.exceptionBreakpoint.allowClasses`: Specifies the allowed locations where the exception breakpoint can break on. Wildcard is supported, e.g. `java.*`, `*.Foo`.
 - `java.debug.settings.exceptionBreakpoint.skipClasses`: Skip the specified classes when breaking on exception.
   - `$JDK` - Skip the JDK classes from the default system bootstrap classpath, such as rt.jar, jrt-fs.jar.
   - `$Libraries` - Skip the classes from application libraries, such as Maven, Gradle dependencies.

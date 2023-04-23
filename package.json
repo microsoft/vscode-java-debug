@@ -861,6 +861,22 @@
           "description": "%java.debugger.configuration.console%",
           "default": "integratedTerminal"
         },
+        "java.debug.settings.exceptionBreakpoint.exceptionTypes": {
+          "type": "array",
+          "description": "%java.debugger.configuration.exceptionBreakpoint.exceptionTypes%",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "java.debug.settings.exceptionBreakpoint.allowClasses": {
+          "type": "array",
+          "description": "%java.debugger.configuration.exceptionBreakpoint.allowClasses%",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "java.debug.settings.exceptionBreakpoint.skipClasses": {
           "type": "array",
           "description": "%java.debugger.configuration.exceptionBreakpoint.skipClasses%",
