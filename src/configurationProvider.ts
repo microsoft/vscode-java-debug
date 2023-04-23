@@ -795,7 +795,7 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                     javaHome,
                     stepFilters,
                     exceptionFilters,
-                    exceptionFiltersUpdated: event && 
+                    exceptionFiltersUpdated: event &&
                         (event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.skipClasses")
                         || event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.allowClasses")
                         || event.affectsConfiguration("java.debug.settings.exceptionBreakpoint.exceptionTypes")),

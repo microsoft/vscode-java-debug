@@ -863,7 +863,7 @@
         },
         "java.debug.settings.exceptionBreakpoint.exceptionTypes": {
           "type": "array",
-          "description": "Specify a set of exception types you want to break on, e.g. java.lang.NullPointerException. A specific exception type and its subclasses can be selected for caught exceptions, uncaught exceptions, or both can be selected.",
+          "description": "%java.debugger.configuration.exceptionBreakpoint.exceptionTypes%",
           "items": {
             "type": "string"
           },
@@ -871,7 +871,7 @@
         },
         "java.debug.settings.exceptionBreakpoint.allowClasses": {
           "type": "array",
-          "description": "Specifies the classes that are allowed to generate exception breakpoint events. Wildcard is supported, e.g. java.*, *.Foo",
+          "description": "%java.debugger.configuration.exceptionBreakpoint.allowClasses%",
           "items": {
             "type": "string"
           },
