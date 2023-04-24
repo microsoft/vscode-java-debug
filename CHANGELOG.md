@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.50.0 - 2023-04-26
+### Added
+- Support specifying the exception types you want to break on. See [#1175](https://github.com/microsoft/vscode-java-debug/issues/1175) and [#295](https://github.com/microsoft/vscode-java-debug/issues/295).
+
 ## 0.49.1 - 2023-03-28
 ### Added
 - Add context menus "Auto/Manual Expand Lazy Variables" to Variables view to auto show 'toString()' value. See [#1316](https://github.com/microsoft/vscode-java-debug/pull/1316).
