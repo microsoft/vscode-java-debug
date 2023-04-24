@@ -152,7 +152,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `java.debug.settings.stepping.skipConstructors`: Skip constructor methods when stepping.
 - `java.debug.settings.jdwp.limitOfVariablesPerJdwpRequest`: The maximum number of variables or fields that can be requested in one JDWP request. The higher the value, the less frequently debuggee will be requested when expanding the variable view. Also a large number can cause JDWP request timeout. Defaults to 100.
 - `java.debug.settings.jdwp.requestTimeout`: The timeout (ms) of JDWP request when the debugger communicates with the target JVM. Defaults to 3000.
-- `java.debug.settings.jdwp.async`: Experimental: Controls whether the debugger is allowed to send JDWP commands asynchronously. Async mode can improve remote debugging response speed on high-latency networks. Defaults to `auto`, and automatically enable async mode in VS Code - Insiders.
+- `java.debug.settings.jdwp.async`: Experimental: Controls whether the debugger is allowed to send JDWP commands asynchronously. Async mode can improve remote debugging response speed on high-latency networks. Defaults to `auto`, and automatically switch to async mode when the latency of a single jdwp request exceeds 15ms during attach debugging.
   - `auto` (Default)
   - `on`
   - `off`

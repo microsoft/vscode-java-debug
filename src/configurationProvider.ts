@@ -784,10 +784,7 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                 skipClasses: await substituteFilterVariables(debugSettingsRoot.settings.exceptionBreakpoint.skipClasses),
             };
 
-            let asyncJDWP: string = debugSettingsRoot.settings.jdwp.async;
-            if (asyncJDWP === "auto" && vscode.env?.appName === "Visual Studio Code - Insiders") {
-                asyncJDWP = "on";
-            }
+            const asyncJDWP: string = debugSettingsRoot.settings.jdwp.async;
             const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
                 {
                     ...debugSettingsRoot.settings,
