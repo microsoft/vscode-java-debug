@@ -4,6 +4,11 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.51.0 - 2023-05-31
+### Fixed
+- NPE when adding lambda breakpoints in reactive projects. See [java-debug#477](https://github.com/microsoft/java-debug/issues/477). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+- Lambda breakpoint on the first line of a method does not work. See [java-debug#488](https://github.com/microsoft/java-debug/issues/488). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.
+
 ## 0.50.0 - 2023-04-26
 ### Added
 - Support specifying the exception types you want to break on. See [#1175](https://github.com/microsoft/vscode-java-debug/issues/1175) and [#295](https://github.com/microsoft/vscode-java-debug/issues/295).
