@@ -22,7 +22,6 @@ import { resolveJavaProcess } from "./processPicker";
 import { IProgressReporter } from "./progressAPI";
 import { progressProvider } from "./progressImpl";
 import * as utility from "./utility";
-import { version } from "vscode";
 
 const platformNameMappings: { [key: string]: string } = {
     win32: "windows",
@@ -788,7 +787,7 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
             const asyncJDWP: string = debugSettingsRoot.settings.jdwp.async;
             let debugSupportOnDecompiledSource: string = debugSettingsRoot.settings.debugSupportOnDecompiledSource;
             if (debugSupportOnDecompiledSource === 'auto') {
-                debugSupportOnDecompiledSource = version.includes("insider") ? "on" : "off";
+                debugSupportOnDecompiledSource = vscode.version.includes("insider") ? "on" : "off";
             }
             const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
                 {
