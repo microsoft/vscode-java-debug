@@ -967,6 +967,16 @@
           "description": "%java.debugger.configuration.vmArgs.description%",
           "default": ""
         },
+        "java.debug.settings.debugSupportOnDecompiledSource": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
+          "description": "%java.debugger.configuration.debugSupportOnDecompiledSource.description%",
+          "default": "auto"
+        },
         "java.silentNotification": {
           "type": "boolean",
           "description": "%java.debugger.configuration.silentNotification%",
