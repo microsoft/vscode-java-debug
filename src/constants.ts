@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 export const JAVA_LANGID: string = "java";
+export const TELEMETRY_EVENT = "telemetry";
 export const HCR_EVENT = "hotcodereplace";
 export const USER_NOTIFICATION_EVENT = "usernotification";
 
