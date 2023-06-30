@@ -785,10 +785,6 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
             };
 
             const asyncJDWP: string = debugSettingsRoot.settings.jdwp.async;
-            let debugSupportOnDecompiledSource: string = debugSettingsRoot.settings.debugSupportOnDecompiledSource;
-            if (debugSupportOnDecompiledSource === 'auto') {
-                debugSupportOnDecompiledSource = vscode.version.includes("insider") ? "on" : "off";
-            }
             const settings = await commands.executeJavaLanguageServerCommand(commands.JAVA_UPDATE_DEBUG_SETTINGS, JSON.stringify(
                 {
                     ...debugSettingsRoot.settings,
@@ -803,7 +799,6 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
                     limitOfVariablesPerJdwpRequest: Math.max(debugSettingsRoot.settings.jdwp.limitOfVariablesPerJdwpRequest, 1),
                     jdwpRequestTimeout: Math.max(debugSettingsRoot.settings.jdwp.requestTimeout, 100),
                     asyncJDWP,
-                    debugSupportOnDecompiledSource,
                 }));
             if (logLevel === "FINE") {
                 // tslint:disable-next-line:no-console
