@@ -6,10 +6,10 @@ import * as _ from "lodash";
 import * as path from "path";
 import * as vscode from "vscode";
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation,
-    instrumentOperationAsVsCodeCommand, setUserError } from "vscode-extension-telemetry-wrapper";
+    instrumentOperationAsVsCodeCommand, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider, lastUsedLaunchConfig } from "./configurationProvider";
-import { HCR_EVENT, JAVA_LANGID, USER_NOTIFICATION_EVENT } from "./constants";
+import { HCR_EVENT, JAVA_LANGID, TELEMETRY_EVENT, USER_NOTIFICATION_EVENT } from "./constants";
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { initExpService } from "./experimentationService";
@@ -120,7 +120,12 @@ function registerDebugEventListener(context: vscode.ExtensionContext) {
         if (t !== JAVA_LANGID) {
             return;
         }
-        if (customEvent.event === HCR_EVENT) {
+        if (customEvent.event === TELEMETRY_EVENT) {
+            sendInfo("", {
+                operationName: customEvent.body?.name,
+                ...customEvent.body?.properties,
+            });
+        } else if (customEvent.event === HCR_EVENT) {
             handleHotCodeReplaceCustomEvent(customEvent);
         } else if (customEvent.event === USER_NOTIFICATION_EVENT) {
             handleUserNotification(customEvent);
