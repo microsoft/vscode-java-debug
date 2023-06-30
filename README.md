@@ -157,6 +157,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `on`
   - `off`
 - `java.debug.settings.vmArgs`: The default VM arguments to launch the Java program. Eg. Use '-Xmx1G -ea' to increase the heap size to 1GB and enable assertions. If you want to customize the VM arguments for a specific debug session, please modify the 'vmArgs' config in launch.json.
+- `java.debug.settings.debugSupportOnDecompiledSource`: [Experimental]: Enable debugging support on the decompiled source code. Be aware that this feature may affect the loading speed of Call Stack Viewlet. You also need [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java)@1.20.0 or higher to use this feature.
 - `java.silentNotification`: Controls whether notifications can be used to report progress. If true, use status bar to report progress instead. Defaults to `false`.
 
 > Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.

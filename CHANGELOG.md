@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.52.0 - 2023-06-30
+### Added
+- Use the setting `java.debug.settings.debugSupportOnDecompiledSource` to enable/disable debugging support on the decompiled source code. This feature requires [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java)@1.20.0 or higher. See [#1356](https://github.com/microsoft/vscode-java-debug/pull/1356).
+
 ## 0.51.0 - 2023-05-31
 ### Fixed
 - NPE when adding lambda breakpoints in reactive projects. See [java-debug#477](https://github.com/microsoft/java-debug/issues/477). Thanks to [Gayan Perera](https://github.com/gayanper) for contribution.

@@ -73,5 +73,5 @@
     "java.debugger.configuration.vmArgs.description": "The default VM arguments to launch the Java program. Eg. Use '-Xmx1G -ea' to increase the heap size to 1GB and enable assertions. If you want to customize the VM arguments for a specific debug session, please modify the 'vmArgs' config in launch.json.",
     "java.debugger.configuration.silentNotification": "Controls whether notifications can be used to report progress. If true, use status bar to report progress instead.",
     "java.debugger.configuration.jdwp.async.description": "Experimental: Controls whether the debugger is allowed to send JDWP commands asynchronously. Async mode can improve remote debugging response speed on high-latency networks.",
-    "java.debugger.configuration.debugSupportOnDecompiledSource.description": "[Experimental]: Enable debugging support on the decompiled source code. When set to 'auto', this feature will be automatically enabled in Visual Studio Code - Insiders. Be aware that this feature may affect the loading speed of Call Stack Viewlet."
+    "java.debugger.configuration.debugSupportOnDecompiledSource.description": "[Experimental]: Enable debugging support on the decompiled source code. Be aware that this feature may affect the loading speed of Call Stack Viewlet."
 }
