@@ -99,7 +99,7 @@ async function subscribeToJavaExtensionEvents(): Promise<void> {
     // wait javaExt to activate
     const timeout = 30 * 60 * 1000; // wait 30 min at most
     let count = 0;
-    while(!javaExt.isActive && count < timeout) {
+    while (!javaExt.isActive && count < timeout) {
        await delay(1000);
        count += 1000;
     }
