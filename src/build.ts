@@ -18,6 +18,7 @@ enum CompileWorkspaceStatus {
     SUCCEED = 1,
     WITHERROR = 2,
     CANCELLED = 3,
+    GRADLE_BS_COMPILATION_ERROR = 100,
 }
 
 export interface BuildParams {
@@ -77,7 +78,8 @@ async function handleBuildFailure(operationId: string, err: any, progressReporte
     sendOperationError(operationId, "build", error);
     const errorDiagnostics = traceErrorTypes(operationId);
     if (!onBuildFailureProceed && err) {
-        if (errorDiagnostics) {
+        // build failure information is not displayed in PROBLEMS panel for build server project.
+        if (errorDiagnostics && err !== CompileWorkspaceStatus.GRADLE_BS_COMPILATION_ERROR) {
             vscode.commands.executeCommand("workbench.actions.view.problems");
         }
 
