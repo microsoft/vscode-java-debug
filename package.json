@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.53.0",
+  "version": "0.54.0",
   "publisher": "vscjava",
   "preview": false,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -52,7 +52,7 @@
       }
     ],
     "javaExtensions": [
-      "./server/com.microsoft.java.debug.plugin-0.48.0.jar"
+      "./server/com.microsoft.java.debug.plugin-0.49.0.jar"
     ],
     "commands": [
       {
