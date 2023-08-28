@@ -62,7 +62,7 @@
     "java.debugger.configuration.numericPrecision.description": "The precision when formatting doubles in \"Variables\" or \"Debug Console\" viewlet.",
     "java.debugger.configuration.hotCodeReplace.description": "Reload the changed Java classes during debugging.",
     "java.debugger.configuration.enableRunDebugCodeLens.description": "Enable the run and debug code lens providers over main methods.",
-    "java.debugger.configuration.forceBuildBeforeLaunch": "Force building the workspace before launching java program. If 'java.autobuild.enabled' is disabled, this setting will be ignored and still force a build job before launching.",
+    "java.debugger.configuration.forceBuildBeforeLaunch": "Force building the workspace before launching java program.",
     "java.debugger.configuration.onBuildFailureProceed": "Force to proceed when build fails",
     "java.debugger.configuration.console": "The specified console to launch Java program. If you want to customize the console for a specific debug session, please modify the 'console' config in launch.json.",
     "java.debugger.configuration.exceptionBreakpoint.exceptionTypes": "Specifies a set of exception types you want to break on, e.g. java.lang.NullPointerException. A specific exception type and its subclasses can be selected for caught exceptions, uncaught exceptions, or both can be selected.",
