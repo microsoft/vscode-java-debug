@@ -60,7 +60,7 @@
     "java.debugger.configuration.maxStringLength.description": "设定“变量”或“调试控制台”视图中显示的字符串最大长度，长度超过部分将被剪掉。如果值为0，则不执行修剪。",
     "java.debugger.configuration.hotCodeReplace.description": "在调试期间重新加载已更改的Java类。",
     "java.debugger.configuration.enableRunDebugCodeLens.description": "在main方法上启用CodeLens标记。",
-    "java.debugger.configuration.forceBuildBeforeLaunch": "在启动java程序之前强制编译整个工作空间。如果“java.autobuild.enabled”被禁掉，则会忽略该设置，在运行之前强制执行一次编译。",
+    "java.debugger.configuration.forceBuildBeforeLaunch": "在启动java程序之前强制编译整个工作空间。",
     "java.debugger.configuration.console": "指定的控制台用于启动Java程序。如果要为特定的调试会话自定义控制台，请修改launch.json中的“console”配置。",
     "java.debugger.configuration.exceptionBreakpoint.exceptionTypes": "指定要中断的一组异常类型，例如 java.lang.NullPointerException。可以为捕获的异常、未捕获的异常或两者都选择一个特定的异常类型及其子类。",
     "java.debugger.configuration.exceptionBreakpoint.allowClasses": "指定允许异常断点中断的位置。支持通配符，例如 java.，.Foo",
