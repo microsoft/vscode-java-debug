@@ -4,6 +4,15 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.54.0 - 2023-08-29
+### Added
+- Code completion in DEBUG CONSOLE now adds fully qualified names for unimported classes. See [#1246](https://github.com/microsoft/vscode-java-debug/issues/1246).
+- Code completion in DEBUG CONSOLE now displays package names for suggested types. See [java-debug#505](https://github.com/microsoft/java-debug/pull/505).
+- Integrate the build support for Gradle build server project. See [#1372](https://github.com/microsoft/vscode-java-debug/pull/1372), [java-debug#503](https://github.com/microsoft/java-debug/pull/503)
+
+### Changed
+- Respect the setting 'java.debug.settings.forceBuildBeforeLaunch' even if autobuild is disabled. See [#1380](https://github.com/microsoft/vscode-java-debug/pull/1380).
+
 ## 0.53.0 - 2023-08-01
 ### Added
 - Automatically refresh the CALL STACK view when the attached sources for frames have changed. See [#1370](https://github.com/microsoft/vscode-java-debug/pull/1370).
