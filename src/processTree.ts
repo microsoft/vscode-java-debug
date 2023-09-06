@@ -128,24 +128,33 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 			proc = spawn('/bin/ps', [ '-ax', '-o', 'pid,ppid,comm:20,command' ]);
 			proc.stdout?.setEncoding('utf8');
 			proc.stdout?.on('data', lines(line => {
+				const PROCESS_REGEX = /^\s*(?<pid>\d+)\s+(?<ppid>\d+)\s+(?<shortName>.+?)\s+(?<fullCommand>.+)$/ium
+				
+				const match = line.match(PROCESS_REGEX)
 
-				const pid = Number(line.substr(0, 5));
-				const ppid = Number(line.substr(6, 5));
-				let command = line.substr(12, 20).trim();
-				let args = line.substr(33);
-
-				let pos = args.indexOf(command);
-				if (pos >= 0) {
-					pos = pos + command.length;
-					while (pos < args.length) {
-						if (args[pos] === ' ') {
-							break;
-						}
-						pos++;
-					}
-					command = args.substr(0, pos);
-					args = args.substr(pos + 1);
+				if (!match) {
+						return;
 				}
+
+				if (match.groups === undefined || match.groups === null) {
+						throw new Error("This is bug in vscode-java-debug. PROCESS_REGEX is incorrect")
+				}
+				
+				const pid = +match.groups["pid"]
+				const ppid = +match.groups["ppid"]
+				const shortName = match.groups["shortName"]
+				const fullCommand = match.groups["fullCommand"]    
+
+				// binaries with spaces in path may not work
+				// possible solution to read directly from /proc
+				let pos = fullCommand.indexOf(shortName);
+				const commandEndPosition = fullCommand.indexOf(" ", pos + shortName.length)
+				if (commandEndPosition < 0) {
+					return;
+				}
+
+				const command = fullCommand.substring(0, commandEndPosition)
+				const args = fullCommand.substring(commandEndPosition).trimStart()
 
 				if (!isNaN(pid) && !isNaN(ppid)) {
 					one(pid, ppid, command, args);
