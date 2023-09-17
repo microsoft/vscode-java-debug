@@ -148,10 +148,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 				// binaries with spaces in path may not work
 				// possible solution to read directly from /proc
 				let pos = fullCommand.indexOf(shortName);
-				const commandEndPosition = fullCommand.indexOf(" ", pos + shortName.length)
-				if (commandEndPosition < 0) {
-					return;
-				}
+				const commandEndPositionMaybe = fullCommand.indexOf(" ", pos + shortName.length)
+                const commandEndPosition = commandEndPositionMaybe < 0 ? fullCommand.length : commandEndPositionMaybe;
 
 				const command = fullCommand.substring(0, commandEndPosition)
 				const args = fullCommand.substring(commandEndPosition).trimStart()
