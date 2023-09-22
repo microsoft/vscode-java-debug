@@ -136,14 +136,19 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 				const shortName = substr(line, 14, 20).trim()
 				const fullCommand = substr(line, 35)
 
-				// binaries with spaces in path may not work
-				// possible solution to read directly from /proc
-				let pos = fullCommand.indexOf(shortName);
-				const commandEndPositionMaybe = fullCommand.indexOf(" ", pos + shortName.length)
-				const commandEndPosition = commandEndPositionMaybe < 0 ? fullCommand.length : commandEndPositionMaybe;
+				let command = shortName;
+				let args = fullCommand;
 
-				const command = fullCommand.substring(0, commandEndPosition)
-				const args = fullCommand.substring(commandEndPosition).trimStart()
+				const pos = fullCommand.indexOf(shortName);
+				if (pos >= 0) {
+					// binaries with spaces in path may not work
+					// possible solution to read directly from /proc
+					const commandEndPositionMaybe = fullCommand.indexOf(" ", pos + shortName.length);
+					const commandEndPosition = commandEndPositionMaybe < 0 ? fullCommand.length : commandEndPositionMaybe;
+					command = fullCommand.substring(0, commandEndPosition)
+					args = fullCommand.substring(commandEndPosition).trimStart()
+				}
+
 
 				if (!isNaN(pid) && !isNaN(ppid)) {
 					one(pid, ppid, command, args);
