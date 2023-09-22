@@ -1,6 +1,8 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *
+ *  Copied from https://github.com/microsoft/vscode-node-debug/blob/master/src/node/extension/processTree.ts
  *--------------------------------------------------------------------------------------------*/
 
 'use strict';
@@ -126,25 +128,22 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 			proc = spawn('/bin/ps', [ '-ax', '-o', 'pid:6,ppid:6,comm:20,command' ]);	// we specify the column width explicitly
 			proc.stdout.setEncoding('utf8');
 			proc.stdout.on('data', lines(line => {
-
+				
 				// the following substr arguments must match the column width specified for the "ps" command above
-				const pid = Number(line.substr(0, 6));
-				const ppid = Number(line.substr(7, 6));
-				let command = line.substr(14, 20).trim();
-				let args = line.substr(35);
+				// regular substr is deprecated
+				const pid = Number(substr(line, 0, 6));
+				const ppid = Number(substr(line, 7, 6));
+				const shortName = substr(line, 14, 20).trim()
+				const fullCommand = substr(line, 35)
 
-				let pos = args.indexOf(command);
-				if (pos >= 0) {
-					pos = pos + command.length;
-					while (pos < args.length) {
-						if (args[pos] === ' ') {
-							break;
-						}
-						pos++;
-					}
-					command = args.substr(0, pos);
-					args = args.substr(pos + 1);
-				}
+				// binaries with spaces in path may not work
+				// possible solution to read directly from /proc
+				let pos = fullCommand.indexOf(shortName);
+				const commandEndPositionMaybe = fullCommand.indexOf(" ", pos + shortName.length)
+				const commandEndPosition = commandEndPositionMaybe < 0 ? fullCommand.length : commandEndPositionMaybe;
+
+				const command = fullCommand.substring(0, commandEndPosition)
+				const args = fullCommand.substring(commandEndPosition).trimStart()
 
 				if (!isNaN(pid) && !isNaN(ppid)) {
 					one(pid, ppid, command, args);
@@ -169,7 +168,7 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 		proc.on('close', (code, signal) => {
 			if (code === 0) {
 				resolve();
-			} else if (code! > 0) {
+			} else if (code !== null && code > 0) {
 				reject(new Error(`process terminated with exit code: ${code}`));
 			}
 			if (signal) {
@@ -192,3 +191,6 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 	});
 }
 
+function substr(str: string, startIndex: number, length?: number) {
+	return str.slice(startIndex, length != undefined ? startIndex + length : str.length)
+}
