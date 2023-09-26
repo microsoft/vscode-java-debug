@@ -4,7 +4,7 @@
  *
  *  Copied from https://github.com/microsoft/vscode-node-debug/blob/master/src/node/extension/processTree.ts
  *--------------------------------------------------------------------------------------------*/
-
+/* tslint:disable */
 'use strict';
 
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
