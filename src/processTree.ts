@@ -5,9 +5,9 @@
  *  Copied from https://github.com/microsoft/vscode-node-debug/blob/master/src/node/extension/processTree.ts
  *--------------------------------------------------------------------------------------------*/
 /* tslint:disable */
- 'use strict';
+'use strict';
 
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import { join } from 'path';
 
 export class ProcessTreeNode {
@@ -68,7 +68,7 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 
 	return new Promise((resolve, reject) => {
 
-		let proc: ChildProcess;
+		let proc: ChildProcessWithoutNullStreams;
 
 		if (process.platform === 'win32') {
 
@@ -77,8 +77,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 
 			const wmic = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'wbem', 'WMIC.exe');
 			proc = spawn(wmic, [ 'process', 'get', 'CommandLine,CreationDate,ParentProcessId,ProcessId' ]);
-			proc.stdout?.setEncoding('utf8');
-			proc.stdout?.on('data', lines(line => {
+			proc.stdout.setEncoding('utf8');
+			proc.stdout.on('data', lines(line => {
 				let matches = CMD_PAT.exec(line.trim());
 				if (matches && matches.length === 5) {
 					const pid = Number(matches[4]);
@@ -110,8 +110,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 		} else if (process.platform === 'darwin') {	// OS X
 
 			proc = spawn('/bin/ps', [ '-x', '-o', `pid,ppid,comm=${'a'.repeat(256)},command` ]);
-			proc.stdout?.setEncoding('utf8');
-			proc.stdout?.on('data', lines(line => {
+			proc.stdout.setEncoding('utf8');
+			proc.stdout.on('data', lines(line => {
 
 				const pid = Number(line.substr(0, 5));
 				const ppid = Number(line.substr(6, 5));
@@ -125,27 +125,30 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 
 		} else {	// linux
 
-			proc = spawn('/bin/ps', [ '-ax', '-o', 'pid,ppid,comm:20,command' ]);
-			proc.stdout?.setEncoding('utf8');
-			proc.stdout?.on('data', lines(line => {
+			proc = spawn('/bin/ps', [ '-ax', '-o', 'pid:6,ppid:6,comm:20,command' ]);	// we specify the column width explicitly
+			proc.stdout.setEncoding('utf8');
+			proc.stdout.on('data', lines(line => {
+				
+				// the following substr arguments must match the column width specified for the "ps" command above
+				// regular substr is deprecated
+				const pid = Number(substr(line, 0, 6));
+				const ppid = Number(substr(line, 7, 6));
+				const shortName = substr(line, 14, 20).trim()
+				const fullCommand = substr(line, 35)
 
-				const pid = Number(line.substr(0, 5));
-				const ppid = Number(line.substr(6, 5));
-				let command = line.substr(12, 20).trim();
-				let args = line.substr(33);
+				let command = shortName;
+				let args = fullCommand;
 
-				let pos = args.indexOf(command);
+				const pos = fullCommand.indexOf(shortName);
 				if (pos >= 0) {
-					pos = pos + command.length;
-					while (pos < args.length) {
-						if (args[pos] === ' ') {
-							break;
-						}
-						pos++;
-					}
-					command = args.substr(0, pos);
-					args = args.substr(pos + 1);
+					// binaries with spaces in path may not work
+					// possible solution to read directly from /proc
+					const commandEndPositionMaybe = fullCommand.indexOf(" ", pos + shortName.length);
+					const commandEndPosition = commandEndPositionMaybe < 0 ? fullCommand.length : commandEndPositionMaybe;
+					command = fullCommand.substring(0, commandEndPosition)
+					args = fullCommand.substring(commandEndPosition).trimStart()
 				}
+
 
 				if (!isNaN(pid) && !isNaN(ppid)) {
 					one(pid, ppid, command, args);
@@ -157,8 +160,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 			reject(err);
 		});
 
-		proc.stderr?.setEncoding('utf8');
-		proc.stderr?.on('data', data => {
+		proc.stderr.setEncoding('utf8');
+		proc.stderr.on('data', data => {
 			const e = data.toString();
 			if (e.indexOf('screen size is bogus') >= 0) {
 				// ignore this error silently; see https://github.com/microsoft/vscode/issues/75932
@@ -191,4 +194,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 			}
 		});
 	});
+}
+
+function substr(str: string, startIndex: number, length?: number) {
+	return str.slice(startIndex, length != undefined ? startIndex + length : str.length)
 }
