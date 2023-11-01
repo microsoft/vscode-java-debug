@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.55.0 - 2023-11-01
+### Changed
+- Don't duplicate build reference projects when building a Gradle project managed by Build Server. [java-debug#511](https://github.com/microsoft/java-debug/pull/511).
+
+### Fixed
+- Cannot find Java process when using "Attach by Process ID". [#1388](https://github.com/microsoft/vscode-java-debug/issues/1388). Thanks to [owl-from-hogvarts](https://github.com/owl-from-hogvarts) for contribution.
+
 ## 0.54.0 - 2023-08-29
 ### Added
 - Code completion in DEBUG CONSOLE now adds fully qualified names for unimported classes. See [#1246](https://github.com/microsoft/vscode-java-debug/issues/1246).
