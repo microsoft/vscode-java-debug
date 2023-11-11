@@ -1016,6 +1016,6 @@
     "vscode-extension-telemetry-wrapper": "^0.13.3",
     "vscode-languageclient": "6.0.0-next.9",
     "vscode-languageserver-types": "3.16.0",
-    "vscode-tas-client": "^0.1.63"
+    "vscode-tas-client": "^0.1.75"
   }
 }
