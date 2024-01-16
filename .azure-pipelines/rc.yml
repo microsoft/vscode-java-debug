@@ -47,7 +47,7 @@ extends:
             steps:
               - checkout: self
                 fetchTags: true
-              - task: DownloadBuildArtifacts@0
+              - task: DownloadBuildArtifacts@1
                 displayName: Download Build Artifacts
                 inputs:
                   buildType: specific
