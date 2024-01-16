@@ -1,13 +1,3 @@
-# This pipeline was generated from the classic pipeline "VSCode-Java-Debugger-VSIX-Nightly" on 2024-01-16 with https://aka.ms/1ESPTMigration (v1.1.0): https://dev.azure.com/mseng/VSJava/_build?definitionId=13475
-#
-# The following items require attention:
-# Variables were exported from the classic pipeline, confirm that `variables` values do not contain private information. If a variable contains private information, follow the guidance on handling secret variables: https://learn.microsoft.com/en-us/azure/devops/pipelines/process/set-secret-variables
-# Cron Schedules have been converted using UTC Time Zone and may need to be updated for your location
-# Agent Queue 'Azure Pipelines' was used with unrecognized Agent Specification, vmImage property must be specified to determine image - https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#software
-# No trigger found, defaulting to 'none'. Update the trigger as needed.
-# No name found, setting the default value '$(Date:yyyyMMdd).$(Rev:r)'. This value determines how your pipeline runs are numbered. Update the name as needed: https://learn.microsoft.com/en-us/azure/devops/pipelines/process/run-number?view=azure-devops&tabs=yaml
-# The following task is disabled in "Agent job 1" and not included in the converted pipeline: "Use Node 10.x"
-
 name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
   - name: Codeql.Enabled
