@@ -18,3 +18,4 @@ package-lock.json
 node_modules
 webpack.config.js
 .DS_Store
+.azure-pipelines/**
