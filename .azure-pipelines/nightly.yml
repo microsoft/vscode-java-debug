@@ -1,0 +1,93 @@
+name: $(Date:yyyyMMdd).$(Rev:r)
+variables:
+  - name: Codeql.Enabled
+    value: true
+schedules:
+  - cron: 0 7 * * 1,2,3,4,5
+    branches:
+      include:
+        - refs/heads/main
+resources:
+  pipelines:
+    - pipeline: microsoft.java-debug.signjars.nightly
+      source: microsoft.java-debug.signjars.nightly
+      trigger:
+        branches:
+          include:
+            - refs/heads/main
+  repositories:
+    - repository: self
+      type: git
+      ref: refs/heads/main
+    - repository: 1esPipelines
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+trigger: none
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  parameters:
+    pool:
+      os: linux
+      name: 1ES_JavaTooling_Pool
+      image: 1ES_JavaTooling_Ubuntu-2004
+    sdl:
+      sourceAnalysisPool:
+        name: 1ES_JavaTooling_Pool
+        image: 1ES_JavaTooling_Windows_2022
+        os: windows
+    customBuildTags:
+      - MigrationTooling-mseng-VSJava-13475-Tool
+    stages:
+      - stage: Build
+        jobs:
+          - job: Job_1
+            displayName: VSCode-Java-Debug-Nightly
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  artifactName: vsix
+                  targetPath: $(Build.ArtifactStagingDirectory)/vsix
+                  displayName: "Publish Artifact: vsix"
+            steps:
+              - checkout: self
+                fetchTags: false
+              - task: DownloadBuildArtifacts@1
+                displayName: Download Build Artifacts
+                inputs:
+                  buildType: specific
+                  project: a4d27ce2-a42d-4b71-8eef-78cee9a9728e
+                  definition: "16485"
+                  specificBuildWithTriggering: true
+                  downloadType: specific
+                  itemPattern: plugin/jars/com.microsoft.java.debug.plugin-*.jar
+                  extractTars: false
+              - task: CmdLine@2
+                displayName: cp plugin.jar to server
+                inputs:
+                  script: |-
+                    mkdir -p server
+
+                    cp $(System.ArtifactsDirectory)/plugin/jars/com.microsoft.java.debug.plugin-*[!a-zA-Z].jar server/
+                    ls -l server/
+              - task: Npm@1
+                displayName: npm install
+                inputs:
+                  verbose: false
+              - task: CmdLine@2
+                displayName: Update nightly vsix version
+                inputs:
+                  script: node scripts/build/prepare-nightly-build.js
+              - task: CmdLine@2
+                displayName: Replace AI key
+                inputs:
+                  script: npx json@9.0.6 -I -f package.json -e "this.aiKey=\"$AI_KEY\""
+              - task: CmdLine@2
+                displayName: vsce package --pre-release
+                inputs:
+                  script: npx @vscode/vsce@latest package --pre-release
+              - task: CopyFiles@2
+                displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)/vsix"
+                inputs:
+                  Contents: "*.vsix"
+                  TargetFolder: $(Build.ArtifactStagingDirectory)/vsix

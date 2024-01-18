@@ -1000,7 +1000,7 @@
     "@types/node": "^14.18.53",
     "@types/uuid": "^8.3.4",
     "@types/vscode": "1.75.0",
-    "@vscode/test-electron": "^2.3.3",
+    "@vscode/test-electron": "^2.3.8",
     "mocha": "^10.2.0",
     "ts-loader": "^9.4.4",
     "tslint": "^6.1.3",
