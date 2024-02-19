@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.56.1 - 2024-02-19
+### Fixed
+- Fix the java.lang.NoClassDefFoundError when triggering code completion in DEBUG CONSOLE. See [java-debug#534](https://github.com/microsoft/java-debug/issues/534).
+
 ## 0.56.0 - 2024-01-31
 ### Fixed
 - Breakpoint doesn't work on lambdas which returns a generic type. See [java-debug#498](https://github.com/microsoft/java-debug/issues/498), [#1413](https://github.com/microsoft/vscode-java-debug/issues/1413) and [#1414](https://github.com/microsoft/vscode-java-debug/issues/1414).
