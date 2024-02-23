@@ -170,12 +170,12 @@
         {
           "command": "java.debug.runJavaFile",
           "when": "resourceExtname == .java",
-          "group": "javadebug@1"
+          "group": "1_javaactions@90"
         },
         {
           "command": "java.debug.debugJavaFile",
           "when": "resourceExtname == .java",
-          "group": "javadebug@2"
+          "group": "1_javaactions@91"
         }
       ],
       "editor/context": [
@@ -1016,6 +1016,6 @@
     "vscode-extension-telemetry-wrapper": "^0.13.3",
     "vscode-languageclient": "6.0.0-next.9",
     "vscode-languageserver-types": "3.16.0",
-    "vscode-tas-client": "^0.1.75"
+    "vscode-tas-client": "^0.1.84"
   }
 }
