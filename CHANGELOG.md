@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.56.2 - 2024-02-28
+### Changed
+- Move 'Run/Debug Java' menus to the same group as the other Java menus within File Explorer. [#1447](https://github.com/microsoft/vscode-java-debug/pull/1447).
+
 ## 0.56.1 - 2024-02-19
 ### Fixed
 - Fix the java.lang.NoClassDefFoundError when triggering code completion in DEBUG CONSOLE. See [java-debug#534](https://github.com/microsoft/java-debug/issues/534).
