@@ -81,7 +81,7 @@ extends:
               - task: CmdLine@2
                 displayName: Replace AI key
                 inputs:
-                  script: npx json@9.0.6 -I -f package.json -e "this.aiKey=\"$AI_KEY\""
+                  script: npx json@9.0.6 -I -f package.json -e "this.aiKey=\"%AI_KEY%\""
               - task: CmdLine@2
                 displayName: vsce package --pre-release
                 inputs:
