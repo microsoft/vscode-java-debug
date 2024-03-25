@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.57.0 - 2024-03-26
+### Added
+- Add support for running Java 21 "Unnamed classes and Instance main method". [#1444](https://github.com/microsoft/vscode-java-debug/issues/1444).
+
 ## 0.56.2 - 2024-02-28
 ### Changed
 - Move 'Run/Debug Java' menus to the same group as the other Java menus within File Explorer. [#1447](https://github.com/microsoft/vscode-java-debug/pull/1447).
