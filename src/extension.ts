@@ -29,9 +29,7 @@ import { registerVariableMenuCommands } from "./variableMenu";
 import { promisify } from "util";
 
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
-    await initializeFromJsonFile(context.asAbsolutePath("./package.json"), {
-        firstParty: true,
-    });
+    await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await initExpService(context);
     return instrumentOperation("activation", initializeExtension)(context);
 }
