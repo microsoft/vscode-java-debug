@@ -4,6 +4,11 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.58.0 - 2024-06-27
+### Fixed
+- Latest Gradle Language Support extension cause hot code replace to fail. [#1402](https://github.com/microsoft/vscode-java-debug/issues/1402).
+- Hot Code Replace returns "Cannot find any changed classes for hot replace!" message. [#1481](https://github.com/microsoft/vscode-java-debug/issues/1481).
+
 ## 0.57.0 - 2024-03-26
 ### Added
 - Add support for running Java 21 "Unnamed classes and Instance main method". [#1444](https://github.com/microsoft/vscode-java-debug/issues/1444).
