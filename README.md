@@ -92,6 +92,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `skipSynthetics` - Skip synthetic methods when stepping.
   - `skipStaticInitializers` - Skip static initializer methods when stepping.
   - `skipConstructors` - Skip constructor methods when stepping.
+- `javaExec` - The path to java executable to use. By default, the project JDK's java executable is used.
 
 ### Attach
 
