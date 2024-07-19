@@ -83,9 +83,9 @@ extends:
                 inputs:
                   script: npx json@9.0.6 -I -f package.json -e "this.aiKey=\"%AI_KEY%\""
               - task: CmdLine@2
-                displayName: vsce package --pre-release
+                displayName: vsce package --pre-release -o extension.vsix
                 inputs:
-                  script: npx @vscode/vsce@latest package --pre-release
+                  script: npx @vscode/vsce@latest package --pre-release -o extension.vsix
               ### Copy files for APIScan
               - task: CopyFiles@2
                 displayName: "Copy Files for APIScan"
@@ -105,8 +105,41 @@ extends:
                 condition: and(succeeded(), ne(variables['DisableAPIScan'], 'true'))
                 env:
                   AzureServicesAuthConnectionString: runAs=App;AppId=$(ApiScanClientId);TenantId=$(ApiScanTenant);AppKey=$(ApiScanSecret)
+              - script: npx @vscode/vsce@latest generate-manifest -i extension.vsix -o extension.manifest
+                displayName: 'Generate extension manifest'
+              - script: cp extension.manifest extension.signature.p7s
+                displayName: 'Prepare manifest for signing'
+              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
+                inputs:
+                  ConnectedServiceName: $(ConnectedServiceName)
+                  AppRegistrationClientId: $(AppRegistrationClientId)
+                  AppRegistrationTenantId: $(AppRegistrationTenantId)
+                  AuthAKVName: $(AuthAKVName)
+                  AuthCertName: $(AuthCertName)
+                  AuthSignCertName: $(AuthSignCertName)
+                  FolderPath: '.'
+                  Pattern: 'extension.signature.p7s'
+                  signConfigType: inlineSignParams
+                  inlineOperation: |
+                    [
+                      {
+                        "keyCode": "CP-401405",
+                        "operationSetCode": "VSCodePublisherSign",
+                        "parameters" : [],
+                        "toolName": "sign",
+                        "toolVersion": "1.0"
+                      }
+                    ]
+                  SessionTimeout: 90
+                  MaxConcurrency: 25
+                  MaxRetryAttempts: 5
+                  PendingAnalysisWaitTimeoutMinutes: 5
+                displayName: 'Sign extension'
               - task: CopyFiles@2
                 displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)/vsix"
                 inputs:
-                  Contents: "*.vsix"
+                  Contents: |
+                    extension.vsix
+                    extension.manifest
+                    extension.signature.p7s
                   TargetFolder: $(Build.ArtifactStagingDirectory)/vsix
