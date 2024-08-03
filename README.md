@@ -118,7 +118,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 ### User Settings
 
 - `java.debug.logLevel`: minimum level of debugger logs that are sent to VS Code, defaults to `warn`.
-- `java.debug.settings.showHex`: show numbers in hex format in "Variables" viewlet, defaults to `false`.
+- `java.debug.settings.formatType`: show numbers in specified format in "Variables" viewlet, defaults to `DEC`.
 - `java.debug.settings.showStaticVariables`: show static variables in "Variables" viewlet, defaults to `false`.
 - `java.debug.settings.showQualifiedNames`: show fully qualified class names in "Variables" viewlet, defaults to `false`.
 - `java.debug.settings.showLogicalStructure`: show the logical structure for the Collection and Map classes in "Variables" viewlet, defaults to `true`.
