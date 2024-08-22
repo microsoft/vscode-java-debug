@@ -187,10 +187,20 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         let result = baseEnv;
         if (config.envFile) {
             try {
-                result = {
-                    ...baseEnv,
-                    ...readEnvFile(config.envFile),
-                };
+                if (typeof config.envFile === 'string') {
+                    result = {
+                        ...result,
+                        ...readEnvFile(config.envFile)
+                    };
+                }
+                if (Array.isArray(config.envFile)) {
+                    config.envFile.forEach((f) => {
+                        result = {
+                            ...result,
+                            ...readEnvFile(f)
+                        };
+                    });
+                }
             } catch (e) {
                 throw new utility.UserError({
                     message: "Cannot load environment file.",
