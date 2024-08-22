@@ -71,7 +71,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
 - `projectName` - The preferred project in which the debugger searches for classes. There could be duplicated class names in different projects. This setting also works when the debugger looks for the specified main class when launching a program. It is required when the workspace has multiple java projects, otherwise the expression evaluation and conditional breakpoint may not work.
 - `cwd` - The working directory of the program. Defaults to `${workspaceFolder}`.
 - `env` - The extra environment variables for the program.
-- `envFile` - Absolute path to a file containing environment variable definitions. Multiple files can be specified by provided an array of absolute paths
+- `envFile` - Absolute path to a file containing environment variable definitions. Multiple files can be specified by providing an array of absolute paths
 - `stopOnEntry` - Automatically pause the program after launching.
 - `console` - The specified console to launch the program. If not specified, use the console specified by the `java.debug.settings.console` user setting.
   - `internalConsole` - VS Code debug console (input stream not supported).
