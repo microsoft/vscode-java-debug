@@ -115,7 +115,7 @@ In case you want to manually edit the configuration, below are the explanation a
     }
   ```
 
-- `envFile` - Absolute path to a file containing environment variable definitions.
+- `envFile` - Absolute path to a file containing environment variable definitions. Multiple files can be specified by providing an array of absolute paths
   ```json
     {
         "version": "0.2.0",
