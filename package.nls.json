@@ -18,7 +18,7 @@
     "java.debugger.launch.encoding.description": "The file.encoding setting for the JVM. Possible values can be found in https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html.",
     "java.debugger.launch.cwd.description": "The working directory of the program. Defaults to the current workspace root.",
     "java.debugger.launch.env.description": "The extra environment variables for the program.",
-    "java.debugger.launch.envFile.description": "Absolute path to a file containing environment variable definitions.",
+    "java.debugger.launch.envFile.description": "Absolute path to a file containing environment variable definitions. Multiple files can be specified by providing an array of absolute paths.",
     "java.debugger.launch.stopOnEntry.description": "Automatically pause the program after launching.",
     "java.debugger.launch.internalConsole.description": "VS Code debug console (input stream not supported).",
     "java.debugger.launch.integratedTerminal.description": "VS Code integrated terminal.",

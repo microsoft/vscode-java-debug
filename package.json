@@ -486,7 +486,10 @@
                 "default": {}
               },
               "envFile": {
-                "type": "string",
+                "type": [
+                  "array",
+                  "string"
+                ],
                 "description": "%java.debugger.launch.envFile.description%",
                 "default": "${workspaceFolder}/.env"
               },
