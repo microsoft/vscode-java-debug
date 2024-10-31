@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.58.1 - 2024-10-31
+### Added
+- The launch config `envFile` now supports an array of env files. [#1505](https://github.com/microsoft/vscode-java-debug/issues/1505). Thanks to [Ed Hillmann](https://github.com/hildo) for contribution.
+
+### Fixed
+- Fail to debug with java 23 - Unrecognized option: -Xnoagent. [java-debug#561](https://github.com/microsoft/java-debug/issues/561).
+
 ## 0.58.0 - 2024-06-27
 ### Fixed
 - Latest Gradle Language Support extension cause hot code replace to fail. [#1402](https://github.com/microsoft/vscode-java-debug/issues/1402).
