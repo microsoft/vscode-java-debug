@@ -19,31 +19,27 @@ resources:
     - repository: self
       type: git
       ref: refs/heads/main
-    - repository: 1esPipelines
+    - repository: MicroBuildTemplate
       type: git
-      name: 1ESPipelineTemplates/1ESPipelineTemplates
-      ref: refs/tags/release
+      name: 1ESPipelineTemplates/MicroBuildTemplate
 trigger: none
 extends:
-  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
   parameters:
     pool:
-      name: 1ES_JavaTooling_Pool
-      image: 1ES_JavaTooling_Windows_2022
-      os: windows
-    sdl:
-      sourceAnalysisPool:
-        name: 1ES_JavaTooling_Pool
-        image: 1ES_JavaTooling_Windows_2022
-        os: windows
-    customBuildTags:
-      - MigrationTooling-mseng-VSJava-13475-Tool
+      name: MSEngSS-MicroBuild2022-1ES
     stages:
       - stage: Build
         jobs:
           - job: Job_1
             displayName: VSCode-Java-Debug-Nightly
             templateContext:
+              mb:
+                 signing:
+                   enabled: true
+                   signType: real
+                   zipSources: false
+                   feedSource: 'https://mseng.pkgs.visualstudio.com/DefaultCollection/_packaging/MicroBuildToolset/nuget/v3/index.json'
               outputs:
                 - output: pipelineArtifact
                   artifactName: vsix
@@ -52,6 +48,10 @@ extends:
             steps:
               - checkout: self
                 fetchTags: false
+              - task: NodeTool@0
+                displayName: Use Node 20.x
+                inputs:
+                  versionSpec: 20.x
               - task: DownloadBuildArtifacts@1
                 displayName: Download Build Artifacts
                 inputs:
@@ -62,14 +62,12 @@ extends:
                   downloadType: specific
                   itemPattern: plugin/jars/com.microsoft.java.debug.plugin-*.jar
                   extractTars: false
-              - task: CmdLine@2
-                displayName: cp plugin.jar to server
+              - task: CopyFiles@2
+                displayName: 'cp plugin.jar to server'
                 inputs:
-                  script: |-
-                    mkdir -p server
-
-                    cp $(System.ArtifactsDirectory)/plugin/jars/com.microsoft.java.debug.plugin-*[!a-zA-Z].jar server/
-                    ls -l server/
+                  SourceFolder: '$(System.ArtifactsDirectory)/plugin/jars'
+                  Contents: 'com.microsoft.java.debug.plugin-*.jar'
+                  TargetFolder: $(Build.SourcesDirectory)/server
               - task: Npm@1
                 displayName: npm install
                 inputs:
@@ -107,34 +105,12 @@ extends:
                   AzureServicesAuthConnectionString: runAs=App;AppId=$(ApiScanClientId);TenantId=$(ApiScanTenant);AppKey=$(ApiScanSecret)
               - script: npx @vscode/vsce@latest generate-manifest -i extension.vsix -o extension.manifest
                 displayName: 'Generate extension manifest'
-              - script: cp extension.manifest extension.signature.p7s
+              - script: copy extension.manifest extension.signature.p7s
                 displayName: 'Prepare manifest for signing'
-              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
+              - task: CmdLine@2
+                displayName: Sign extension
                 inputs:
-                  ConnectedServiceName: $(ConnectedServiceName)
-                  AppRegistrationClientId: $(AppRegistrationClientId)
-                  AppRegistrationTenantId: $(AppRegistrationTenantId)
-                  AuthAKVName: $(AuthAKVName)
-                  AuthCertName: $(AuthCertName)
-                  AuthSignCertName: $(AuthSignCertName)
-                  FolderPath: '.'
-                  Pattern: 'extension.signature.p7s'
-                  signConfigType: inlineSignParams
-                  inlineOperation: |
-                    [
-                      {
-                        "keyCode": "CP-401405",
-                        "operationSetCode": "VSCodePublisherSign",
-                        "parameters" : [],
-                        "toolName": "sign",
-                        "toolVersion": "1.0"
-                      }
-                    ]
-                  SessionTimeout: 90
-                  MaxConcurrency: 25
-                  MaxRetryAttempts: 5
-                  PendingAnalysisWaitTimeoutMinutes: 5
-                displayName: 'Sign extension'
+                  script: dotnet %MBSIGN_APPFOLDER%/ddsignfiles.dll /file:extension.signature.p7s /certs:4014052
               - task: CopyFiles@2
                 displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)/vsix"
                 inputs:
