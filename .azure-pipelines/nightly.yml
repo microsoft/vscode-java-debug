@@ -65,7 +65,6 @@ extends:
                     mkdir -p server
 
                     copy $(System.ArtifactsDirectory)/plugin/jars/com.microsoft.java.debug.plugin-*[!a-zA-Z].jar server/
-                    dir server/
               - task: Npm@1
                 displayName: npm install
                 inputs:
