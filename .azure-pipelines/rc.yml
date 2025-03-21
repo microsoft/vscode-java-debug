@@ -94,7 +94,7 @@ extends:
                   AzureServicesAuthConnectionString: runAs=App;AppId=$(ApiScanClientId);TenantId=$(ApiScanTenant);AppKey=$(ApiScanSecret)
               - script: npx @vscode/vsce@latest generate-manifest -i extension.vsix -o extension.manifest
                 displayName: 'Generate extension manifest'
-              - script: cp extension.manifest extension.signature.p7s
+              - script: copy extension.manifest extension.signature.p7s
                 displayName: 'Prepare manifest for signing'
               - task: CmdLine@2
                 displayName: Sign extension
