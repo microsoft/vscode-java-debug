@@ -59,7 +59,7 @@ extends:
                   script: |-
                     mkdir -p server
 
-                    cp $(System.ArtifactsDirectory)/m2/com.microsoft.java.debug.plugin/com.microsoft.java.debug.plugin-*[!a-zA-Z].jar server/
+                    copy $(System.ArtifactsDirectory)/m2/com.microsoft.java.debug.plugin/com.microsoft.java.debug.plugin-*[!a-zA-Z].jar server/
                     ls -l server/
               - task: Npm@1
                 displayName: npm install
