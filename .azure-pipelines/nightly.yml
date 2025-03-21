@@ -62,11 +62,12 @@ extends:
                   downloadType: specific
                   itemPattern: plugin/jars/com.microsoft.java.debug.plugin-*.jar
                   extractTars: false
-              - task: CopyFiles@2
-                displayName: "cp plugin.jar to server"
+              - task: CmdLine@2
+                displayName: cp plugin.jar to server
                 inputs:
-                  Contents: "$(System.ArtifactsDirectory)/plugin/jars/com.microsoft.java.debug.plugin-*.jar"
-                  TargetFolder: server/
+                  script: |-
+                    mkdir -p server
+                    copy %System.ArtifactsDirectory%\plugin\jars\com.microsoft.java.debug.plugin-*.jar server\
               - task: Npm@1
                 displayName: npm install
                 inputs:
