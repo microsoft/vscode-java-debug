@@ -63,9 +63,13 @@ extends:
                   SourceFolder: '$(System.ArtifactsDirectory)/m2/com.microsoft.java.debug.plugin'
                   Contents: |
                     com.microsoft.java.debug.plugin-*.jar
-                    !com.microsoft.java.debug.plugin-*-sources.jar  # Exclude sources jar
-                    !com.microsoft.java.debug.plugin-*-javadoc.jar  # Exclude javadoc jar
                   TargetFolder: $(Build.SourcesDirectory)/server
+              - task: CmdLine@2
+                displayName: Delete sources.jar and javadoc.jar from server
+                inputs:
+                  script: |
+                    del server\com.microsoft.java.debug.plugin-*-sources.jar
+                    del server\com.microsoft.java.debug.plugin-*-javadoc.jar
               - task: Npm@1
                 displayName: npm install
                 inputs:
