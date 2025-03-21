@@ -48,6 +48,10 @@ extends:
             steps:
               - checkout: self
                 fetchTags: false
+              - task: NodeTool@0
+                displayName: Use Node 20.x
+                inputs:
+                  versionSpec: 20.x
               - task: DownloadBuildArtifacts@1
                 displayName: Download Build Artifacts
                 inputs:
