@@ -23,8 +23,6 @@ extends:
   parameters:
     pool:
       name: MSEngSS-MicroBuild2022-1ES
-    customBuildTags:
-      - MigrationTooling-mseng-VSJava-9157-Tool
     stages:
       - stage: Build
         jobs:
