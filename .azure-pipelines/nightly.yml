@@ -21,7 +21,7 @@ resources:
       ref: refs/heads/main
     - repository: MicroBuildTemplate
       type: git
-      name: name: 1ESPipelineTemplates/MicroBuildTemplate
+      name: 1ESPipelineTemplates/MicroBuildTemplate
 trigger: none
 extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
