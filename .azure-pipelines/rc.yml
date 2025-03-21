@@ -61,7 +61,10 @@ extends:
                 displayName: 'cp plugin.jar to server'
                 inputs:
                   SourceFolder: '$(System.ArtifactsDirectory)/m2/com.microsoft.java.debug.plugin'
-                  Contents: 'com.microsoft.java.debug.plugin-*.jar'
+                  Contents: |
+                    com.microsoft.java.debug.plugin-*.jar
+                    !com.microsoft.java.debug.plugin-*-sources.jar  # Exclude sources jar
+                    !com.microsoft.java.debug.plugin-*-javadoc.jar  # Exclude javadoc jar
                   TargetFolder: $(Build.SourcesDirectory)/server
               - task: Npm@1
                 displayName: npm install
