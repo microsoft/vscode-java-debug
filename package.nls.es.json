@@ -43,7 +43,6 @@
     "java.debugger.snippet.attachRemote.description": "Añade una nueva configuración para acoplarse a un programa Java remoto.",
     "java.debugger.configuration.title": "Depurador de Java",
     "java.debugger.configuration.logLevel.description": "Nivel mínimo de registros de depuración que se envían a VS Code.",
-    "java.debugger.configuration.showHex.description": "Mostrar los números en formato hexadecimal en la vista \"Variables\".",
     "java.debugger.configuration.showStaticVariables.description": "Muestra las variables estáticas en la vista \"Variables\".",
     "java.debugger.configuration.showQualifiedNames.description": "Mostrar los nombres de las clases totalmente cualificados en la vista de \"Variables\".",
     "java.debugger.configuration.showLogicalStructure.description": "Mostrar la estructura lógica de las clases Collection y Map en la vista de \"Variables\".",
