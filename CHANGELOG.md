@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.58.2 - 2025-04-28
+### Fixed
+- Provide graceful shutdown on debug stop action. [#1274](https://github.com/microsoft/vscode-java-debug/issues/1274). Thanks to [Dave Syer](https://github.com/dsyer) for contribution.
+
+### Changed
+- Update Apache Commons IO from 2.11.0 to 2.19.0. [java-debug#585](https://github.com/microsoft/java-debug/pull/585). Thanks to [Roland Grunberg](https://github.com/rgrunber) for contribution.
+
 ## 0.58.1 - 2024-10-31
 ### Added
 - The launch config `envFile` now supports an array of env files. [#1505](https://github.com/microsoft/vscode-java-debug/issues/1505). Thanks to [Ed Hillmann](https://github.com/hildo) for contribution.
