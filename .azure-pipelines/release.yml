@@ -48,4 +48,4 @@ extends:
                   azureSubscription: 'VSCode-Ext-Publishing'
                   scriptType: pscore
                   scriptLocation: inlineScript
-                  inlineScript: 'npx @vscode/vsce@latest publish -i ''$(System.DefaultWorkingDirectory)/_microsoft.vscode-java-debug-rc-vsix/vsix/extension.vsix'' --manifestPath ''$(System.DefaultWorkingDirectory)/_microsoft.vscode-java-debug-rc-vsix/vsix/extension.manifest'' --signaturePath ''$(System.DefaultWorkingDirectory)/_microsoft.vscode-java-debug-rc-vsix/vsix/extension.signature.p7s'' --azure-credential'
+                  inlineScript: 'npx @vscode/vsce@latest publish -i ''$(Build.SourcesDirectory)/extension.vsix'' --manifestPath ''$(Build.SourcesDirectory)/extension.manifest'' --signaturePath ''$(Build.SourcesDirectory)/extension.signature.p7s'' --azure-credential'
