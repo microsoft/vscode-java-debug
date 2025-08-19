@@ -136,3 +136,4 @@ The value specified in `request` option of *launch.json* is incorrect.
 ### Try:
 1. Reference the VS Code official document [launch configurations](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations) about how to configure *launch.json*.
 2. Try to use the debugger to regenerate the debug configurations in *launch.json*. Remove the existing *launch.json* file and press F5. The debugger will automatically generate a new *launch.json* with the right debug configurations.
+
