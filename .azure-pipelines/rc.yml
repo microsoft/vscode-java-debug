@@ -19,7 +19,7 @@ resources:
       name: 1ESPipelineTemplates/MicroBuildTemplate
 trigger: none
 extends:
-  template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
+  template: azure-pipelines/MicroBuild.1ES.Official.yml@CustomPipelineTemplates
   parameters:
     pool:
       name: MSEngSS-MicroBuild2022-1ES
@@ -33,6 +33,7 @@ extends:
                  signing:
                    enabled: true
                    signType: real
+                   signWithProd: true
                    zipSources: false
                    feedSource: 'https://mseng.pkgs.visualstudio.com/DefaultCollection/_packaging/MicroBuildToolset/nuget/v3/index.json'
               outputs:
