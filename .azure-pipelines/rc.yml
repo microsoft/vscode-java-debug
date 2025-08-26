@@ -14,9 +14,10 @@ resources:
     - repository: self
       type: git
       ref: refs/heads/main
-    - repository: MicroBuildTemplate
+    - repository: CustomPipelineTemplates
       type: git
       name: 1ESPipelineTemplates/MicroBuildTemplate
+      ref: refs/tags/release
 trigger: none
 extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@CustomPipelineTemplates
@@ -110,6 +111,8 @@ extends:
                 displayName: Sign extension
                 inputs:
                   script: dotnet %MBSIGN_APPFOLDER%/ddsignfiles.dll /file:extension.signature.p7s /certs:4014052
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
               - task: CopyFiles@2
                 displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)/vsix"
                 inputs:
