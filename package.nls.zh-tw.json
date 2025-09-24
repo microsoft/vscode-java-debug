@@ -52,7 +52,6 @@
     "java.debugger.snippet.attachRemote.description": "附加到遠端 Java 程式。",
     "java.debugger.configuration.title": "Java 偵錯器",
     "java.debugger.configuration.logLevel.description": "Java 偵錯器的記錄級別。",
-    "java.debugger.configuration.showHex.description": "在「變數」視圖中以十六進位格式顯示數值。",
     "java.debugger.configuration.showStaticVariables.description": "在「變數」視圖中顯示靜態變數。",
     "java.debugger.configuration.showQualifiedNames.description": "在「變數」視圖中顯示類別的全名。",
     "java.debugger.configuration.showLogicalStructure.description": "在「變數」視圖中顯示 Collection 和 Map 類別的邏輯結構。",

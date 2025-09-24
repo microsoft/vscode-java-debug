@@ -12,11 +12,14 @@ export function registerVariableMenuCommands(context: vscode.ExtensionContext): 
     });
     // Initialize the context keys
     updateContextKeys();
-
     context.subscriptions.push(instrumentOperationAsVsCodeCommand(
-        "java.debug.variables.showHex", () => updateVariableFormatter("showHex", true)));
+        "java.debug.variables.showBin", () => updateVariableFormatter("formatType", "BIN")));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand(
-        "java.debug.variables.notShowHex", () => updateVariableFormatter("showHex", false)));
+        "java.debug.variables.showOct", () => updateVariableFormatter("formatType", "OCT")));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand(
+        "java.debug.variables.showHex", () => updateVariableFormatter("formatType", "HEX")));
+    context.subscriptions.push(instrumentOperationAsVsCodeCommand(
+        "java.debug.variables.showDec", () => updateVariableFormatter("formatType", "DEC")));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand(
         "java.debug.variables.showQualifiedNames", () => updateVariableFormatter("showQualifiedNames", true)));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand(
@@ -50,7 +53,7 @@ function refreshVariableView() {
     const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
     if (vscode.debug.activeDebugSession && vscode.debug.activeDebugSession.type === "java") {
         const formatter: any = {
-            showHex: debugSettingsRoot.showHex,
+            formatType: debugSettingsRoot.formatType,
             showQualifiedNames: debugSettingsRoot.showQualifiedNames,
             showStaticVariables: debugSettingsRoot.showStaticVariables,
             showLogicalStructure: debugSettingsRoot.showLogicalStructure,
@@ -85,7 +88,7 @@ function getConfigurationTarget(section: string, key: string): vscode.Configurat
 function updateContextKeys() {
     const debugSettingsRoot: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration("java.debug.settings");
     if (debugSettingsRoot) {
-        vscode.commands.executeCommand("setContext", "javadebug:showHex", debugSettingsRoot.showHex ? "on" : "off");
+        vscode.commands.executeCommand("setContext", "javadebug:formatType", debugSettingsRoot.formatType);
         vscode.commands.executeCommand("setContext", "javadebug:showLogicalStructure", debugSettingsRoot.showLogicalStructure ? "on" : "off");
         vscode.commands.executeCommand("setContext", "javadebug:showQualifiedNames", debugSettingsRoot.showQualifiedNames ? "on" : "off");
         vscode.commands.executeCommand("setContext", "javadebug:showStaticVariables", debugSettingsRoot.showStaticVariables ? "on" : "off");

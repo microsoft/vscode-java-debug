@@ -100,11 +100,19 @@
         "title": "Pause Others"
       },
       {
+        "command": "java.debug.variables.showBin",
+        "title": "Show as Bin"
+      },
+      {
+        "command": "java.debug.variables.showOct",
+        "title": "Show as Oct"
+      },
+      {
         "command": "java.debug.variables.showHex",
         "title": "Show as Hex"
       },
       {
-        "command": "java.debug.variables.notShowHex",
+        "command": "java.debug.variables.showDec",
         "title": "Show as Dec"
       },
       {
@@ -265,11 +273,19 @@
           "when": "false"
         },
         {
+          "command": "java.debug.variables.showBin",
+          "when": "false"
+        },
+        {
+          "command": "java.debug.variables.showOct",
+          "when": "false"
+        },
+        {
           "command": "java.debug.variables.showHex",
           "when": "false"
         },
         {
-          "command": "java.debug.variables.notShowHex",
+          "command": "java.debug.variables.showDec",
           "when": "false"
         },
         {
@@ -315,13 +331,23 @@
       ],
       "debug/variables/context": [
         {
-          "command": "java.debug.variables.showHex",
-          "when": "debugType == 'java' && javadebug:showHex == 'off'",
+          "command": "java.debug.variables.showBin",
+          "when": "debugType == 'java' && javadebug:formatType == 'BIN'",
           "group": "1_view@1"
         },
         {
-          "command": "java.debug.variables.notShowHex",
-          "when": "debugType == 'java' && javadebug:showHex == 'on'",
+          "command": "java.debug.variables.showOct",
+          "when": "debugType == 'java' && javadebug:formatType == 'OCT'",
+          "group": "1_view@1"
+        },
+        {
+          "command": "java.debug.variables.showHex",
+          "when": "debugType == 'java' && javadebug:formatType == 'HEX'",
+          "group": "1_view@1"
+        },
+        {
+          "command": "java.debug.variables.showDec",
+          "when": "debugType == 'java' && javadebug:formatType == 'DEC'",
           "group": "1_view@1"
         },
         {
@@ -789,10 +815,16 @@
             "verbose"
           ]
         },
-        "java.debug.settings.showHex": {
-          "type": "boolean",
-          "description": "%java.debugger.configuration.showHex.description%",
-          "default": false
+        "java.debug.settings.formatType": {
+          "type": "string",
+          "description": "%java.debugger.configuration.formatType.description%",
+          "default": "DEC",
+          "enum": [
+            "BIN",
+            "OCT",
+            "HEX",
+            "DEC"
+          ]
         },
         "java.debug.settings.showStaticVariables": {
           "type": "boolean",
