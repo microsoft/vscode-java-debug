@@ -32,14 +32,14 @@ import { promisify } from "util";
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await initExpService(context);
-    
+
     // Register No-Config Debug functionality
     const noConfigDisposable = await registerNoConfigDebug(
         context.environmentVariableCollection,
         context.extensionPath
     );
     context.subscriptions.push(noConfigDisposable);
-    
+
     return instrumentOperation("activation", initializeExtension)(context);
 }
 

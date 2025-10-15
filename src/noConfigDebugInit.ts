@@ -6,6 +6,8 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 
+import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
+
 /**
  * Registers the configuration-less debugging setup for the extension.
  *
@@ -33,8 +35,12 @@ export async function registerNoConfigDebug(
         workspaceString = vscode.workspace.workspaceFolders?.map((e) => e.uri.fsPath).join(';');
     }
     if (!workspaceString) {
-        console.error('[Java Debug] No workspace folder found');
-        return Promise.resolve(new vscode.Disposable(() => {}));
+        const error: Error = {
+            name: "NoConfigDebugError",
+            message: '[Java Debug] No workspace folder found',
+        };
+        sendError(error);
+        return Promise.resolve(new vscode.Disposable(() => { }));
     }
 
     // create a stable hash for the workspace folder, reduce terminal variable churn
@@ -52,7 +58,11 @@ export async function registerNoConfigDebug(
         // remove endpoint file in the temp directory if it exists (async to avoid blocking)
         if (fs.existsSync(tempFilePath)) {
             fs.promises.unlink(tempFilePath).catch((err) => {
-                console.error(`[Java Debug] Failed to cleanup old endpoint file: ${err}`);
+                const error: Error = {
+                    name: "NoConfigDebugError",
+                    message: `[Java Debug] Failed to cleanup old endpoint file: ${err}`,
+                };
+                sendError(error);
             });
         }
     }
@@ -80,52 +90,60 @@ export async function registerNoConfigDebug(
     const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
         new vscode.RelativePattern(tempDirPath, '**/*.txt')
     );
-    
+
     // Track active debug sessions to prevent duplicates
     const activeDebugSessions = new Set<number>();
-    
+
     // Handle both file creation and modification to support multiple runs
     const handleEndpointFile = async (uri: vscode.Uri) => {
-        console.log('[Java Debug] No-config debug session detected');
-
         const filePath = uri.fsPath;
-        
+
         // Add a small delay to ensure file is fully written
         // File system events can fire before write is complete
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         fs.readFile(filePath, (err, data) => {
             if (err) {
-                console.error(`[Java Debug] Error reading endpoint file: ${err}`);
+                const error: Error = {
+                    name: "NoConfigDebugError",
+                    message: `[Java Debug] No-config debug failed: file_read_error - ${err}`,
+                };
+                sendError(error);
                 return;
             }
             try {
                 // parse the client port
                 const dataParse = data.toString();
                 const jsonData = JSON.parse(dataParse);
-                
+
                 // Validate JSON structure
                 if (!jsonData || typeof jsonData !== 'object' || !jsonData.client) {
-                    console.error(`[Java Debug] Invalid endpoint file format: ${dataParse}`);
+                    const error: Error = {
+                        name: "NoConfigDebugError",
+                        message: `[Java Debug] No-config debug failed: invalid_format - ${dataParse}`,
+                    };
+                    sendError(error);
                     return;
                 }
-                
+
                 const clientPort = jsonData.client.port;
-                
+
                 // Validate port number
                 if (!clientPort || typeof clientPort !== 'number' || clientPort < 1 || clientPort > 65535) {
-                    console.error(`[Java Debug] Invalid port number: ${clientPort}`);
+                    const error: Error = {
+                        name: "NoConfigDebugError",
+                        message: `[Java Debug] No-config debug failed: invalid_port - ${clientPort}`,
+                    };
+                    sendError(error);
                     return;
                 }
-                
+
                 // Check if we already have an active session for this port
                 if (activeDebugSessions.has(clientPort)) {
-                    console.log(`[Java Debug] Debug session already active for port ${clientPort}, skipping`);
+                    // Skip duplicate session silently - this is expected behavior
                     return;
                 }
-                
-                console.log(`[Java Debug] Parsed JDWP port: ${clientPort}`);
-                
+
                 // Mark this port as active
                 activeDebugSessions.add(clientPort);
 
@@ -147,29 +165,45 @@ export async function registerNoConfigDebug(
                 ).then(
                     (started) => {
                         if (started) {
-                            console.log('[Java Debug] Successfully started no-config debug session');
+                            // Send telemetry only on successful session start with port info
+                            sendInfo('', { message: '[Java Debug] No-config debug session started', port: clientPort });
                             // Clean up the endpoint file after successful debug session start (async)
                             if (fs.existsSync(filePath)) {
-                                fs.promises.unlink(filePath).then(() => {
-                                    console.log('[Java Debug] Cleaned up endpoint file');
-                                }).catch((cleanupErr) => {
-                                    console.error(`[Java Debug] Failed to cleanup endpoint file: ${cleanupErr}`);
+                                fs.promises.unlink(filePath).catch((cleanupErr) => {
+                                    // Cleanup failure is non-critical, just log for debugging
+                                    const error: Error = {
+                                        name: "NoConfigDebugError",
+                                        message: `[Java Debug] No-config debug failed: cleanup_error - ${cleanupErr}`,
+                                    };
+                                    sendError(error);
                                 });
                             }
                         } else {
-                            console.error('[Java Debug] Error starting debug session, session not started.');
+                            const error: Error = {
+                                name: "NoConfigDebugError",
+                                message: `[Java Debug] No-config debug failed: attach_failed - port ${clientPort}`,
+                            };
+                            sendError(error);
                             // Remove from active sessions on failure
                             activeDebugSessions.delete(clientPort);
                         }
                     },
                     (error) => {
-                        console.error(`[Java Debug] Error starting debug session: ${error}`);
+                        const attachError: Error = {
+                            name: "NoConfigDebugError",
+                            message: `[Java Debug] No-config debug failed: attach_error - port ${clientPort} - ${error}`,
+                        };
+                        sendError(attachError);
                         // Remove from active sessions on error
                         activeDebugSessions.delete(clientPort);
                     },
                 );
             } catch (parseErr) {
-                console.error(`[Java Debug] Error parsing JSON: ${parseErr}`);
+                const error: Error = {
+                    name: "NoConfigDebugError",
+                    message: `[Java Debug] No-config debug failed: parse_error - ${parseErr}`,
+                };
+                sendError(error);
             }
         });
     };
@@ -177,13 +211,13 @@ export async function registerNoConfigDebug(
     // Listen for both file creation and modification events
     const fileCreationEvent = fileSystemWatcher.onDidCreate(handleEndpointFile);
     const fileChangeEvent = fileSystemWatcher.onDidChange(handleEndpointFile);
-    
+
     // Clean up active sessions when debug session ends
     const debugSessionEndListener = vscode.debug.onDidTerminateDebugSession((session) => {
         if (session.name === 'Attach to Java (No-Config)' && session.configuration.port) {
             const port = session.configuration.port;
             activeDebugSessions.delete(port);
-            console.log(`[Java Debug] Debug session ended for port ${port}`);
+            // Session end is normal operation, no telemetry needed
         }
     });
 
