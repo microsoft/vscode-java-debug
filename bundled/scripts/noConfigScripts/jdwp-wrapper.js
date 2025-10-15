@@ -21,20 +21,46 @@ const javaToolOptions = process.env.JAVA_TOOL_OPTIONS || '';
 // Check if debugging is enabled
 const isDebugEnabled = javaToolOptions.includes('jdwp') && endpointFile;
 
+// Helper function to find java command
+function getJavaCommand() {
+    const javaHome = process.env.JAVA_HOME;
+    
+    // Try JAVA_HOME first
+    if (javaHome) {
+        const javaPath = path.join(javaHome, 'bin', 'java');
+        const javaPathExe = process.platform === 'win32' ? `${javaPath}.exe` : javaPath;
+        
+        // Check if the file exists
+        if (fs.existsSync(javaPathExe)) {
+            return javaPath;
+        }
+        if (fs.existsSync(javaPath)) {
+            return javaPath;
+        }
+        
+        console.warn(`[Java Debug] JAVA_HOME is set to '${javaHome}', but java command not found there. Falling back to PATH.`);
+    }
+    
+    // Fall back to 'java' in PATH
+    return 'java';
+}
+
+const javaCmd = getJavaCommand();
+
 if (!isDebugEnabled) {
     // No debugging, just run java normally
-    const javaHome = process.env.JAVA_HOME;
-    const javaCmd = javaHome ? path.join(javaHome, 'bin', 'java') : 'java';
     const child = spawn(javaCmd, process.argv.slice(2), {
         stdio: 'inherit',
         shell: false
     });
     child.on('exit', (code) => process.exit(code || 0));
+    child.on('error', (err) => {
+        console.error(`[Java Debug] Failed to start java: ${err.message}`);
+        console.error(`[Java Debug] Make sure Java is installed and either JAVA_HOME is set correctly or 'java' is in your PATH.`);
+        process.exit(1);
+    });
 } else {
     // Debugging enabled, capture JDWP port
-    const javaHome = process.env.JAVA_HOME;
-    const javaCmd = javaHome ? path.join(javaHome, 'bin', 'java') : 'java';
-    
     const child = spawn(javaCmd, process.argv.slice(2), {
         stdio: ['inherit', 'pipe', 'pipe'],
         shell: false
