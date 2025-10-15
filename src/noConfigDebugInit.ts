@@ -73,7 +73,7 @@ export async function registerNoConfigDebug(
     // Add env var for VSCODE_JDWP_ADAPTER_ENDPOINTS
     // Note: We do NOT set JAVA_TOOL_OPTIONS globally to avoid affecting all Java processes
     // (javac, maven, gradle, language server, etc.). Instead, JAVA_TOOL_OPTIONS is set
-    // only in the javadebug wrapper scripts (javadebug.ps1, javadebug.bat, javadebug)
+    // only in the debugjava wrapper scripts (debugjava.ps1, debugjava.bat, debugjava)
     collection.replace('VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
 
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
