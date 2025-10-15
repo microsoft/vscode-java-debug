@@ -49,22 +49,22 @@ export async function registerNoConfigDebug(
     if (!fs.existsSync(tempDirPath)) {
         fs.mkdirSync(tempDirPath, { recursive: true });
     } else {
-        // remove endpoint file in the temp directory if it exists
+        // remove endpoint file in the temp directory if it exists (async to avoid blocking)
         if (fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath);
+            fs.promises.unlink(tempFilePath).catch((err) => {
+                console.error(`[Java Debug] Failed to cleanup old endpoint file: ${err}`);
+            });
         }
     }
 
     // clear the env var collection to remove any existing env vars
     collection.clear();
 
-    // Add env vars for VSCODE_JDWP_ADAPTER_ENDPOINTS and JAVA_TOOL_OPTIONS
+    // Add env var for VSCODE_JDWP_ADAPTER_ENDPOINTS
+    // Note: We do NOT set JAVA_TOOL_OPTIONS globally to avoid affecting all Java processes
+    // (javac, maven, gradle, language server, etc.). Instead, JAVA_TOOL_OPTIONS is set
+    // only in the javadebug wrapper scripts (javadebug.ps1, javadebug.bat, javadebug)
     collection.replace('VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
-    
-    // Configure JDWP to listen on a random port and suspend until debugger attaches
-    // quiet=y prevents the "Listening for transport..." message from appearing in terminal
-    collection.replace('JAVA_TOOL_OPTIONS', 
-        '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=0,quiet=y');
 
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
     const pathSeparator = process.platform === 'win32' ? ';' : ':';
@@ -81,10 +81,19 @@ export async function registerNoConfigDebug(
         new vscode.RelativePattern(tempDirPath, '**/*.txt')
     );
     
-    const fileCreationEvent = fileSystemWatcher.onDidCreate(async (uri) => {
+    // Track active debug sessions to prevent duplicates
+    const activeDebugSessions = new Set<number>();
+    
+    // Handle both file creation and modification to support multiple runs
+    const handleEndpointFile = async (uri: vscode.Uri) => {
         console.log('[Java Debug] No-config debug session detected');
 
         const filePath = uri.fsPath;
+        
+        // Add a small delay to ensure file is fully written
+        // File system events can fire before write is complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         fs.readFile(filePath, (err, data) => {
             if (err) {
                 console.error(`[Java Debug] Error reading endpoint file: ${err}`);
@@ -94,8 +103,31 @@ export async function registerNoConfigDebug(
                 // parse the client port
                 const dataParse = data.toString();
                 const jsonData = JSON.parse(dataParse);
-                const clientPort = jsonData.client?.port;
+                
+                // Validate JSON structure
+                if (!jsonData || typeof jsonData !== 'object' || !jsonData.client) {
+                    console.error(`[Java Debug] Invalid endpoint file format: ${dataParse}`);
+                    return;
+                }
+                
+                const clientPort = jsonData.client.port;
+                
+                // Validate port number
+                if (!clientPort || typeof clientPort !== 'number' || clientPort < 1 || clientPort > 65535) {
+                    console.error(`[Java Debug] Invalid port number: ${clientPort}`);
+                    return;
+                }
+                
+                // Check if we already have an active session for this port
+                if (activeDebugSessions.has(clientPort)) {
+                    console.log(`[Java Debug] Debug session already active for port ${clientPort}, skipping`);
+                    return;
+                }
+                
                 console.log(`[Java Debug] Parsed JDWP port: ${clientPort}`);
+                
+                // Mark this port as active
+                activeDebugSessions.add(clientPort);
 
                 const options: vscode.DebugSessionOptions = {
                     noDebug: false,
@@ -116,24 +148,52 @@ export async function registerNoConfigDebug(
                     (started) => {
                         if (started) {
                             console.log('[Java Debug] Successfully started no-config debug session');
+                            // Clean up the endpoint file after successful debug session start (async)
+                            if (fs.existsSync(filePath)) {
+                                fs.promises.unlink(filePath).then(() => {
+                                    console.log('[Java Debug] Cleaned up endpoint file');
+                                }).catch((cleanupErr) => {
+                                    console.error(`[Java Debug] Failed to cleanup endpoint file: ${cleanupErr}`);
+                                });
+                            }
                         } else {
                             console.error('[Java Debug] Error starting debug session, session not started.');
+                            // Remove from active sessions on failure
+                            activeDebugSessions.delete(clientPort);
                         }
                     },
                     (error) => {
                         console.error(`[Java Debug] Error starting debug session: ${error}`);
+                        // Remove from active sessions on error
+                        activeDebugSessions.delete(clientPort);
                     },
                 );
             } catch (parseErr) {
                 console.error(`[Java Debug] Error parsing JSON: ${parseErr}`);
             }
         });
+    };
+
+    // Listen for both file creation and modification events
+    const fileCreationEvent = fileSystemWatcher.onDidCreate(handleEndpointFile);
+    const fileChangeEvent = fileSystemWatcher.onDidChange(handleEndpointFile);
+    
+    // Clean up active sessions when debug session ends
+    const debugSessionEndListener = vscode.debug.onDidTerminateDebugSession((session) => {
+        if (session.name === 'Attach to Java (No-Config)' && session.configuration.port) {
+            const port = session.configuration.port;
+            activeDebugSessions.delete(port);
+            console.log(`[Java Debug] Debug session ended for port ${port}`);
+        }
     });
 
     return Promise.resolve(
         new vscode.Disposable(() => {
             fileSystemWatcher.dispose();
             fileCreationEvent.dispose();
+            fileChangeEvent.dispose();
+            debugSessionEndListener.dispose();
+            activeDebugSessions.clear();
         }),
     );
 }

@@ -4,6 +4,10 @@
 # Export the endpoint file path for JDWP port communication
 $env:JDWP_ADAPTER_ENDPOINTS = $env:VSCODE_JDWP_ADAPTER_ENDPOINTS
 
+# Set JDWP options only for this javadebug invocation
+# This overrides the global JAVA_TOOL_OPTIONS to avoid affecting other Java processes
+$env:JAVA_TOOL_OPTIONS = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=0"
+
 # Get the directory of this script
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 

@@ -43,64 +43,52 @@ if (!isDebugEnabled) {
     let portCaptured = false;
     const jdwpPortRegex = /Listening for transport dt_socket at address:\s*(\d+)/;
 
+    // Shared function to capture JDWP port from output
+    const capturePort = (output) => {
+        if (portCaptured) return;
+        
+        const match = output.match(jdwpPortRegex);
+        if (match && match[1]) {
+            const port = parseInt(match[1], 10);
+            
+            // Validate port range
+            if (port < 1 || port > 65535) {
+                console.error(`[Java Debug] Invalid port number: ${port}`);
+                return;
+            }
+            
+            console.log(`[Java Debug] Captured JDWP port: ${port}`);
+            
+            // Write port to endpoint file
+            const endpointData = JSON.stringify({
+                client: {
+                    host: 'localhost',
+                    port: port
+                }
+            });
+
+            try {
+                fs.writeFileSync(endpointFile, endpointData, 'utf8');
+                console.log(`[Java Debug] Wrote endpoint file: ${endpointFile}`);
+                portCaptured = true;
+            } catch (err) {
+                console.error(`[Java Debug] Failed to write endpoint file: ${err}`);
+            }
+        }
+    };
+
     // Monitor stdout for JDWP port
     child.stdout.on('data', (data) => {
         const output = data.toString();
         process.stdout.write(data);
-
-        if (!portCaptured) {
-            const match = output.match(jdwpPortRegex);
-            if (match && match[1]) {
-                const port = parseInt(match[1], 10);
-                console.log(`[Java Debug] Captured JDWP port: ${port}`);
-                
-                // Write port to endpoint file
-                const endpointData = JSON.stringify({
-                    client: {
-                        host: 'localhost',
-                        port: port
-                    }
-                });
-
-                try {
-                    fs.writeFileSync(endpointFile, endpointData, 'utf8');
-                    console.log(`[Java Debug] Wrote endpoint file: ${endpointFile}`);
-                    portCaptured = true;
-                } catch (err) {
-                    console.error(`[Java Debug] Failed to write endpoint file: ${err}`);
-                }
-            }
-        }
+        capturePort(output);
     });
 
-    // Monitor stderr
+    // Monitor stderr for JDWP port (it might appear on stderr)
     child.stderr.on('data', (data) => {
         const output = data.toString();
         process.stderr.write(data);
-
-        // JDWP message might appear on stderr
-        if (!portCaptured) {
-            const match = output.match(jdwpPortRegex);
-            if (match && match[1]) {
-                const port = parseInt(match[1], 10);
-                console.log(`[Java Debug] Captured JDWP port: ${port}`);
-                
-                const endpointData = JSON.stringify({
-                    client: {
-                        host: 'localhost',
-                        port: port
-                    }
-                });
-
-                try {
-                    fs.writeFileSync(endpointFile, endpointData, 'utf8');
-                    console.log(`[Java Debug] Wrote endpoint file: ${endpointFile}`);
-                    portCaptured = true;
-                } catch (err) {
-                    console.error(`[Java Debug] Failed to write endpoint file: ${err}`);
-                }
-            }
-        }
+        capturePort(output);
     });
 
     child.on('exit', (code) => process.exit(code || 0));
