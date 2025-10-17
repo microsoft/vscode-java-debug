@@ -7,6 +7,7 @@ import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 
 import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
+import { getJavaHome } from "./utility";
 
 /**
  * Registers the configuration-less debugging setup for the extension.
@@ -75,6 +76,19 @@ export async function registerNoConfigDebug(
     // (javac, maven, gradle, language server, etc.). Instead, JAVA_TOOL_OPTIONS is set
     // only in the debugjava wrapper scripts (debugjava.ps1, debugjava.bat, debugjava)
     collection.replace('VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
+
+    // Try to get Java executable from Java Language Server
+    // This ensures we use the same Java version as the project is compiled with
+    try {
+        const javaHome = await getJavaHome();
+        if (javaHome) {
+            const javaExec = path.join(javaHome, 'bin', 'java');
+            collection.replace('VSCODE_JAVA_EXEC', javaExec);
+        }
+    } catch (error) {
+        // If we can't get Java from Language Server, that's okay
+        // The wrapper script will fall back to JAVA_HOME or PATH
+    }
 
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
     const pathSeparator = process.platform === 'win32' ? ';' : ':';

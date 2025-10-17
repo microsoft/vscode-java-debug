@@ -62,11 +62,15 @@ debugjava -jar myapp.jar --spring.profiles.active=dev
 ## How It Works Internally
 
 1. When you run `debugjava`, the wrapper script temporarily sets `JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=0`
-2. The wrapper launches the Java process with JDWP enabled
-3. JVM starts and outputs: "Listening for transport dt_socket at address: 12345"
-4. The wrapper captures the JDWP port from this output
-5. The port is written to a communication file
-6. VS Code's file watcher detects the file and automatically starts an attach debug session
+2. The wrapper determines which Java executable to use (priority order):
+   - First: `JAVA_HOME/bin/java` if JAVA_HOME environment variable is set (user's explicit choice)
+   - Second: `VSCODE_JAVA_EXEC` environment variable (Java path from VS Code's Java Language Server)
+   - Third: `java` command from system PATH
+3. The wrapper launches the Java process with JDWP enabled
+4. JVM starts and outputs: "Listening for transport dt_socket at address: 12345"
+5. The wrapper captures the JDWP port from this output
+6. The port is written to a communication file
+7. VS Code's file watcher detects the file and automatically starts an attach debug session
 
 ## Troubleshooting
 

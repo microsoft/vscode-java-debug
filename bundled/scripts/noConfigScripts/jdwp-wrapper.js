@@ -23,9 +23,8 @@ const isDebugEnabled = javaToolOptions.includes('jdwp') && endpointFile;
 
 // Helper function to find java command
 function getJavaCommand() {
+    // Priority 1: Try JAVA_HOME environment variable first (user's explicit choice)
     const javaHome = process.env.JAVA_HOME;
-    
-    // Try JAVA_HOME first
     if (javaHome) {
         const javaPath = path.join(javaHome, 'bin', 'java');
         const javaPathExe = process.platform === 'win32' ? `${javaPath}.exe` : javaPath;
@@ -38,10 +37,16 @@ function getJavaCommand() {
             return javaPath;
         }
         
-        console.warn(`[Java Debug] JAVA_HOME is set to '${javaHome}', but java command not found there. Falling back to PATH.`);
+        console.warn(`[Java Debug] JAVA_HOME is set to '${javaHome}', but java command not found there. Falling back to VS Code's Java.`);
     }
     
-    // Fall back to 'java' in PATH
+    // Priority 2: Use VSCODE_JAVA_EXEC if provided by VS Code (from Java Language Server)
+    const vscodeJavaExec = process.env.VSCODE_JAVA_EXEC;
+    if (vscodeJavaExec && fs.existsSync(vscodeJavaExec)) {
+        return vscodeJavaExec;
+    }
+    
+    // Priority 3: Fall back to 'java' in PATH
     return 'java';
 }
 
