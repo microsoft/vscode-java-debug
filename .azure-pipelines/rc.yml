@@ -14,12 +14,13 @@ resources:
     - repository: self
       type: git
       ref: refs/heads/main
-    - repository: MicroBuildTemplate
+    - repository: CustomPipelineTemplates
       type: git
       name: 1ESPipelineTemplates/MicroBuildTemplate
+      ref: refs/tags/release
 trigger: none
 extends:
-  template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
+  template: azure-pipelines/MicroBuild.1ES.Official.yml@CustomPipelineTemplates
   parameters:
     pool:
       name: MSEngSS-MicroBuild2022-1ES
@@ -33,6 +34,7 @@ extends:
                  signing:
                    enabled: true
                    signType: real
+                   signWithProd: true
                    zipSources: false
                    feedSource: 'https://mseng.pkgs.visualstudio.com/DefaultCollection/_packaging/MicroBuildToolset/nuget/v3/index.json'
               outputs:
@@ -109,6 +111,8 @@ extends:
                 displayName: Sign extension
                 inputs:
                   script: dotnet %MBSIGN_APPFOLDER%/ddsignfiles.dll /file:extension.signature.p7s /certs:4014052
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
               - task: CopyFiles@2
                 displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)/vsix"
                 inputs:

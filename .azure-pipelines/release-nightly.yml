@@ -1,0 +1,55 @@
+# This pipeline is used to release the VS Code Java Debug extension from the nightly/stable build.
+# It contains following steps:
+#   1. Download the plugin artifact from the nightly/stable build pipeline.
+#   2. Publish the plugin to the marketplace.
+
+name: $(Date:yyyyMMdd).$(Rev:r) # Use the current date and a revision number for the build name.
+
+variables:
+  - name: Codeql.Enabled
+    value: true
+resources:
+  repositories:
+    - repository: self
+      type: git
+      ref: refs/heads/main
+    - repository: 1esPipelines
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+trigger: none
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  parameters:
+    pool:
+      os: linux
+      name: 1ES_JavaTooling_Pool
+      image: 1ES_JavaTooling_Ubuntu-2004
+    stages:
+      - stage: Release
+        jobs:
+          - job: Job
+            displayName: Release VS Code Java Debug Extension
+            templateContext:
+              type: releaseJob
+              isProduction: true
+              inputs:
+              - input: pipelineArtifact
+                buildType: specific
+                project: $(AzDo.ProjectId) # Azure DevOps project ID
+                definition: $(AzDo.BuildPipelineId) # artifact build pipeline ID
+                artifactName: vsix
+                downloadType: specific
+                targetPath: '$(Build.SourcesDirectory)'
+            steps:
+              - task: UseNode@1
+                displayName: 'Use Node.js 20.x'
+                inputs:
+                  version: '20.x'
+              - task: AzureCLI@2
+                displayName: 'Publish Extension'
+                inputs:
+                  azureSubscription: 'VSCode-Ext-Publishing'
+                  scriptType: pscore
+                  scriptLocation: inlineScript
+                  inlineScript: 'npx @vscode/vsce@latest publish -i ''$(Build.SourcesDirectory)/extension.vsix'' --manifestPath ''$(Build.SourcesDirectory)/extension.manifest'' --signaturePath ''$(Build.SourcesDirectory)/extension.signature.p7s'' --azure-credential'

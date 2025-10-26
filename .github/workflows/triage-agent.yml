@@ -1,0 +1,123 @@
+name: AI Triage - Label and Comment on New Issues
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to triage (manual run). e.g. 123'
+        required: true
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  label_and_comment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get issue data
+        id: get_issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const eventName = context.eventName;
+            let issue;
+            if (eventName === 'workflow_dispatch') {
+              const inputs = context.payload.inputs || {};
+              const issueNumber = inputs.issue_number || inputs.issueNumber;
+              if (!issueNumber) core.setFailed('Input issue_number is required for manual run.');
+              const { data } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: parseInt(issueNumber, 10),
+              });
+              issue = data;
+            } else if (context.payload.issue) {
+              issue = context.payload.issue;
+            } else {
+              core.setFailed('No issue information found in the event payload.');
+            }
+            core.setOutput('id', String(issue.number));
+            core.setOutput('user', String((issue.user && issue.user.login) || ''));
+            core.setOutput('title', String(issue.title || ''));
+            core.setOutput('body', String(issue.body || ''));
+            const labelNames = (issue.labels || []).map(label => label.name);
+            core.setOutput('labels', JSON.stringify(labelNames));
+
+      - name: Call Azure Function
+        id: call_azure_function
+        env:
+          PAYLOAD: >-
+            {
+              "authToken": "${{ secrets.GITHUB_TOKEN }}",
+              "repoId": "microsoft/vscode-java-debug",
+              "issueData": {
+                "id": ${{ steps.get_issue.outputs.id }},
+                "user": ${{ toJson(steps.get_issue.outputs.user) }},
+                "title": ${{ toJson(steps.get_issue.outputs.title) }},
+                "body":  ${{ toJson(steps.get_issue.outputs.body)  }},
+                "labels": ${{ steps.get_issue.outputs.labels }}
+              },
+              "mode": "DirectUpdate"
+            }
+
+        run: |
+          # Make the HTTP request with improved error handling and timeouts
+          echo "Making request to triage agent..."
+
+          # Add timeout handling and better error detection
+          set +e  # Don't exit on curl failure
+          response=$(timeout ${{ vars.TRIAGE_AGENT_TIMEOUT }} curl \
+              --max-time 0 \
+              --connect-timeout 30 \
+              --fail-with-body \
+              --silent \
+              --show-error \
+              --write-out "HTTPSTATUS:%{http_code}" \
+              --header "Content-Type: application/json" \
+              --request POST \
+              --data "$PAYLOAD" \
+              ${{ secrets.TRIAGE_FUNCTION_LINK }} 2>&1)
+
+          curl_exit_code=$?
+          set -e  # Re-enable exit on error
+
+          echo "Curl exit code: $curl_exit_code"
+
+          # Check if curl command timed out or failed
+          if [ $curl_exit_code -eq 124 ]; then
+            echo "❌ Request timed out after 650 seconds"
+            exit 1
+          elif [ $curl_exit_code -ne 0 ]; then
+            echo "❌ Curl command failed with exit code: $curl_exit_code"
+            echo "Response: $response"
+            exit 1
+          fi
+
+          # Extract HTTP status code and response body
+          http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+          response_body=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')
+
+          echo "HTTP Status Code: $http_code"
+
+          # Validate HTTP status code
+          if [ -z "$http_code" ]; then
+            echo "❌ Failed to extract HTTP status code from response"
+            echo "Raw response: $response"
+            exit 1
+          fi
+
+          # Check if the request was successful
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "✅ Azure Function call succeeded"
+          else
+            echo "❌ Azure Function call failed with status code: $http_code"
+            echo "Response: $response_body"
+            exit 1
+          fi
