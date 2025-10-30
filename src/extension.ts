@@ -13,6 +13,7 @@ import { HCR_EVENT, JAVA_LANGID, TELEMETRY_EVENT, USER_NOTIFICATION_EVENT } from
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { initExpService } from "./experimentationService";
+import { registerNoConfigDebug } from "./noConfigDebugInit";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
@@ -31,6 +32,14 @@ import { promisify } from "util";
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await initExpService(context);
+
+    // Register No-Config Debug functionality
+    const noConfigDisposable = await registerNoConfigDebug(
+        context.environmentVariableCollection,
+        context.extensionPath
+    );
+    context.subscriptions.push(noConfigDisposable);
+
     return instrumentOperation("activation", initializeExtension)(context);
 }
 
