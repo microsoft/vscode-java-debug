@@ -4,6 +4,10 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.58.3 - 2025-11-03
+### Added
+- No config debug [[#1530](https://github.com/microsoft/vscode-java-debug/issues/1530)]
+
 ## 0.58.2 - 2025-04-28
 ### Fixed
 - Provide graceful shutdown on debug stop action. [#1274](https://github.com/microsoft/vscode-java-debug/issues/1274). Thanks to [Dave Syer](https://github.com/dsyer) for contribution.
