@@ -471,14 +471,16 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         const paths: string[] = [];
         let replaced: boolean = false;
         for (const p of pathArray) {
-            if (pathVariables.includes(p)) {
-                if (!replaced) {
-                    paths.push(...resolvedPaths);
-                    replaced = true;
+            for (const splitPath of p.split(':')) {
+                if (pathVariables.includes(splitPath)) {
+                    if (!replaced) {
+                        paths.push(...resolvedPaths);
+                        replaced = true;
+                    }
+                    continue;
                 }
-                continue;
+                paths.push(splitPath);
             }
-            paths.push(p);
         }
         return this.filterExcluded(folder, paths);
     }
