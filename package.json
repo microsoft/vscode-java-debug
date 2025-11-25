@@ -100,6 +100,10 @@
         "title": "Pause Others"
       },
       {
+        "command": "java.debug.breakpoints.exceptionTypes",
+        "title": "Manage Java Breakpoint Exception Types"
+      },
+      {
         "command": "java.debug.variables.showHex",
         "title": "Show as Hex"
       },
