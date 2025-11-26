@@ -17,6 +17,8 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Debug console
 - Evaluation
 - Hot Code Replace
+- **[NEW]** No-Config Debug (debug Java apps without launch.json)
+- **[NEW]** AI-Assisted Debugging (GitHub Copilot integration)
 
 ## Requirements
 - JDK (version 1.8.0 or later)
@@ -40,6 +42,38 @@ ext install vscode-java-debug
 - Press `F5`
 
 Please also check the documentation of [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) if you have trouble setting up your project.
+
+## No-Config Debug
+
+You can now debug Java applications without creating a `launch.json` file! Simply open a terminal in VS Code and use the `debugjava` command:
+
+```bash
+# Debug a main class
+debugjava -cp bin com.example.Main
+
+# Debug a JAR file
+debugjava -jar target/myapp.jar
+
+# Debug with arguments
+debugjava -cp bin com.example.Main arg1 arg2
+```
+
+The debugger will automatically attach. See [No-Config Debug Documentation](bundled/scripts/noConfigScripts/README.md) for more details.
+
+## AI-Assisted Debugging
+
+When using GitHub Copilot Chat, you can now ask AI to help you debug Java applications! The extension provides a Language Model Tool that enables natural language debugging:
+
+- "Debug my Spring Boot application"
+- "Debug the Main class in this project"
+- "Debug Calculator with arguments 10 and 5"
+
+The AI will automatically:
+1. Detect your project type (Maven/Gradle/VS Code)
+2. Build/compile your project
+3. Start debugging with appropriate configuration
+
+See [Language Model Tool Documentation](docs/LANGUAGE_MODEL_TOOL.md) for more details.
 
 ## Options
 

@@ -21,7 +21,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.95.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -42,7 +42,8 @@
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs",
-    "onCommand:JavaDebug.PickJavaProcess"
+    "onCommand:JavaDebug.PickJavaProcess",
+    "onLanguageModelTool:debug_java_application"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -985,7 +986,57 @@
           "default": false
         }
       }
-    }
+    },
+    "languageModelTools": [
+      {
+        "name": "debug_java_application",
+        "displayName": "Debug Java Application",
+        "modelDescription": "Debug a Java application with proper classpath resolution. CRITICAL WORKFLOW: 1) FIRST call 'rebuild_java_project' tool to compile the project and get the correct classpath (outputPath), 2) THEN call this tool with the classpath from rebuild result. This ensures accurate classpath resolution. The tool starts debugging with 'debugjava' command and attaches the debugger automatically. IMPORTANT: If user requests debugging, you MUST call rebuild_java_project FIRST to get classpath, then pass it to this tool via the 'classpath' parameter. Set 'skipBuild: true' since rebuild was already done. The debug process will run indefinitely until the user stops it. Examples: 'Debug App' (after rebuild), 'Debug com.example.Main with args' (after rebuild), 'Debug target/app.jar'.",
+        "toolReferenceName": "debugJavaApplication",
+        "tags": [
+          "java",
+          "debug",
+          "debugger",
+          "build",
+          "compile"
+        ],
+        "icon": "$(debug-alt)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "What to debug: 1) Main class name - can be simple (e.g., 'App') or fully qualified (e.g., 'com.example.Main'). Tool auto-detects package from source files. 2) JAR file path (e.g., 'target/app.jar'). 3) Raw java arguments (e.g., '-cp bin com.example.Main'). IMPORTANT: For simple class names without packages, just use 'App' - the tool will find the .class file automatically."
+            },
+            "workspacePath": {
+              "type": "string",
+              "description": "Absolute path to the Java project root directory containing pom.xml, build.gradle, or .java source files. This is the working directory for compilation and debugging."
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional command-line arguments to pass to the Java main method (e.g., ['arg1', 'arg2', '--flag=value']). These are program arguments, not JVM arguments."
+            },
+            "skipBuild": {
+              "type": "boolean",
+              "description": "Whether to skip compilation before debugging. DEFAULT: false (will compile automatically). Set to true when you have already called 'rebuild_java_project' tool and obtained the classpath. Set to false if rebuilding within this tool is needed (fallback scenario).",
+              "default": false
+            },
+            "classpath": {
+              "type": "string",
+              "description": "CRITICAL: The classpath obtained from 'rebuild_java_project' tool's outputPath field. This ensures accurate classpath resolution. REQUIRED when skipBuild is true. Format: absolute paths separated by system path delimiter (';' on Windows, ':' on Unix). Example: 'C:\\project\\target\\classes;C:\\project\\lib\\dep.jar' or '/project/target/classes:/project/lib/dep.jar'. If not provided, tool will attempt to infer classpath (less accurate)."
+            }
+          },
+          "required": [
+            "target",
+            "workspacePath"
+          ]
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run build",

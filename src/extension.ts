@@ -18,6 +18,7 @@ import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, Y
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
 import { logJavaException, logJavaInfo } from "./javaLogger";
+import { registerLanguageModelTool } from "./languageModelTool";
 import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
@@ -39,6 +40,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
         context.extensionPath
     );
     context.subscriptions.push(noConfigDisposable);
+
+    // Register Language Model Tool for AI-assisted debugging
+    if (vscode.lm && vscode.lm.registerTool) {
+        registerLanguageModelTool(context);
+    }
 
     return instrumentOperation("activation", initializeExtension)(context);
 }
