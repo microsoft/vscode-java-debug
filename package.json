@@ -1296,6 +1296,26 @@
           },
           "required": []
         }
+      },
+      {
+        "name": "get_debug_session_info",
+        "displayName": "Get Debug Session Info",
+        "modelDescription": "Get information about the currently active Java debug session. Use this to check if a debug session is already running before starting a new one, or to verify that you can use debug tools. Returns session ID, name, type, configuration details, and available actions. If no session is active, provides guidance on how to start debugging.",
+        "toolReferenceName": "getDebugSessionInfo",
+        "tags": [
+          "java",
+          "debug",
+          "session",
+          "info",
+          "status"
+        ],
+        "icon": "$(info)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
       }
     ],
     "chatAgents": [

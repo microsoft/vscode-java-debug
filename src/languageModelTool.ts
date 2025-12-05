@@ -19,6 +19,8 @@ interface DebugJavaApplicationResult {
     success: boolean;
     message: string;
     terminalName?: string;
+    status?: 'started' | 'timeout' | 'sent';  // More specific status
+    sessionId?: string;  // Session ID if detected
 }
 
 // Type definitions for Language Model API (these will be in future VS Code versions)
@@ -167,14 +169,16 @@ async function debugJavaApplication(
                     timeoutHandle && clearTimeout(timeoutHandle);
                     
                     sendInfo('', {
-                        operationName: 'languageModelTool.debugSessionStarted',
+                        operationName: 'languageModelTool.debugSessionStarted.eventBased',
                         sessionId: session.id,
                         sessionName: session.name
                     });
                     
                     resolve({
                         success: true,
-                        message: `Debug session started for ${targetInfo}. Session ID: ${session.id}. The debugger is now attached and ready. Any breakpoints you set will be active.${warningNote}`,
+                        status: 'started',
+                        sessionId: session.id,
+                        message: `✓ Debug session started for ${targetInfo}. Session ID: ${session.id}. The debugger is now attached and ready. Any breakpoints you set will be active.${warningNote}`,
                         terminalName: terminal.name
                     });
                 }
@@ -183,36 +187,88 @@ async function debugJavaApplication(
             // Send the command after setting up the listener
             terminal.sendText(debugCommand);
             
-            // Set a timeout (30 seconds) to avoid hanging indefinitely
+            // Set a timeout (45 seconds) for large applications
             const timeoutHandle = setTimeout(() => {
                 if (!sessionStarted) {
                     sessionDisposable.dispose();
                     
                     sendInfo('', {
-                        operationName: 'languageModelTool.debugSessionTimeout',
+                        operationName: 'languageModelTool.debugSessionTimeout.eventBased',
                         target: targetInfo
                     });
                     
                     resolve({
-                        success: true,
-                        message: `Debug command sent for ${targetInfo}, but session start not detected within 30 seconds. The application may still be starting. Check terminal '${terminal.name}' for status.${warningNote}`,
+                        success: false,
+                        status: 'timeout',
+                        message: `❌ Debug session failed to start within 45 seconds for ${targetInfo}.\n\n` +
+                                 `This usually indicates a problem:\n` +
+                                 `• Compilation errors preventing startup\n` +
+                                 `• ClassNotFoundException or NoClassDefFoundError\n` +
+                                 `• Application crashed during initialization\n` +
+                                 `• Incorrect main class or classpath configuration\n\n` +
+                                 `Action required:\n` +
+                                 `1. Check terminal '${terminal.name}' for error messages\n` +
+                                 `2. Verify the target class name is correct\n` +
+                                 `3. Ensure the project is compiled successfully\n` +
+                                 `4. Use get_debug_session_info() to confirm session status${warningNote}`,
                         terminalName: terminal.name
                     });
                 }
-            }, 30000);
+            }, 45000);
         });
     } else {
-        // Default behavior: send command and wait briefly for startup
+        // Default behavior: send command and use smart polling to detect session start
         terminal.sendText(debugCommand);
         
-        // Wait 5 seconds to give the debug session time to start
-        // This is longer than the previous 500ms to increase the chance
-        // that the session is ready, while still being reasonably fast
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Smart polling: check every 300ms for up to 15 seconds
+        const maxWaitTime = 15000;  // 15 seconds max
+        const pollInterval = 300;   // Check every 300ms
+        const startTime = Date.now();
+        
+        while (Date.now() - startTime < maxWaitTime) {
+            // Check if debug session has started
+            const session = vscode.debug.activeDebugSession;
+            if (session && session.type === 'java') {
+                const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                
+                sendInfo('', {
+                    operationName: 'languageModelTool.debugSessionDetected',
+                    sessionId: session.id,
+                    elapsedTime: elapsedTime
+                });
+                
+                return {
+                    success: true,
+                    status: 'started',
+                    sessionId: session.id,
+                    message: `✓ Debug session started for ${targetInfo} (detected in ${elapsedTime}s). Session ID: ${session.id}. The debugger is attached and ready.${warningNote}`,
+                    terminalName: terminal.name
+                };
+            }
+            
+            // Wait before next check
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+        
+        // Timeout: session not detected within 15 seconds
+        sendInfo('', {
+            operationName: 'languageModelTool.debugSessionTimeout.smartPolling',
+            target: targetInfo,
+            maxWaitTime: maxWaitTime
+        });
         
         return {
             success: true,
-            message: `Debug command sent for ${targetInfo}. The Java application should start in debug mode in terminal '${terminal.name}'. The VS Code debugger will attach automatically. You can set breakpoints in your Java source files.${warningNote}`,
+            status: 'timeout',
+            message: `⚠️ Debug command sent for ${targetInfo}, but session not detected within 15 seconds.\n\n` +
+                     `Possible reasons:\n` +
+                     `• Application is still starting (large projects may take longer)\n` +
+                     `• Compilation errors (check terminal '${terminal.name}' for errors)\n` +
+                     `• Application may have started and already terminated\n\n` +
+                     `Next steps:\n` +
+                     `• Use get_debug_session_info() to check if session is now active\n` +
+                     `• Check terminal '${terminal.name}' for error messages\n` +
+                     `• If starting slowly, wait 10-15 more seconds and check again${warningNote}`,
             terminalName: terminal.name
         };
     }
@@ -723,6 +779,10 @@ interface StopDebugSessionInput {
     reason?: string;
 }
 
+interface GetDebugSessionInfoInput {
+    // No parameters needed - just returns info about active session
+}
+
 /**
  * Registers all debug session control tools
  */
@@ -1087,6 +1147,77 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         }
     };
     disposables.push(lmApi.registerTool('stop_debug_session', stopDebugSessionTool));
+
+    // Tool 9: Get Debug Session Info
+    const getDebugSessionInfoTool: LanguageModelTool<GetDebugSessionInfoInput> = {
+        async invoke(_options: { input: GetDebugSessionInfoInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                
+                if (!session) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart(
+                            '❌ No active debug session found.\n\n' +
+                            'You can:\n' +
+                            '• Start a new debug session using debug_java_application\n' +
+                            '• Set breakpoints before or after starting a session\n' +
+                            '• Wait for an existing session to hit a breakpoint'
+                        )
+                    ]);
+                }
+
+                // Gather session information
+                const sessionInfo = {
+                    id: session.id,
+                    name: session.name,
+                    type: session.type,
+                    workspaceFolder: session.workspaceFolder?.name || 'N/A',
+                    configuration: {
+                        name: session.configuration.name,
+                        type: session.configuration.type,
+                        request: session.configuration.request,
+                        mainClass: session.configuration.mainClass,
+                        projectName: session.configuration.projectName
+                    }
+                };
+                
+                const message = [
+                    '✓ Active Debug Session Found:',
+                    '',
+                    `• Session ID: ${sessionInfo.id}`,
+                    `• Session Name: ${sessionInfo.name}`,
+                    `• Debug Type: ${sessionInfo.type}`,
+                    `• Workspace: ${sessionInfo.workspaceFolder}`,
+                    '',
+                    'Configuration:',
+                    `• Name: ${sessionInfo.configuration.name || 'N/A'}`,
+                    `• Type: ${sessionInfo.configuration.type || 'N/A'}`,
+                    `• Request: ${sessionInfo.configuration.request || 'N/A'}`,
+                    `• Main Class: ${sessionInfo.configuration.mainClass || 'N/A'}`,
+                    `• Project: ${sessionInfo.configuration.projectName || 'N/A'}`,
+                    '',
+                    'Available Actions:',
+                    '• Use debug tools (get_debug_variables, debug_step_operation, etc.) to inspect this session',
+                    '• Use stop_debug_session to terminate this session when done'
+                ].join('\n');
+                
+                sendInfo('', {
+                    operationName: 'languageModelTool.getDebugSessionInfo',
+                    sessionId: session.id,
+                    sessionType: session.type
+                });
+                
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(message)
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to get debug session info: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('get_debug_session_info', getDebugSessionInfoTool));
 
     return disposables;
 }
