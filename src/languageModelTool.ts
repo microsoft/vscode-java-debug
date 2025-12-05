@@ -12,6 +12,7 @@ interface DebugJavaApplicationInput {
     args?: string[];
     skipBuild?: boolean;
     classpath?: string;
+    waitForSession?: boolean;
 }
 
 interface DebugJavaApplicationResult {
@@ -124,7 +125,7 @@ async function debugJavaApplication(
         };
     }
     
-    // Step 4: Execute in terminal (non-blocking)
+    // Step 4: Execute in terminal and optionally wait for debug session
     const terminal = vscode.window.createTerminal({
         name: 'Java Debug',
         cwd: input.workspacePath,
@@ -133,13 +134,6 @@ async function debugJavaApplication(
     });
     
     terminal.show();
-    
-    // Send the command and return immediately - don't wait for process to finish
-    // This is crucial because the Java process will run until user stops it
-    terminal.sendText(debugCommand);
-
-    // Give a brief moment for the command to start
-    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Build info message for AI
     let targetInfo = input.target;
@@ -159,12 +153,69 @@ async function debugJavaApplication(
             warningNote = ' ⚠️ Note: Could not auto-detect package name. If you see "ClassNotFoundException", please provide the fully qualified class name (e.g., "com.example.App" instead of "App").';
         }
     }
-
-    return {
-        success: true,
-        message: `Debug session started for ${targetInfo}. The Java application is now running in debug mode in terminal '${terminal.name}'. The VS Code debugger should attach automatically. You can set breakpoints in your Java source files.${warningNote}`,
-        terminalName: terminal.name
-    };
+    
+    // If waitForSession is true, wait for the debug session to start
+    if (input.waitForSession) {
+        return new Promise<DebugJavaApplicationResult>((resolve) => {
+            let sessionStarted = false;
+            
+            // Listen for debug session start
+            const sessionDisposable = vscode.debug.onDidStartDebugSession((session) => {
+                if (session.type === 'java' && !sessionStarted) {
+                    sessionStarted = true;
+                    sessionDisposable.dispose();
+                    timeoutHandle && clearTimeout(timeoutHandle);
+                    
+                    sendInfo('', {
+                        operationName: 'languageModelTool.debugSessionStarted',
+                        sessionId: session.id,
+                        sessionName: session.name
+                    });
+                    
+                    resolve({
+                        success: true,
+                        message: `Debug session started for ${targetInfo}. Session ID: ${session.id}. The debugger is now attached and ready. Any breakpoints you set will be active.${warningNote}`,
+                        terminalName: terminal.name
+                    });
+                }
+            });
+            
+            // Send the command after setting up the listener
+            terminal.sendText(debugCommand);
+            
+            // Set a timeout (30 seconds) to avoid hanging indefinitely
+            const timeoutHandle = setTimeout(() => {
+                if (!sessionStarted) {
+                    sessionDisposable.dispose();
+                    
+                    sendInfo('', {
+                        operationName: 'languageModelTool.debugSessionTimeout',
+                        target: targetInfo
+                    });
+                    
+                    resolve({
+                        success: true,
+                        message: `Debug command sent for ${targetInfo}, but session start not detected within 30 seconds. The application may still be starting. Check terminal '${terminal.name}' for status.${warningNote}`,
+                        terminalName: terminal.name
+                    });
+                }
+            }, 30000);
+        });
+    } else {
+        // Default behavior: send command and wait briefly for startup
+        terminal.sendText(debugCommand);
+        
+        // Wait 5 seconds to give the debug session time to start
+        // This is longer than the previous 500ms to increase the chance
+        // that the session is ready, while still being reasonably fast
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        return {
+            success: true,
+            message: `Debug command sent for ${targetInfo}. The Java application should start in debug mode in terminal '${terminal.name}'. The VS Code debugger will attach automatically. You can set breakpoints in your Java source files.${warningNote}`,
+            terminalName: terminal.name
+        };
+    }
 }
 
 /**
@@ -627,4 +678,427 @@ function inferClasspath(workspacePath: string, projectType: 'maven' | 'gradle' |
     }
 
     return classpaths.join(path.delimiter);
+}
+
+// ============================================================================
+// Debug Session Control Tools
+// ============================================================================
+
+interface SetBreakpointInput {
+    filePath: string;
+    lineNumber: number;
+    condition?: string;
+    hitCondition?: string;
+    logMessage?: string;
+}
+
+interface StepOperationInput {
+    operation: 'stepIn' | 'stepOut' | 'stepOver' | 'continue' | 'pause';
+    threadId?: number;
+}
+
+interface GetVariablesInput {
+    frameId?: number;
+    scopeType?: 'local' | 'static' | 'all';
+    filter?: string;
+}
+
+interface GetStackTraceInput {
+    threadId?: number;
+    maxDepth?: number;
+}
+
+interface EvaluateExpressionInput {
+    expression: string;
+    frameId?: number;
+    context?: 'watch' | 'repl' | 'hover';
+}
+
+interface RemoveBreakpointsInput {
+    filePath?: string;
+    lineNumber?: number;
+}
+
+interface StopDebugSessionInput {
+    reason?: string;
+}
+
+/**
+ * Registers all debug session control tools
+ */
+export function registerDebugSessionTools(_context: vscode.ExtensionContext): vscode.Disposable[] {
+    const lmApi = (vscode as any).lm;
+    if (!lmApi || typeof lmApi.registerTool !== 'function') {
+        return [];
+    }
+
+    const disposables: vscode.Disposable[] = [];
+
+    // Tool 1: Set Breakpoint
+    const setBreakpointTool: LanguageModelTool<SetBreakpointInput> = {
+        async invoke(options: { input: SetBreakpointInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const { filePath, lineNumber, condition, hitCondition, logMessage } = options.input;
+                
+                // Set breakpoint through VS Code API (no active session required)
+                const uri = vscode.Uri.file(filePath);
+                const breakpoint = new vscode.SourceBreakpoint(
+                    new vscode.Location(uri, new vscode.Position(lineNumber - 1, 0)),
+                    true, // enabled
+                    condition,
+                    hitCondition,
+                    logMessage
+                );
+
+                vscode.debug.addBreakpoints([breakpoint]);
+
+                const bpType = logMessage ? 'Logpoint' : 'Breakpoint';
+                const session = vscode.debug.activeDebugSession;
+                const sessionInfo = (session && session.type === 'java')
+                    ? ' (active in current session)'
+                    : ' (will activate when debugging starts)';
+                
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        `✓ ${bpType} set at ${path.basename(filePath)}:${lineNumber}${condition ? ` (condition: ${condition})` : ''}${sessionInfo}`
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to set breakpoint: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('set_java_breakpoint', setBreakpointTool));
+
+    // Tool 2: Step Operations
+    const stepOperationTool: LanguageModelTool<StepOperationInput> = {
+        async invoke(options: { input: StepOperationInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                if (!session || session.type !== 'java') {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
+                    ]);
+                }
+
+                const { operation, threadId } = options.input;
+                
+                // Map operation to VS Code debug commands
+                const commandMap: { [key: string]: string } = {
+                    stepIn: 'workbench.action.debug.stepInto',
+                    stepOut: 'workbench.action.debug.stepOut',
+                    stepOver: 'workbench.action.debug.stepOver',
+                    continue: 'workbench.action.debug.continue',
+                    pause: 'workbench.action.debug.pause'
+                };
+
+                const command = commandMap[operation];
+                if (threadId !== undefined) {
+                    // For thread-specific operations, use custom request
+                    await session.customRequest(operation, { threadId });
+                } else {
+                    // Use VS Code command for current thread
+                    await vscode.commands.executeCommand(command);
+                }
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✓ Executed ${operation}`)
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Step operation failed: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('debug_step_operation', stepOperationTool));
+
+    // Tool 3: Get Variables
+    const getVariablesTool: LanguageModelTool<GetVariablesInput> = {
+        async invoke(options: { input: GetVariablesInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                if (!session || session.type !== 'java') {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
+                    ]);
+                }
+
+                const { frameId = 0, scopeType = 'all', filter } = options.input;
+
+                // Get stack trace to access frame
+                const stackResponse = await session.customRequest('stackTrace', {
+                    threadId: (session as any).threadId || 1,
+                    startFrame: frameId,
+                    levels: 1
+                });
+
+                if (!stackResponse.stackFrames || stackResponse.stackFrames.length === 0) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No stack frame available.')
+                    ]);
+                }
+
+                const frame = stackResponse.stackFrames[0];
+
+                // Get scopes for the frame
+                const scopesResponse = await session.customRequest('scopes', { frameId: frame.id });
+                
+                let variables: string[] = [];
+                for (const scope of scopesResponse.scopes) {
+                    // Filter by scope type
+                    if (scopeType === 'local' && scope.name !== 'Local' && scope.name !== 'Locals') continue;
+                    if (scopeType === 'static' && scope.name !== 'Static') continue;
+
+                    // Get variables for this scope
+                    const varsResponse = await session.customRequest('variables', { 
+                        variablesReference: scope.variablesReference 
+                    });
+
+                    for (const v of varsResponse.variables) {
+                        if (!filter || v.name.includes(filter) || matchWildcard(v.name, filter)) {
+                            variables.push(`${v.name}: ${v.type || ''} = ${v.value}`);
+                        }
+                    }
+                }
+
+                if (variables.length === 0) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('No variables found.')
+                    ]);
+                }
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        `Variables (frame ${frameId}):\n${variables.join('\n')}`
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to get variables: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('get_debug_variables', getVariablesTool));
+
+    // Tool 4: Get Stack Trace
+    const getStackTraceTool: LanguageModelTool<GetStackTraceInput> = {
+        async invoke(options: { input: GetStackTraceInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                if (!session || session.type !== 'java') {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
+                    ]);
+                }
+
+                const { threadId, maxDepth = 50 } = options.input;
+
+                const stackResponse = await session.customRequest('stackTrace', {
+                    threadId: threadId || (session as any).threadId || 1,
+                    startFrame: 0,
+                    levels: maxDepth
+                });
+
+                if (!stackResponse.stackFrames || stackResponse.stackFrames.length === 0) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('No stack frames available.')
+                    ]);
+                }
+
+                const frames = stackResponse.stackFrames.map((frame: any, index: number) => {
+                    const location = frame.source ? 
+                        `${frame.source.name}:${frame.line}` : 
+                        'unknown location';
+                    return `#${index} ${frame.name} at ${location}`;
+                });
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        `Call Stack:\n${frames.join('\n')}`
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to get stack trace: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('get_debug_stack_trace', getStackTraceTool));
+
+    // Tool 5: Evaluate Expression
+    const evaluateExpressionTool: LanguageModelTool<EvaluateExpressionInput> = {
+        async invoke(options: { input: EvaluateExpressionInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                if (!session || session.type !== 'java') {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
+                    ]);
+                }
+
+                const { expression, frameId = 0, context = 'repl' } = options.input;
+
+                const evalResponse = await session.customRequest('evaluate', {
+                    expression,
+                    frameId,
+                    context
+                });
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        `Expression: ${expression}\nResult: ${evalResponse.result}${evalResponse.type ? ` (${evalResponse.type})` : ''}`
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Evaluation failed: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('evaluate_debug_expression', evaluateExpressionTool));
+
+    // Tool 6: Get Threads
+    const getThreadsTool: LanguageModelTool<{}> = {
+        async invoke(_options: { input: {} }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                if (!session || session.type !== 'java') {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
+                    ]);
+                }
+
+                const threadsResponse = await session.customRequest('threads');
+
+                if (!threadsResponse.threads || threadsResponse.threads.length === 0) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('No threads found.')
+                    ]);
+                }
+
+                const threads = threadsResponse.threads.map((thread: any) => 
+                    `Thread #${thread.id}: ${thread.name}`
+                );
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        `Active Threads:\n${threads.join('\n')}`
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to get threads: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('get_debug_threads', getThreadsTool));
+
+    // Tool 7: Remove Breakpoints
+    const removeBreakpointsTool: LanguageModelTool<RemoveBreakpointsInput> = {
+        async invoke(options: { input: RemoveBreakpointsInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const { filePath, lineNumber } = options.input;
+
+                const breakpoints = vscode.debug.breakpoints;
+
+                if (!filePath) {
+                    // Remove all breakpoints (no active session required)
+                    const count = breakpoints.length;
+                    vscode.debug.removeBreakpoints(breakpoints);
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart(`✓ Removed all ${count} breakpoint(s).`)
+                    ]);
+                }
+
+                const uri = vscode.Uri.file(filePath);
+                const toRemove = breakpoints.filter(bp => {
+                    if (bp instanceof vscode.SourceBreakpoint) {
+                        const match = bp.location.uri.fsPath === uri.fsPath;
+                        if (lineNumber !== undefined) {
+                            return match && bp.location.range.start.line === lineNumber - 1;
+                        }
+                        return match;
+                    }
+                    return false;
+                });
+
+                if (toRemove.length > 0) {
+                    vscode.debug.removeBreakpoints(toRemove);
+                }
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        toRemove.length > 0 
+                            ? `✓ Removed ${toRemove.length} breakpoint(s) from ${path.basename(filePath)}${lineNumber ? `:${lineNumber}` : ''}`
+                            : 'No matching breakpoints found.'
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to remove breakpoints: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('remove_java_breakpoints', removeBreakpointsTool));
+
+    // Tool 8: Stop Debug Session
+    const stopDebugSessionTool: LanguageModelTool<StopDebugSessionInput> = {
+        async invoke(options: { input: StopDebugSessionInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const session = vscode.debug.activeDebugSession;
+                
+                if (!session) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('No active debug session to stop.')
+                    ]);
+                }
+
+                const sessionInfo = `${session.name} (${session.type})`;
+                const reason = options.input.reason || 'Investigation complete';
+                
+                // Stop the debug session
+                await vscode.debug.stopDebugging(session);
+                
+                sendInfo('', {
+                    operationName: 'languageModelTool.stopDebugSession',
+                    sessionId: session.id,
+                    sessionName: session.name,
+                    reason: reason
+                });
+                
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(
+                        `✓ Stopped debug session: ${sessionInfo}. Reason: ${reason}`
+                    )
+                ]);
+            } catch (error) {
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to stop debug session: ${error}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('stop_debug_session', stopDebugSessionTool));
+
+    return disposables;
+}
+
+/**
+ * Simple wildcard matching helper
+ */
+function matchWildcard(text: string, pattern: string): boolean {
+    const regex = new RegExp('^' + pattern.split('*').map(escapeRegex).join('.*') + '$');
+    return regex.test(text);
+}
+
+function escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

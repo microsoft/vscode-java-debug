@@ -18,7 +18,7 @@ import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, Y
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
 import { logJavaException, logJavaInfo } from "./javaLogger";
-import { registerLanguageModelTool } from "./languageModelTool";
+import { registerLanguageModelTool, registerDebugSessionTools } from "./languageModelTool";
 import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
@@ -41,10 +41,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
     );
     context.subscriptions.push(noConfigDisposable);
 
-    // Register Language Model Tool for AI-assisted debugging
-    if (vscode.lm && vscode.lm.registerTool) {
-        registerLanguageModelTool(context);
-    }
+    // Register Language Model Tools after Java Language Server is ready
+    registerLanguageModelToolsWhenReady(context);
 
     return instrumentOperation("activation", initializeExtension)(context);
 }
@@ -103,6 +101,29 @@ export async function deactivate() {
 }
 
 const delay = promisify(setTimeout);
+
+/**
+ * Register Language Model Tools after Java Language Server is ready.
+ * The debug tools depend on JDT.LS for compilation, classpath resolution,
+ * and executing debug server commands.
+ */
+async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionContext): Promise<void> {
+    // Check if Language Model API is available
+    if (!vscode.lm || typeof vscode.lm.registerTool !== 'function') {
+        return;
+    }
+
+    const javaExt = vscode.extensions.getExtension("redhat.java");
+    if (!javaExt) {
+        return;
+    }
+
+    // Register Language Model Tools for AI-assisted debugging
+    registerLanguageModelTool(context);
+    const debugToolsDisposables = registerDebugSessionTools(context);
+    context.subscriptions.push(...debugToolsDisposables);
+}
+
 async function subscribeToJavaExtensionEvents(): Promise<void> {
     const javaExt = vscode.extensions.getExtension("redhat.java");
     if (!javaExt) {
