@@ -1300,14 +1300,16 @@
       {
         "name": "get_debug_session_info",
         "displayName": "Get Debug Session Info",
-        "modelDescription": "Get information about the currently active Java debug session. Use this to check if a debug session is already running before starting a new one, or to verify that you can use debug tools. Returns session ID, name, type, configuration details, and available actions. If no session is active, provides guidance on how to start debugging.",
+        "modelDescription": "Get information about the currently active Java debug session, including whether it's PAUSED at a breakpoint or RUNNING. CRITICAL: Check status before using inspection tools (get_debug_variables, get_debug_stack_trace, evaluate_debug_expression) or control operations (continue, step). PAUSED status (🔴) means stopped at breakpoint - inspection and control tools available. RUNNING status (🟢) means executing code - only breakpoint setting or session stop available. Returns session ID, name, type, configuration details, and status-specific available actions.",
         "toolReferenceName": "getDebugSessionInfo",
         "tags": [
           "java",
           "debug",
           "session",
           "info",
-          "status"
+          "status",
+          "paused",
+          "running"
         ],
         "icon": "$(info)",
         "canBeReferencedInPrompt": true,

@@ -1181,9 +1181,45 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     }
                 };
                 
+                // Check if session is paused (stopped at breakpoint)
+                let isPaused = false;
+                let stoppedReason = 'unknown';
+                try {
+                    // Try to get stack trace - only succeeds if session is paused
+                    const stackResponse = await session.customRequest('stackTrace', {
+                        threadId: (session as any).threadId || 1,
+                        startFrame: 0,
+                        levels: 1
+                    });
+                    
+                    if (stackResponse && stackResponse.stackFrames && stackResponse.stackFrames.length > 0) {
+                        isPaused = true;
+                        // Check threads to get stop reason
+                        try {
+                            const threadsResponse = await session.customRequest('threads');
+                            if (threadsResponse?.threads) {
+                                const stoppedThread = threadsResponse.threads.find((t: any) => t.id === (session as any).threadId || t.id === 1);
+                                if (stoppedThread) {
+                                    stoppedReason = (session as any).stoppedDetails?.reason || 'breakpoint';
+                                }
+                            }
+                        } catch {
+                            stoppedReason = 'breakpoint';
+                        }
+                    }
+                } catch {
+                    // If stackTrace fails, session is running (not paused)
+                    isPaused = false;
+                }
+                
+                const statusLine = isPaused 
+                    ? `🔴 Status: PAUSED (stopped: ${stoppedReason})`
+                    : '🟢 Status: RUNNING';
+                
                 const message = [
                     '✓ Active Debug Session Found:',
                     '',
+                    statusLine,
                     `• Session ID: ${sessionInfo.id}`,
                     `• Session Name: ${sessionInfo.name}`,
                     `• Debug Type: ${sessionInfo.type}`,
@@ -1197,8 +1233,14 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     `• Project: ${sessionInfo.configuration.projectName || 'N/A'}`,
                     '',
                     'Available Actions:',
-                    '• Use debug tools (get_debug_variables, debug_step_operation, etc.) to inspect this session',
-                    '• Use stop_debug_session to terminate this session when done'
+                    isPaused 
+                        ? '• Use debug tools (get_debug_variables, get_debug_stack_trace, evaluate_debug_expression) to inspect state\n' +
+                          '• Use debug_step_operation (stepOver, stepIn, stepOut, continue) to control execution\n' +
+                          '• Use stop_debug_session to terminate this session when done'
+                        : '⚠️  Session is running - waiting for breakpoint to be hit\n' +
+                          '• Set breakpoints with set_java_breakpoint\n' +
+                          '• Use stop_debug_session to terminate this session\n' +
+                          '• Debug inspection tools require session to be paused at a breakpoint'
                 ].join('\n');
                 
                 sendInfo('', {
