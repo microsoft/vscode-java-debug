@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.58.3",
+  "version": "0.58.4",
   "publisher": "vscjava",
   "preview": false,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -1123,7 +1123,7 @@
       {
         "name": "get_debug_variables",
         "displayName": "Get Debug Variables",
-        "modelDescription": "Inspect variables in the current stack frame: local variables, method parameters, static fields, and instance fields. Returns variable names, types, and values. Supports filtering by scope type or name pattern with wildcards. REQUIRES: Active debug session in paused state. Use this to examine program state when stopped at a breakpoint.",
+        "modelDescription": "Inspect variables in a specific thread's stack frame: local variables, method parameters, static fields, and instance fields. Returns variable names, types, and values. Supports filtering by scope type or name pattern. REQUIRES: Active debug session with at least one SUSPENDED thread. For multi-threaded debugging, use threadId to specify which thread's variables to inspect. If no threadId is provided, uses the first suspended thread.",
         "toolReferenceName": "getDebugVariables",
         "tags": [
           "java",
@@ -1136,6 +1136,10 @@
         "inputSchema": {
           "type": "object",
           "properties": {
+            "threadId": {
+              "type": "number",
+              "description": "Thread ID to inspect. Use get_debug_threads() to list available threads with their IDs and states. Only SUSPENDED threads can be inspected. If omitted, uses the first suspended thread found."
+            },
             "frameId": {
               "type": "number",
               "description": "Optional stack frame ID. Default is 0 (current/top frame). Use get_debug_stack_trace to get available frame IDs. Higher numbers are deeper in the call stack."
@@ -1189,7 +1193,7 @@
       {
         "name": "evaluate_debug_expression",
         "displayName": "Evaluate Debug Expression",
-        "modelDescription": "Evaluate a Java expression in the current debug context. Access local variables, parameters, fields, and invoke methods. Returns the result with type information. REQUIRES: Active debug session in paused state. Use this to test hypotheses, check complex conditions, or invoke methods without modifying code. Examples: 'user.getName()', 'list.size() > 10', 'Thread.holdsLock(this)'.",
+        "modelDescription": "Evaluate a Java expression in a specific thread's debug context. Access local variables, parameters, fields, and invoke methods. Returns the result with type information. REQUIRES: Active debug session with at least one SUSPENDED thread. For multi-threaded debugging, use threadId to specify which thread's context to use. If no threadId is provided, uses the first suspended thread. Examples: 'user.getName()', 'list.size() > 10', 'counter == null'.",
         "toolReferenceName": "evaluateDebugExpression",
         "tags": [
           "java",
@@ -1205,6 +1209,10 @@
             "expression": {
               "type": "string",
               "description": "The Java expression to evaluate. Can be a variable name, field access, method call, or complex expression. Example: 'user.age', 'calculateTotal()', 'count > 0 && !items.isEmpty()'."
+            },
+            "threadId": {
+              "type": "number",
+              "description": "Thread ID for evaluation context. Use get_debug_threads() to list available threads with their IDs and states. Only SUSPENDED threads can evaluate expressions. If omitted, uses the first suspended thread found."
             },
             "frameId": {
               "type": "number",
@@ -1230,7 +1238,7 @@
       {
         "name": "get_debug_threads",
         "displayName": "Get Debug Threads",
-        "modelDescription": "List all threads in the debugged Java application with their IDs, names, and states (running, suspended, blocked). REQUIRES: Active debug session. Essential for multi-threaded debugging: use thread IDs to target specific threads in step operations or variable inspection.",
+        "modelDescription": "List all threads in the debugged Java application with their IDs, names, and states (🔴 SUSPENDED or 🟢 RUNNING). For SUSPENDED threads, also shows the current location (file:line). REQUIRES: Active debug session. IMPORTANT: Only SUSPENDED threads can have their variables inspected or expressions evaluated. Use the returned thread IDs with get_debug_variables(threadId=X) or evaluate_debug_expression(threadId=X) to inspect specific threads.",
         "toolReferenceName": "getDebugThreads",
         "tags": [
           "java",

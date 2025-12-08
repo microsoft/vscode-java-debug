@@ -754,6 +754,7 @@ interface StepOperationInput {
 }
 
 interface GetVariablesInput {
+    threadId?: number;
     frameId?: number;
     scopeType?: 'local' | 'static' | 'all';
     filter?: string;
@@ -766,6 +767,7 @@ interface GetStackTraceInput {
 
 interface EvaluateExpressionInput {
     expression: string;
+    threadId?: number;
     frameId?: number;
     context?: 'watch' | 'repl' | 'hover';
 }
@@ -886,11 +888,39 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     ]);
                 }
 
-                const { frameId = 0, scopeType = 'all', filter } = options.input;
+                const { threadId, frameId = 0, scopeType = 'all', filter } = options.input;
+
+                // Find the target thread - either specified or find first suspended thread
+                let targetThreadId = threadId;
+                if (!targetThreadId) {
+                    const threadsResponse = await session.customRequest('threads');
+                    // Find first suspended thread by trying to get its stack trace
+                    for (const thread of threadsResponse.threads || []) {
+                        try {
+                            const testStack = await session.customRequest('stackTrace', {
+                                threadId: thread.id,
+                                startFrame: 0,
+                                levels: 1
+                            });
+                            if (testStack?.stackFrames?.length > 0) {
+                                targetThreadId = thread.id;
+                                break;
+                            }
+                        } catch {
+                            continue;
+                        }
+                    }
+                }
+
+                if (!targetThreadId) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No suspended thread found. Use get_debug_threads() to see thread states.')
+                    ]);
+                }
 
                 // Get stack trace to access frame
                 const stackResponse = await session.customRequest('stackTrace', {
-                    threadId: (session as any).threadId || 1,
+                    threadId: targetThreadId,
                     startFrame: frameId,
                     levels: 1
                 });
@@ -932,7 +962,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
-                        `Variables (frame ${frameId}):\n${variables.join('\n')}`
+                        `Variables (Thread #${targetThreadId}, Frame ${frameId}):\n${variables.join('\n')}`
                     )
                 ]);
             } catch (error) {
@@ -1001,17 +1031,69 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     ]);
                 }
 
-                const { expression, frameId = 0, context = 'repl' } = options.input;
+                const { expression, threadId, frameId = 0, context = 'repl' } = options.input;
+
+                // Find the target thread and frame for evaluation
+                let targetFrameId = frameId;
+                let targetThreadId = threadId;
+                
+                // If no threadId specified, find first suspended thread
+                if (!targetThreadId) {
+                    const threadsResponse = await session.customRequest('threads');
+                    for (const thread of threadsResponse.threads || []) {
+                        try {
+                            const testStack = await session.customRequest('stackTrace', {
+                                threadId: thread.id,
+                                startFrame: 0,
+                                levels: 1
+                            });
+                            if (testStack?.stackFrames?.length > 0) {
+                                targetThreadId = thread.id;
+                                // Use the actual frame ID from the stack
+                                if (frameId === 0) {
+                                    targetFrameId = testStack.stackFrames[0].id;
+                                }
+                                break;
+                            }
+                        } catch {
+                            continue;
+                        }
+                    }
+                } else {
+                    // Get the frame ID for the specified thread
+                    try {
+                        const stackResponse = await session.customRequest('stackTrace', {
+                            threadId: targetThreadId,
+                            startFrame: frameId,
+                            levels: 1
+                        });
+                        if (stackResponse?.stackFrames?.length > 0) {
+                            targetFrameId = stackResponse.stackFrames[0].id;
+                        }
+                    } catch {
+                        return new (vscode as any).LanguageModelToolResult([
+                            new (vscode as any).LanguageModelTextPart(`✗ Thread #${targetThreadId} is not suspended. Cannot evaluate expression.`)
+                        ]);
+                    }
+                }
+
+                if (!targetThreadId) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('✗ No suspended thread found. Use get_debug_threads() to see thread states.')
+                    ]);
+                }
 
                 const evalResponse = await session.customRequest('evaluate', {
                     expression,
-                    frameId,
+                    frameId: targetFrameId,
                     context
                 });
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
-                        `Expression: ${expression}\nResult: ${evalResponse.result}${evalResponse.type ? ` (${evalResponse.type})` : ''}`
+                        `Expression: ${expression}\n` +
+                        `Thread: #${targetThreadId}\n` +
+                        `Result: ${evalResponse.result}${evalResponse.type ? ` (${evalResponse.type})` : ''}`
                     )
                 ]);
             } catch (error) {
@@ -1042,13 +1124,46 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     ]);
                 }
 
-                const threads = threadsResponse.threads.map((thread: any) => 
-                    `Thread #${thread.id}: ${thread.name}`
-                );
+                // Check each thread's state by trying to get its stack trace
+                const threadInfos: string[] = [];
+                for (const thread of threadsResponse.threads) {
+                    let state = '🟢 RUNNING';
+                    let location = '';
+                    
+                    try {
+                        const stackResponse = await session.customRequest('stackTrace', {
+                            threadId: thread.id,
+                            startFrame: 0,
+                            levels: 1
+                        });
+                        
+                        if (stackResponse?.stackFrames?.length > 0) {
+                            state = '🔴 SUSPENDED';
+                            const topFrame = stackResponse.stackFrames[0];
+                            if (topFrame.source) {
+                                location = ` at ${topFrame.source.name}:${topFrame.line}`;
+                            }
+                        }
+                    } catch {
+                        // Thread is running, can't get stack
+                        state = '🟢 RUNNING';
+                    }
+                    
+                    threadInfos.push(`Thread #${thread.id}: ${thread.name} [${state}]${location}`);
+                }
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
-                        `Active Threads:\n${threads.join('\n')}`
+                        `═══════════════════════════════════════════\n` +
+                        `THREADS (${threadsResponse.threads.length} total)\n` +
+                        `═══════════════════════════════════════════\n\n` +
+                        `${threadInfos.join('\n')}\n\n` +
+                        `───────────────────────────────────────────\n` +
+                        `💡 Use threadId parameter to inspect a specific thread:\n` +
+                        `• get_debug_variables(threadId=X)\n` +
+                        `• get_debug_stack_trace(threadId=X)\n` +
+                        `• evaluate_debug_expression(threadId=X, expression="...")\n` +
+                        `───────────────────────────────────────────`
                     )
                 ]);
             } catch (error) {
@@ -1181,72 +1296,149 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     }
                 };
                 
-                // Check if session is paused (stopped at breakpoint)
+                // Check if session is paused and get current location
+                // Strategy: Get all threads first, then try to get stack trace for each
+                // A thread is paused if we can successfully get its stack trace
                 let isPaused = false;
                 let stoppedReason = 'unknown';
+                let currentLocation = '';
+                let currentFile = '';
+                let currentLine = 0;
+                let stoppedThreadId: number | undefined;
+                let stoppedThreadName = '';
+                
                 try {
-                    // Try to get stack trace - only succeeds if session is paused
-                    const stackResponse = await session.customRequest('stackTrace', {
-                        threadId: (session as any).threadId || 1,
-                        startFrame: 0,
-                        levels: 1
-                    });
+                    // Step 1: Get all threads
+                    const threadsResponse = await session.customRequest('threads');
+                    const threads = threadsResponse?.threads || [];
                     
-                    if (stackResponse && stackResponse.stackFrames && stackResponse.stackFrames.length > 0) {
-                        isPaused = true;
-                        // Check threads to get stop reason
+                    // Step 2: Try to get stack trace for each thread to find paused one
+                    // In Java debug, only paused threads can provide stack traces
+                    for (const thread of threads) {
                         try {
-                            const threadsResponse = await session.customRequest('threads');
-                            if (threadsResponse?.threads) {
-                                const stoppedThread = threadsResponse.threads.find((t: any) => t.id === (session as any).threadId || t.id === 1);
-                                if (stoppedThread) {
-                                    stoppedReason = (session as any).stoppedDetails?.reason || 'breakpoint';
+                            const stackResponse = await session.customRequest('stackTrace', {
+                                threadId: thread.id,
+                                startFrame: 0,
+                                levels: 1
+                            });
+                            
+                            // If we got stack frames, this thread is paused
+                            if (stackResponse?.stackFrames?.length > 0) {
+                                isPaused = true;
+                                stoppedThreadId = thread.id;
+                                stoppedThreadName = thread.name || `Thread-${thread.id}`;
+                                
+                                const topFrame = stackResponse.stackFrames[0];
+                                
+                                // Extract current location details
+                                if (topFrame.source) {
+                                    currentFile = topFrame.source.path || topFrame.source.name || 'unknown';
+                                    currentLine = topFrame.line || 0;
+                                    const methodName = topFrame.name || 'unknown';
+                                    const fileName = topFrame.source.name || path.basename(currentFile);
+                                    currentLocation = `${fileName}:${currentLine} in ${methodName}`;
                                 }
+                                
+                                // Try to determine stop reason from thread name or default to breakpoint
+                                stoppedReason = 'breakpoint';
+                                
+                                // Found a paused thread, no need to check others for basic info
+                                break;
                             }
                         } catch {
-                            stoppedReason = 'breakpoint';
+                            // This thread is running, not paused - continue to next
+                            continue;
                         }
                     }
-                } catch {
-                    // If stackTrace fails, session is running (not paused)
+                    
+                    // If no thread had stack frames, all are running
+                    if (!isPaused && threads.length > 0) {
+                        // Session exists but all threads are running
+                        isPaused = false;
+                    }
+                } catch (error) {
+                    // If we can't even get threads, something is wrong
+                    // But session exists, so mark as running
                     isPaused = false;
+                    sendInfo('', {
+                        operationName: 'languageModelTool.getDebugSessionInfo.threadError',
+                        error: String(error)
+                    });
                 }
                 
-                const statusLine = isPaused 
-                    ? `🔴 Status: PAUSED (stopped: ${stoppedReason})`
-                    : '🟢 Status: RUNNING';
+                // Build status line with location info
+                let statusLine: string;
+                let locationInfo = '';
+                
+                if (isPaused) {
+                    statusLine = `🔴 Status: PAUSED (${stoppedReason})`;
+                    locationInfo = [
+                        '',
+                        '📍 Current Location:',
+                        `• File: ${currentFile}`,
+                        `• Line: ${currentLine}`,
+                        `• Method: ${currentLocation}`,
+                        `• Thread: ${stoppedThreadName} (ID: ${stoppedThreadId})`
+                    ].join('\n');
+                } else {
+                    statusLine = '🟢 Status: RUNNING';
+                }
+                
+                // Build clear action guidance based on state
+                let actionGuidance: string;
+                if (isPaused) {
+                    actionGuidance = [
+                        '✅ READY FOR INSPECTION - Session is paused at breakpoint',
+                        '',
+                        'You can now:',
+                        '• evaluate_debug_expression - Test your hypothesis (e.g., "user == null")',
+                        '• get_debug_variables - Inspect specific variables',
+                        '• get_debug_stack_trace - See full call stack',
+                        '• debug_step_operation - Step through code (stepOver, stepIn, stepOut)',
+                        '• debug_step_operation(continue) - Resume to next breakpoint',
+                        '• stop_debug_session - End debugging when done'
+                    ].join('\n');
+                } else {
+                    actionGuidance = [
+                        '⏳ WAITING - Session is running, not yet at breakpoint',
+                        '',
+                        'The program is executing. To pause:',
+                        '• Wait for it to hit your breakpoint',
+                        '• Or use debug_step_operation(pause) to pause immediately',
+                        '',
+                        'Inspection tools (get_debug_variables, evaluate_debug_expression) ',
+                        'will NOT work until the session is PAUSED.'
+                    ].join('\n');
+                }
                 
                 const message = [
-                    '✓ Active Debug Session Found:',
+                    '═══════════════════════════════════════════',
+                    isPaused ? '🔴 DEBUG SESSION PAUSED' : '🟢 DEBUG SESSION RUNNING',
+                    '═══════════════════════════════════════════',
                     '',
                     statusLine,
+                    locationInfo,
+                    '',
+                    '───────────────────────────────────────────',
+                    'Session Details:',
                     `• Session ID: ${sessionInfo.id}`,
-                    `• Session Name: ${sessionInfo.name}`,
-                    `• Debug Type: ${sessionInfo.type}`,
-                    `• Workspace: ${sessionInfo.workspaceFolder}`,
-                    '',
-                    'Configuration:',
-                    `• Name: ${sessionInfo.configuration.name || 'N/A'}`,
-                    `• Type: ${sessionInfo.configuration.type || 'N/A'}`,
-                    `• Request: ${sessionInfo.configuration.request || 'N/A'}`,
+                    `• Name: ${sessionInfo.name}`,
+                    `• Type: ${sessionInfo.type}`,
                     `• Main Class: ${sessionInfo.configuration.mainClass || 'N/A'}`,
-                    `• Project: ${sessionInfo.configuration.projectName || 'N/A'}`,
                     '',
-                    'Available Actions:',
-                    isPaused 
-                        ? '• Use debug tools (get_debug_variables, get_debug_stack_trace, evaluate_debug_expression) to inspect state\n' +
-                          '• Use debug_step_operation (stepOver, stepIn, stepOut, continue) to control execution\n' +
-                          '• Use stop_debug_session to terminate this session when done'
-                        : '⚠️  Session is running - waiting for breakpoint to be hit\n' +
-                          '• Set breakpoints with set_java_breakpoint\n' +
-                          '• Use stop_debug_session to terminate this session\n' +
-                          '• Debug inspection tools require session to be paused at a breakpoint'
+                    '───────────────────────────────────────────',
+                    actionGuidance,
+                    '═══════════════════════════════════════════'
                 ].join('\n');
                 
                 sendInfo('', {
                     operationName: 'languageModelTool.getDebugSessionInfo',
                     sessionId: session.id,
-                    sessionType: session.type
+                    sessionType: session.type,
+                    isPaused: String(isPaused),
+                    stoppedThreadId: String(stoppedThreadId || ''),
+                    currentFile: currentFile,
+                    currentLine: String(currentLine)
                 });
                 
                 return new (vscode as any).LanguageModelToolResult([
