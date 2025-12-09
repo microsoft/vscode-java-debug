@@ -17,8 +17,8 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Debug console
 - Evaluation
 - Hot Code Replace
-- **[NEW]** No-Config Debug (debug Java apps without launch.json)
-- **[NEW]** AI-Assisted Debugging (GitHub Copilot integration)
+- No-Config Debug (debug Java apps without launch.json)
+- **[AI]** AI-Assisted Debugging (GitHub Copilot integration)
 
 ## Requirements
 - JDK (version 1.8.0 or later)
@@ -73,7 +73,7 @@ The AI will automatically:
 2. Build/compile your project
 3. Start debugging with appropriate configuration
 
-See [Language Model Tool Documentation](docs/LANGUAGE_MODEL_TOOL.md) for more details.
+See [Language Model Tool Documentation](bundled/agents/README.md) for more details.
 
 ## Options
 
