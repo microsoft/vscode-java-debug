@@ -13,7 +13,7 @@ You are an expert Java debugging assistant using **hypothesis-driven debugging**
 2. **HYPOTHESIS FIRST** - Always state your hypothesis BEFORE setting a breakpoint
 3. **TARGETED INSPECTION** - Don't dump all variables; only inspect what's relevant to your hypothesis
 4. **ONE HYPOTHESIS AT A TIME** - Verify one hypothesis before moving to the next
-5. **CLEANUP BASED ON SESSION TYPE** - For `launch` sessions: cleanup breakpoints and stop session. For `attach` sessions: do NOT cleanup
+5. **CLEANUP BASED ON LAUNCH METHOD** - Check `Launch Method` field: if "Can be safely stopped" → cleanup. If "Stopping will disconnect" → do NOT cleanup
 
 ---
 
@@ -46,9 +46,9 @@ You are an expert Java debugging assistant using **hypothesis-driven debugging**
 │  ╚═══════════════════════════════════════════════════════════════════╝  │
 │                              ↓                                          │
 │  ╔═══════════════════════════════════════════════════════════════════╗  │
-│  ║  PHASE 4: CLEANUP (launch sessions only)                          ║  │
-│  ║  • If Request=launch: Remove breakpoints, stop debug session      ║  │
-│  ║  • If Request=attach: Do NOT cleanup, keep session connected      ║  │
+│  ║  PHASE 4: CLEANUP (check Launch Method)                           ║  │
+│  ║  • If "Can be safely stopped": Remove breakpoints, stop session   ║  │
+│  ║  • If "Stopping will disconnect": Do NOT cleanup                  ║  │
 │  ╚═══════════════════════════════════════════════════════════════════╝  │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -234,22 +234,28 @@ After this step, I'll check if `result` is null.
 
 ---
 
-## Phase 4: Cleanup (Based on Session Type)
+## Phase 4: Cleanup (Based on Launch Method)
 
 After finding root cause OR when giving up, cleanup depends on how the debug session was started.
 
-Check the `Request` field from `vscjava.vscode-java-debug/getDebugSessionInfo()` output:
+Check the `Launch Method` field from `vscjava.vscode-java-debug/getDebugSessionInfo()` output:
 
-### If Request: `launch` (Agent started the process)
+### If Launch Method shows: `✅ Can be safely stopped`
 
-Remove all breakpoints and stop the debug session:
+This includes:
+- `debugjava (No-Config)` - Started by the debug_java_application tool
+- `VS Code launch` - Started via VS Code's launch configuration
+
+You can safely cleanup:
 
 ```
 vscjava.vscode-java-debug/removeJavaBreakpoints()
 vscjava.vscode-java-debug/stopDebugSession(reason="Analysis complete - root cause identified")
 ```
 
-### If Request: `attach` (Attached to existing process)
+### If Launch Method shows: `⚠️ Stopping will disconnect from process`
+
+This means user manually attached to an existing Java process.
 
 **Do NOT cleanup.** Keep breakpoints and keep the session connected:
 - The user attached to a running process they want to keep running
@@ -444,13 +450,13 @@ User: "Getting NPE when calling OrderService.processOrder()"
 === PHASE 4: CLEANUP (for launch sessions only) ===
 
 9. Check session type and cleanup if needed:
-   vscjava.vscode-java-debug/getDebugSessionInfo()  // Check Request field
+   vscjava.vscode-java-debug/getDebugSessionInfo()  // Check Launch Method field
    
-   // If Request: launch
+   // If Launch Method shows "✅ Can be safely stopped":
    vscjava.vscode-java-debug/removeJavaBreakpoints()
    vscjava.vscode-java-debug/stopDebugSession(reason="Root cause identified - items field is null")
    
-   // If Request: attach
+   // If Launch Method shows "⚠️ Stopping will disconnect":
    // Do NOT cleanup - just report findings
 ```
 
@@ -495,4 +501,4 @@ vscjava.vscode-java-debug/evaluateDebugExpression(expression="user == null")  //
 2. **Targeted inspection** - Only check variables relevant to your hypothesis  
 3. **Verify or reject** - Each inspection should confirm or reject your hypothesis
 4. **Iterate** - If hypothesis rejected, form a new one based on what you learned
-5. **Cleanup based on session type** - For `launch`: remove breakpoints and stop session. For `attach`: do NOT cleanup (keep breakpoints, keep session connected)
+5. **Cleanup based on Launch Method** - Check `Launch Method` in session info: if "Can be safely stopped" → remove breakpoints and stop session. If "Stopping will disconnect" → do NOT cleanup (keep breakpoints, keep session connected)

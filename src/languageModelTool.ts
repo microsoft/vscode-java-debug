@@ -1479,6 +1479,15 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     ].join('\n');
                 }
 
+                // Determine if this is a debugjava (No-Config) session that can be safely stopped
+                const isNoConfigSession = sessionInfo.name.includes('No-Config') ||
+                                          sessionInfo.name.includes('debugjava');
+                const launchMethod = isNoConfigSession
+                    ? 'debugjava (No-Config) - ✅ Can be safely stopped'
+                    : sessionInfo.configuration.request === 'attach'
+                        ? 'External attach - ⚠️ Stopping will disconnect from process'
+                        : 'VS Code launch - ✅ Can be safely stopped';
+
                 const message = [
                     '═══════════════════════════════════════════',
                     isPaused ? '🔴 DEBUG SESSION PAUSED' : '🟢 DEBUG SESSION RUNNING',
@@ -1493,6 +1502,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     `• Name: ${sessionInfo.name}`,
                     `• Type: ${sessionInfo.type}`,
                     `• Request: ${sessionInfo.configuration.request || 'N/A'}`,
+                    `• Launch Method: ${launchMethod}`,
                     `• Main Class: ${sessionInfo.configuration.mainClass || 'N/A'}`,
                     '',
                     '───────────────────────────────────────────',
