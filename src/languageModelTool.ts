@@ -6,6 +6,26 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { sendError, sendInfo } from "vscode-extension-telemetry-wrapper";
 
+// ============================================================================
+// Constants
+// ============================================================================
+const CONSTANTS = {
+    /** Timeout for waitForSession mode (ms) */
+    SESSION_WAIT_TIMEOUT: 45000,
+    /** Maximum wait time for smart polling (ms) */
+    SMART_POLLING_MAX_WAIT: 15000,
+    /** Interval between polling checks (ms) */
+    SMART_POLLING_INTERVAL: 300,
+    /** Timeout for build tasks (ms) */
+    BUILD_TIMEOUT: 60000,
+    /** Maximum number of Java files to check for compilation errors */
+    MAX_JAVA_FILES_TO_CHECK: 100,
+    /** Default stack trace depth */
+    DEFAULT_STACK_DEPTH: 50,
+    /** Maximum depth for recursive file search */
+    MAX_FILE_SEARCH_DEPTH: 10
+};
+
 interface DebugJavaApplicationInput {
     target: string;
     workspacePath: string;
@@ -189,7 +209,7 @@ async function debugJavaApplication(
             // Send the command after setting up the listener
             terminal.sendText(debugCommand);
 
-            // Set a timeout (45 seconds) for large applications
+            // Set a timeout for large applications
             const timeoutHandle = setTimeout(() => {
                 if (!sessionStarted) {
                     sessionDisposable.dispose();
@@ -202,7 +222,7 @@ async function debugJavaApplication(
                     resolve({
                         success: false,
                         status: 'timeout',
-                        message: `❌ Debug session failed to start within 45 seconds for ${targetInfo}.\n\n` +
+                        message: `❌ Debug session failed to start within ${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds for ${targetInfo}.\n\n` +
                                  `This usually indicates a problem:\n` +
                                  `• Compilation errors preventing startup\n` +
                                  `• ClassNotFoundException or NoClassDefFoundError\n` +
@@ -216,15 +236,15 @@ async function debugJavaApplication(
                         terminalName: terminal.name
                     });
                 }
-            }, 45000);
+            }, CONSTANTS.SESSION_WAIT_TIMEOUT);
         });
     } else {
         // Default behavior: send command and use smart polling to detect session start
         terminal.sendText(debugCommand);
 
-        // Smart polling: check every 300ms for up to 15 seconds
-        const maxWaitTime = 15000;  // 15 seconds max
-        const pollInterval = 300;   // Check every 300ms
+        // Smart polling to detect session start
+        const maxWaitTime = CONSTANTS.SMART_POLLING_MAX_WAIT;
+        const pollInterval = CONSTANTS.SMART_POLLING_INTERVAL;
         const startTime = Date.now();
 
         while (Date.now() - startTime < maxWaitTime) {
@@ -262,7 +282,7 @@ async function debugJavaApplication(
         return {
             success: true,
             status: 'timeout',
-            message: `⚠️ Debug command sent for ${targetInfo}, but session not detected within 15 seconds.\n\n` +
+            message: `⚠️ Debug command sent for ${targetInfo}, but session not detected within ${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n` +
                      `Possible reasons:\n` +
                      `• Application is still starting (large projects may take longer)\n` +
                      `• Compilation errors (check terminal '${terminal.name}' for errors)\n` +
@@ -270,7 +290,7 @@ async function debugJavaApplication(
                      `Next steps:\n` +
                      `• Use get_debug_session_info() to check if session is now active\n` +
                      `• Check terminal '${terminal.name}' for error messages\n` +
-                     `• If starting slowly, wait 10-15 more seconds and check again${warningNote}`,
+                     `• If starting slowly, wait a bit longer and check again${warningNote}`,
             terminalName: terminal.name
         };
     }
@@ -329,57 +349,111 @@ async function buildProject(
 }
 
 /**
+ * Executes a shell task and waits for completion.
+ * This is a common function used by both Maven and Gradle builds.
+ */
+async function executeShellTask(
+    workspaceUri: vscode.Uri,
+    taskId: string,
+    taskName: string,
+    command: string,
+    successMessage: string,
+    timeoutMessage: string,
+    failureMessagePrefix: string
+): Promise<DebugJavaApplicationResult> {
+    return new Promise((resolve) => {
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(workspaceUri);
+        if (!workspaceFolder) {
+            resolve({
+                success: false,
+                message: `Cannot find workspace folder for ${workspaceUri.fsPath}`
+            });
+            return;
+        }
+
+        const task = new vscode.Task(
+            { type: 'shell', task: taskId },
+            workspaceFolder,
+            taskName,
+            'Java Debug',
+            new vscode.ShellExecution(command, { cwd: workspaceUri.fsPath })
+        );
+
+        let resolved = false;
+        let taskDisposable: vscode.Disposable | undefined;
+        let errorDisposable: vscode.Disposable | undefined;
+
+        const cleanup = () => {
+            clearTimeout(timeoutHandle);
+            taskDisposable?.dispose();
+            errorDisposable?.dispose();
+        };
+
+        // Set a timeout to avoid hanging indefinitely
+        const timeoutHandle = setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                cleanup();
+                resolve({
+                    success: true,
+                    message: timeoutMessage
+                });
+            }
+        }, CONSTANTS.BUILD_TIMEOUT);
+
+        vscode.tasks.executeTask(task).then(
+            (execution) => {
+                taskDisposable = vscode.tasks.onDidEndTask((e) => {
+                    if (e.execution === execution && !resolved) {
+                        resolved = true;
+                        cleanup();
+                        resolve({
+                            success: true,
+                            message: successMessage
+                        });
+                    }
+                });
+
+                errorDisposable = vscode.tasks.onDidEndTaskProcess((e) => {
+                    if (e.execution === execution && e.exitCode !== 0 && !resolved) {
+                        resolved = true;
+                        cleanup();
+                        resolve({
+                            success: false,
+                            message: `${failureMessagePrefix} with exit code ${e.exitCode}. Please check the terminal output.`
+                        });
+                    }
+                });
+            },
+            (error: Error) => {
+                if (!resolved) {
+                    resolved = true;
+                    cleanup();
+                    resolve({
+                        success: false,
+                        message: `Failed to execute task: ${error.message}`
+                    });
+                }
+            }
+        );
+    });
+}
+
+/**
  * Builds a Maven project using mvn compile.
  */
 async function buildMavenProject(
     workspaceUri: vscode.Uri
 ): Promise<DebugJavaApplicationResult> {
-    return new Promise((resolve) => {
-        // Use task API for better control
-        const task = new vscode.Task(
-            { type: 'shell', task: 'maven-compile' },
-            vscode.workspace.getWorkspaceFolder(workspaceUri)!,
-            'Maven Compile',
-            'Java Debug',
-            new vscode.ShellExecution('mvn compile', { cwd: workspaceUri.fsPath })
-        );
-
-        // Set a timeout to avoid hanging indefinitely
-        const timeout = setTimeout(() => {
-            resolve({
-                success: true,
-                message: 'Maven compile command sent. Build may still be in progress.'
-            });
-        }, 60000); // 60 second timeout
-
-        vscode.tasks.executeTask(task).then((execution) => {
-            let resolved = false;
-
-            const disposable = vscode.tasks.onDidEndTask((e) => {
-                if (e.execution === execution && !resolved) {
-                    resolved = true;
-                    clearTimeout(timeout);
-                    disposable.dispose();
-                    resolve({
-                        success: true,
-                        message: 'Maven project compiled successfully'
-                    });
-                }
-            });
-
-            const errorDisposable = vscode.tasks.onDidEndTaskProcess((e) => {
-                if (e.execution === execution && e.exitCode !== 0 && !resolved) {
-                    resolved = true;
-                    clearTimeout(timeout);
-                    errorDisposable.dispose();
-                    resolve({
-                        success: false,
-                        message: `Maven build failed with exit code ${e.exitCode}. Please check the terminal output.`
-                    });
-                }
-            });
-        });
-    });
+    return executeShellTask(
+        workspaceUri,
+        'maven-compile',
+        'Maven Compile',
+        'mvn compile',
+        'Maven project compiled successfully',
+        'Maven compile command sent. Build may still be in progress.',
+        'Maven build failed'
+    );
 }
 
 /**
@@ -388,56 +462,20 @@ async function buildMavenProject(
 async function buildGradleProject(
     workspaceUri: vscode.Uri
 ): Promise<DebugJavaApplicationResult> {
-    return new Promise((resolve) => {
-        const gradleWrapper = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
-        const gradleCommand = fs.existsSync(path.join(workspaceUri.fsPath, gradleWrapper))
-            ? gradleWrapper
-            : 'gradle';
+    const gradleWrapper = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
+    const gradleCommand = fs.existsSync(path.join(workspaceUri.fsPath, gradleWrapper))
+        ? gradleWrapper
+        : 'gradle';
 
-        const task = new vscode.Task(
-            { type: 'shell', task: 'gradle-classes' },
-            vscode.workspace.getWorkspaceFolder(workspaceUri)!,
-            'Gradle Classes',
-            'Java Debug',
-            new vscode.ShellExecution(`${gradleCommand} classes`, { cwd: workspaceUri.fsPath })
-        );
-
-        // Set a timeout to avoid hanging indefinitely
-        const timeout = setTimeout(() => {
-            resolve({
-                success: true,
-                message: 'Gradle compile command sent. Build may still be in progress.'
-            });
-        }, 60000); // 60 second timeout
-
-        vscode.tasks.executeTask(task).then((execution) => {
-            let resolved = false;
-
-            const disposable = vscode.tasks.onDidEndTask((e) => {
-                if (e.execution === execution && !resolved) {
-                    resolved = true;
-                    clearTimeout(timeout);
-                    disposable.dispose();
-                    resolve({
-                        success: true,
-                        message: 'Gradle project compiled successfully'
-                    });
-                }
-            });
-
-            const errorDisposable = vscode.tasks.onDidEndTaskProcess((e) => {
-                if (e.execution === execution && e.exitCode !== 0 && !resolved) {
-                    resolved = true;
-                    clearTimeout(timeout);
-                    errorDisposable.dispose();
-                    resolve({
-                        success: false,
-                        message: `Gradle build failed with exit code ${e.exitCode}. Please check the terminal output.`
-                    });
-                }
-            });
-        });
-    });
+    return executeShellTask(
+        workspaceUri,
+        'gradle-classes',
+        'Gradle Classes',
+        `${gradleCommand} classes`,
+        'Gradle project compiled successfully',
+        'Gradle compile command sent. Build may still be in progress.',
+        'Gradle build failed'
+    );
 }
 
 /**
@@ -449,7 +487,7 @@ async function ensureVSCodeCompilation(workspaceUri: vscode.Uri): Promise<DebugJ
         const javaFiles = await vscode.workspace.findFiles(
             new vscode.RelativePattern(workspaceUri, '**/*.java'),
             '**/node_modules/**',
-            100 // Limit to 100 files for performance
+            CONSTANTS.MAX_JAVA_FILES_TO_CHECK
         );
 
         let hasErrors = false;
@@ -587,7 +625,7 @@ function findFullyQualifiedClassName(
         }
 
         try {
-            const javaFile = findJavaFile(srcDir, simpleClassName);
+            const javaFile = findJavaFile(srcDir, simpleClassName, 0);
             if (javaFile) {
                 // Extract package name from the file
                 const packageName = extractPackageName(javaFile);
@@ -608,8 +646,14 @@ function findFullyQualifiedClassName(
 
 /**
  * Recursively searches for a Java file with the given class name.
+ * @param depth Current recursion depth (for limiting search depth)
  */
-function findJavaFile(dir: string, className: string): string | null {
+function findJavaFile(dir: string, className: string, depth: number = 0): string | null {
+    // Limit recursion depth to prevent performance issues
+    if (depth > CONSTANTS.MAX_FILE_SEARCH_DEPTH) {
+        return null;
+    }
+
     try {
         const files = fs.readdirSync(dir);
 
@@ -622,7 +666,7 @@ function findJavaFile(dir: string, className: string): string | null {
                 if (file === 'node_modules' || file === '.git' || file === 'target' || file === 'build') {
                     continue;
                 }
-                const found = findJavaFile(filePath, className);
+                const found = findJavaFile(filePath, className, depth + 1);
                 if (found) {
                     return found;
                 }
@@ -652,8 +696,14 @@ function extractPackageName(javaFilePath: string): string | null {
 
 /**
  * Checks if a directory contains any .class files.
+ * @param depth Current recursion depth (for limiting search depth)
  */
-function hasClassFiles(dir: string): boolean {
+function hasClassFiles(dir: string, depth: number = 0): boolean {
+    // Limit recursion depth to prevent performance issues
+    if (depth > CONSTANTS.MAX_FILE_SEARCH_DEPTH) {
+        return false;
+    }
+
     try {
         const files = fs.readdirSync(dir);
         for (const file of files) {
@@ -663,8 +713,7 @@ function hasClassFiles(dir: string): boolean {
             if (stat.isFile() && file.endsWith('.class')) {
                 return true;
             } else if (stat.isDirectory()) {
-                // Recursively check subdirectories (but limit depth)
-                if (hasClassFiles(filePath)) {
+                if (hasClassFiles(filePath, depth + 1)) {
                     return true;
                 }
             }
@@ -787,6 +836,45 @@ interface StopDebugSessionInput {
 type GetDebugSessionInfoInput = Record<string, never>;
 
 /**
+ * Result of finding a suspended thread
+ */
+interface SuspendedThreadInfo {
+    threadId: number;
+    frameId: number;
+}
+
+/**
+ * Finds the first suspended thread in the debug session.
+ * Returns the thread ID and top frame ID, or null if no suspended thread is found.
+ */
+async function findFirstSuspendedThread(session: vscode.DebugSession): Promise<SuspendedThreadInfo | null> {
+    try {
+        const threadsResponse = await session.customRequest('threads');
+        for (const thread of threadsResponse.threads || []) {
+            try {
+                const stackResponse = await session.customRequest('stackTrace', {
+                    threadId: thread.id,
+                    startFrame: 0,
+                    levels: 1
+                });
+                if (stackResponse?.stackFrames?.length > 0) {
+                    return {
+                        threadId: thread.id,
+                        frameId: stackResponse.stackFrames[0].id
+                    };
+                }
+            } catch {
+                // Thread is running, continue to next
+                continue;
+            }
+        }
+    } catch {
+        // Failed to get threads
+    }
+    return null;
+}
+
+/**
  * Registers all debug session control tools
  */
 export function registerDebugSessionTools(_context: vscode.ExtensionContext): vscode.Disposable[] {
@@ -894,22 +982,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 // Find the target thread - either specified or find first suspended thread
                 let targetThreadId = threadId;
                 if (!targetThreadId) {
-                    const threadsResponse = await session.customRequest('threads');
-                    // Find first suspended thread by trying to get its stack trace
-                    for (const thread of threadsResponse.threads || []) {
-                        try {
-                            const testStack = await session.customRequest('stackTrace', {
-                                threadId: thread.id,
-                                startFrame: 0,
-                                levels: 1
-                            });
-                            if (testStack?.stackFrames?.length > 0) {
-                                targetThreadId = thread.id;
-                                break;
-                            }
-                        } catch {
-                            continue;
-                        }
+                    const suspendedThread = await findFirstSuspendedThread(session);
+                    if (suspendedThread) {
+                        targetThreadId = suspendedThread.threadId;
                     }
                 }
 
@@ -990,7 +1065,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     ]);
                 }
 
-                const { threadId, maxDepth = 50 } = options.input;
+                const { threadId, maxDepth = CONSTANTS.DEFAULT_STACK_DEPTH } = options.input;
 
                 const stackResponse = await session.customRequest('stackTrace', {
                     threadId: threadId || (session as any).threadId || 1,
@@ -1039,29 +1114,17 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 const { expression, threadId, frameId = 0, context = 'repl' } = options.input;
 
                 // Find the target thread and frame for evaluation
-                let targetFrameId = frameId;
+                let targetFrameId: number = frameId;
                 let targetThreadId = threadId;
 
                 // If no threadId specified, find first suspended thread
                 if (!targetThreadId) {
-                    const threadsResponse = await session.customRequest('threads');
-                    for (const thread of threadsResponse.threads || []) {
-                        try {
-                            const testStack = await session.customRequest('stackTrace', {
-                                threadId: thread.id,
-                                startFrame: 0,
-                                levels: 1
-                            });
-                            if (testStack?.stackFrames?.length > 0) {
-                                targetThreadId = thread.id;
-                                // Use the actual frame ID from the stack
-                                if (frameId === 0) {
-                                    targetFrameId = testStack.stackFrames[0].id;
-                                }
-                                break;
-                            }
-                        } catch {
-                            continue;
+                    const suspendedThread = await findFirstSuspendedThread(session);
+                    if (suspendedThread) {
+                        targetThreadId = suspendedThread.threadId;
+                        // Use the actual frame ID from the stack if frameId is 0
+                        if (frameId === 0) {
+                            targetFrameId = suspendedThread.frameId;
                         }
                     }
                 } else {
