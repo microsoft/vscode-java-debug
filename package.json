@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.58.3",
+  "version": "0.58.4",
   "publisher": "vscjava",
   "preview": false,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -99,6 +99,10 @@
       {
         "command": "java.debug.pauseOthers",
         "title": "Pause Others"
+      },
+      {
+        "command": "java.debug.breakpoints.exceptionTypes",
+        "title": "Manage Java Breakpoint Exception Types"
       },
       {
         "command": "java.debug.variables.showHex",
