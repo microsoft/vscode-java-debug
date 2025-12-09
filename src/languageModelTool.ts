@@ -1424,6 +1424,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     `• Session ID: ${sessionInfo.id}`,
                     `• Name: ${sessionInfo.name}`,
                     `• Type: ${sessionInfo.type}`,
+                    `• Request: ${sessionInfo.configuration.request || 'N/A'}`,
                     `• Main Class: ${sessionInfo.configuration.mainClass || 'N/A'}`,
                     '',
                     '───────────────────────────────────────────',
