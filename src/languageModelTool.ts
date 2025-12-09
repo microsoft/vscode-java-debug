@@ -51,21 +51,21 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
 
             try {
                 const result = await debugJavaApplication(options.input, token);
-                
+
                 // Format the message for AI - use simple text, not JSON
-                const message = result.success 
+                const message = result.success
                     ? `✓ ${result.message}`
                     : `✗ ${result.message}`;
-                
+
                 // Return result in the expected format - simple text part
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(message)
                 ]);
             } catch (error) {
                 sendError(error as Error);
-                
+
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                
+
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Debug failed: ${errorMessage}`)
                 ]);
@@ -118,7 +118,7 @@ async function debugJavaApplication(
 
     // Step 3: Construct and execute the debugjava command
     const debugCommand = constructDebugCommand(input, projectType);
-    
+
     // Validate that we can construct a valid command
     if (!debugCommand || debugCommand === 'debugjava') {
         return {
@@ -126,7 +126,7 @@ async function debugJavaApplication(
             message: 'Failed to construct debug command. Please check the target parameter.'
         };
     }
-    
+
     // Step 4: Execute in terminal and optionally wait for debug session
     const terminal = vscode.window.createTerminal({
         name: 'Java Debug',
@@ -134,13 +134,13 @@ async function debugJavaApplication(
         hideFromUser: false,
         isTransient: false  // Keep terminal alive even after process exits
     });
-    
+
     terminal.show();
 
     // Build info message for AI
     let targetInfo = input.target;
     let warningNote = '';
-    
+
     if (input.target.endsWith('.jar')) {
         targetInfo = input.target;
     } else if (input.target.includes('.')) {
@@ -155,25 +155,27 @@ async function debugJavaApplication(
             warningNote = ' ⚠️ Note: Could not auto-detect package name. If you see "ClassNotFoundException", please provide the fully qualified class name (e.g., "com.example.App" instead of "App").';
         }
     }
-    
+
     // If waitForSession is true, wait for the debug session to start
     if (input.waitForSession) {
         return new Promise<DebugJavaApplicationResult>((resolve) => {
             let sessionStarted = false;
-            
+
             // Listen for debug session start
             const sessionDisposable = vscode.debug.onDidStartDebugSession((session) => {
                 if (session.type === 'java' && !sessionStarted) {
                     sessionStarted = true;
                     sessionDisposable.dispose();
-                    timeoutHandle && clearTimeout(timeoutHandle);
-                    
+                    if (timeoutHandle) {
+                        clearTimeout(timeoutHandle);
+                    }
+
                     sendInfo('', {
                         operationName: 'languageModelTool.debugSessionStarted.eventBased',
                         sessionId: session.id,
                         sessionName: session.name
                     });
-                    
+
                     resolve({
                         success: true,
                         status: 'started',
@@ -183,20 +185,20 @@ async function debugJavaApplication(
                     });
                 }
             });
-            
+
             // Send the command after setting up the listener
             terminal.sendText(debugCommand);
-            
+
             // Set a timeout (45 seconds) for large applications
             const timeoutHandle = setTimeout(() => {
                 if (!sessionStarted) {
                     sessionDisposable.dispose();
-                    
+
                     sendInfo('', {
                         operationName: 'languageModelTool.debugSessionTimeout.eventBased',
                         target: targetInfo
                     });
-                    
+
                     resolve({
                         success: false,
                         status: 'timeout',
@@ -219,24 +221,24 @@ async function debugJavaApplication(
     } else {
         // Default behavior: send command and use smart polling to detect session start
         terminal.sendText(debugCommand);
-        
+
         // Smart polling: check every 300ms for up to 15 seconds
         const maxWaitTime = 15000;  // 15 seconds max
         const pollInterval = 300;   // Check every 300ms
         const startTime = Date.now();
-        
+
         while (Date.now() - startTime < maxWaitTime) {
             // Check if debug session has started
             const session = vscode.debug.activeDebugSession;
             if (session && session.type === 'java') {
                 const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
-                
+
                 sendInfo('', {
                     operationName: 'languageModelTool.debugSessionDetected',
                     sessionId: session.id,
-                    elapsedTime: elapsedTime
+                    elapsedTime
                 });
-                
+
                 return {
                     success: true,
                     status: 'started',
@@ -245,18 +247,18 @@ async function debugJavaApplication(
                     terminalName: terminal.name
                 };
             }
-            
+
             // Wait before next check
             await new Promise(resolve => setTimeout(resolve, pollInterval));
         }
-        
+
         // Timeout: session not detected within 15 seconds
         sendInfo('', {
             operationName: 'languageModelTool.debugSessionTimeout.smartPolling',
             target: targetInfo,
-            maxWaitTime: maxWaitTime
+            maxWaitTime
         });
-        
+
         return {
             success: true,
             status: 'timeout',
@@ -281,12 +283,12 @@ function detectProjectType(workspacePath: string): 'maven' | 'gradle' | 'vscode'
     if (fs.existsSync(path.join(workspacePath, 'pom.xml'))) {
         return 'maven';
     }
-    
-    if (fs.existsSync(path.join(workspacePath, 'build.gradle')) || 
+
+    if (fs.existsSync(path.join(workspacePath, 'build.gradle')) ||
         fs.existsSync(path.join(workspacePath, 'build.gradle.kts'))) {
         return 'gradle';
     }
-    
+
     // Check if VS Code Java extension is likely managing compilation
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(workspacePath));
     if (workspaceFolder) {
@@ -295,7 +297,7 @@ function detectProjectType(workspacePath: string): 'maven' | 'gradle' | 'vscode'
             return 'vscode';
         }
     }
-    
+
     return 'unknown';
 }
 
@@ -309,14 +311,14 @@ async function buildProject(
 ): Promise<DebugJavaApplicationResult> {
     switch (projectType) {
         case 'maven':
-            return await buildMavenProject(workspaceUri);
-        
+            return buildMavenProject(workspaceUri);
+
         case 'gradle':
-            return await buildGradleProject(workspaceUri);
-        
+            return buildGradleProject(workspaceUri);
+
         case 'vscode':
-            return await ensureVSCodeCompilation(workspaceUri);
-        
+            return ensureVSCodeCompilation(workspaceUri);
+
         case 'unknown':
             // Try to proceed anyway - user might have manually compiled
             return {
@@ -352,7 +354,7 @@ async function buildMavenProject(
 
         vscode.tasks.executeTask(task).then((execution) => {
             let resolved = false;
-            
+
             const disposable = vscode.tasks.onDidEndTask((e) => {
                 if (e.execution === execution && !resolved) {
                     resolved = true;
@@ -388,8 +390,8 @@ async function buildGradleProject(
 ): Promise<DebugJavaApplicationResult> {
     return new Promise((resolve) => {
         const gradleWrapper = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
-        const gradleCommand = fs.existsSync(path.join(workspaceUri.fsPath, gradleWrapper)) 
-            ? gradleWrapper 
+        const gradleCommand = fs.existsSync(path.join(workspaceUri.fsPath, gradleWrapper))
+            ? gradleWrapper
             : 'gradle';
 
         const task = new vscode.Task(
@@ -410,7 +412,7 @@ async function buildGradleProject(
 
         vscode.tasks.executeTask(task).then((execution) => {
             let resolved = false;
-            
+
             const disposable = vscode.tasks.onDidEndTask((e) => {
                 if (e.execution === execution && !resolved) {
                     resolved = true;
@@ -501,7 +503,7 @@ function constructDebugCommand(
     // Handle JAR files
     if (input.target.endsWith('.jar')) {
         command += ` -jar ${input.target}`;
-    } 
+    }
     // Handle raw java command arguments (starts with - like -cp, -jar, etc)
     else if (input.target.startsWith('-')) {
         command += ` ${input.target}`;
@@ -509,8 +511,8 @@ function constructDebugCommand(
     // Handle class name (with or without package)
     else {
         let className = input.target;
-        
-        // If target doesn't contain a dot and we can find the Java file, 
+
+        // If target doesn't contain a dot and we can find the Java file,
         // try to detect the fully qualified class name
         if (!input.target.includes('.')) {
             const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
@@ -518,8 +520,8 @@ function constructDebugCommand(
                 sendInfo('', {
                     operationName: 'languageModelTool.classNameDetection',
                     simpleClassName: input.target,
-                    detectedClassName: detectedClassName,
-                    projectType: projectType
+                    detectedClassName,
+                    projectType
                 });
                 className = detectedClassName;
             } else {
@@ -527,14 +529,14 @@ function constructDebugCommand(
                 sendInfo('', {
                     operationName: 'languageModelTool.classNameDetection.noPackage',
                     simpleClassName: input.target,
-                    projectType: projectType
+                    projectType
                 });
             }
         }
-        
+
         // Use provided classpath if available, otherwise infer it
         const classpath = input.classpath || inferClasspath(input.workspacePath, projectType);
-        
+
         command += ` -cp "${classpath}" ${className}`;
     }
 
@@ -557,7 +559,7 @@ function findFullyQualifiedClassName(
 ): string | null {
     // Determine source directories based on project type
     const sourceDirs: string[] = [];
-    
+
     switch (projectType) {
         case 'maven':
             sourceDirs.push(path.join(workspacePath, 'src', 'main', 'java'));
@@ -610,11 +612,11 @@ function findFullyQualifiedClassName(
 function findJavaFile(dir: string, className: string): string | null {
     try {
         const files = fs.readdirSync(dir);
-        
+
         for (const file of files) {
             const filePath = path.join(dir, file);
             const stat = fs.statSync(filePath);
-            
+
             if (stat.isDirectory()) {
                 // Skip common non-source directories
                 if (file === 'node_modules' || file === '.git' || file === 'target' || file === 'build') {
@@ -631,7 +633,7 @@ function findJavaFile(dir: string, className: string): string | null {
     } catch (error) {
         // Ignore permission errors or other file system issues
     }
-    
+
     return null;
 }
 
@@ -657,7 +659,7 @@ function hasClassFiles(dir: string): boolean {
         for (const file of files) {
             const filePath = path.join(dir, file);
             const stat = fs.statSync(filePath);
-            
+
             if (stat.isFile() && file.endsWith('.class')) {
                 return true;
             } else if (stat.isDirectory()) {
@@ -781,9 +783,8 @@ interface StopDebugSessionInput {
     reason?: string;
 }
 
-interface GetDebugSessionInfoInput {
-    // No parameters needed - just returns info about active session
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+type GetDebugSessionInfoInput = Record<string, never>;
 
 /**
  * Registers all debug session control tools
@@ -801,7 +802,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(options: { input: SetBreakpointInput }, _token: vscode.CancellationToken): Promise<any> {
             try {
                 const { filePath, lineNumber, condition, hitCondition, logMessage } = options.input;
-                
+
                 // Set breakpoint through VS Code API (no active session required)
                 const uri = vscode.Uri.file(filePath);
                 const breakpoint = new vscode.SourceBreakpoint(
@@ -819,7 +820,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 const sessionInfo = (session && session.type === 'java')
                     ? ' (active in current session)'
                     : ' (will activate when debugging starts)';
-                
+
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
                         `✓ ${bpType} set at ${path.basename(filePath)}:${lineNumber}${condition ? ` (condition: ${condition})` : ''}${sessionInfo}`
@@ -846,7 +847,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 }
 
                 const { operation, threadId } = options.input;
-                
+
                 // Map operation to VS Code debug commands
                 const commandMap: { [key: string]: string } = {
                     stepIn: 'workbench.action.debug.stepInto',
@@ -935,16 +936,20 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
                 // Get scopes for the frame
                 const scopesResponse = await session.customRequest('scopes', { frameId: frame.id });
-                
-                let variables: string[] = [];
+
+                const variables: string[] = [];
                 for (const scope of scopesResponse.scopes) {
                     // Filter by scope type
-                    if (scopeType === 'local' && scope.name !== 'Local' && scope.name !== 'Locals') continue;
-                    if (scopeType === 'static' && scope.name !== 'Static') continue;
+                    if (scopeType === 'local' && scope.name !== 'Local' && scope.name !== 'Locals') {
+                        continue;
+                    }
+                    if (scopeType === 'static' && scope.name !== 'Static') {
+                        continue;
+                    }
 
                     // Get variables for this scope
-                    const varsResponse = await session.customRequest('variables', { 
-                        variablesReference: scope.variablesReference 
+                    const varsResponse = await session.customRequest('variables', {
+                        variablesReference: scope.variablesReference
                     });
 
                     for (const v of varsResponse.variables) {
@@ -1000,8 +1005,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 }
 
                 const frames = stackResponse.stackFrames.map((frame: any, index: number) => {
-                    const location = frame.source ? 
-                        `${frame.source.name}:${frame.line}` : 
+                    const location = frame.source ?
+                        `${frame.source.name}:${frame.line}` :
                         'unknown location';
                     return `#${index} ${frame.name} at ${location}`;
                 });
@@ -1036,7 +1041,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 // Find the target thread and frame for evaluation
                 let targetFrameId = frameId;
                 let targetThreadId = threadId;
-                
+
                 // If no threadId specified, find first suspended thread
                 if (!targetThreadId) {
                     const threadsResponse = await session.customRequest('threads');
@@ -1129,14 +1134,14 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 for (const thread of threadsResponse.threads) {
                     let state = '🟢 RUNNING';
                     let location = '';
-                    
+
                     try {
                         const stackResponse = await session.customRequest('stackTrace', {
                             threadId: thread.id,
                             startFrame: 0,
                             levels: 1
                         });
-                        
+
                         if (stackResponse?.stackFrames?.length > 0) {
                             state = '🔴 SUSPENDED';
                             const topFrame = stackResponse.stackFrames[0];
@@ -1148,7 +1153,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                         // Thread is running, can't get stack
                         state = '🟢 RUNNING';
                     }
-                    
+
                     threadInfos.push(`Thread #${thread.id}: ${thread.name} [${state}]${location}`);
                 }
 
@@ -1210,7 +1215,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
-                        toRemove.length > 0 
+                        toRemove.length > 0
                             ? `✓ Removed ${toRemove.length} breakpoint(s) from ${path.basename(filePath)}${lineNumber ? `:${lineNumber}` : ''}`
                             : 'No matching breakpoints found.'
                     )
@@ -1229,7 +1234,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(options: { input: StopDebugSessionInput }, _token: vscode.CancellationToken): Promise<any> {
             try {
                 const session = vscode.debug.activeDebugSession;
-                
+
                 if (!session) {
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('No active debug session to stop.')
@@ -1238,17 +1243,17 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
                 const sessionInfo = `${session.name} (${session.type})`;
                 const reason = options.input.reason || 'Investigation complete';
-                
+
                 // Stop the debug session
                 await vscode.debug.stopDebugging(session);
-                
+
                 sendInfo('', {
                     operationName: 'languageModelTool.stopDebugSession',
                     sessionId: session.id,
                     sessionName: session.name,
-                    reason: reason
+                    reason
                 });
-                
+
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
                         `✓ Stopped debug session: ${sessionInfo}. Reason: ${reason}`
@@ -1268,7 +1273,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(_options: { input: GetDebugSessionInfoInput }, _token: vscode.CancellationToken): Promise<any> {
             try {
                 const session = vscode.debug.activeDebugSession;
-                
+
                 if (!session) {
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart(
@@ -1295,7 +1300,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                         projectName: session.configuration.projectName
                     }
                 };
-                
+
                 // Check if session is paused and get current location
                 // Strategy: Get all threads first, then try to get stack trace for each
                 // A thread is paused if we can successfully get its stack trace
@@ -1306,12 +1311,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 let currentLine = 0;
                 let stoppedThreadId: number | undefined;
                 let stoppedThreadName = '';
-                
+
                 try {
                     // Step 1: Get all threads
                     const threadsResponse = await session.customRequest('threads');
                     const threads = threadsResponse?.threads || [];
-                    
+
                     // Step 2: Try to get stack trace for each thread to find paused one
                     // In Java debug, only paused threads can provide stack traces
                     for (const thread of threads) {
@@ -1321,15 +1326,15 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                                 startFrame: 0,
                                 levels: 1
                             });
-                            
+
                             // If we got stack frames, this thread is paused
                             if (stackResponse?.stackFrames?.length > 0) {
                                 isPaused = true;
                                 stoppedThreadId = thread.id;
                                 stoppedThreadName = thread.name || `Thread-${thread.id}`;
-                                
+
                                 const topFrame = stackResponse.stackFrames[0];
-                                
+
                                 // Extract current location details
                                 if (topFrame.source) {
                                     currentFile = topFrame.source.path || topFrame.source.name || 'unknown';
@@ -1338,10 +1343,10 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                                     const fileName = topFrame.source.name || path.basename(currentFile);
                                     currentLocation = `${fileName}:${currentLine} in ${methodName}`;
                                 }
-                                
+
                                 // Try to determine stop reason from thread name or default to breakpoint
                                 stoppedReason = 'breakpoint';
-                                
+
                                 // Found a paused thread, no need to check others for basic info
                                 break;
                             }
@@ -1350,7 +1355,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                             continue;
                         }
                     }
-                    
+
                     // If no thread had stack frames, all are running
                     if (!isPaused && threads.length > 0) {
                         // Session exists but all threads are running
@@ -1365,11 +1370,11 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                         error: String(error)
                     });
                 }
-                
+
                 // Build status line with location info
                 let statusLine: string;
                 let locationInfo = '';
-                
+
                 if (isPaused) {
                     statusLine = `🔴 Status: PAUSED (${stoppedReason})`;
                     locationInfo = [
@@ -1383,7 +1388,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 } else {
                     statusLine = '🟢 Status: RUNNING';
                 }
-                
+
                 // Build clear action guidance based on state
                 let actionGuidance: string;
                 if (isPaused) {
@@ -1410,7 +1415,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                         'will NOT work until the session is PAUSED.'
                     ].join('\n');
                 }
-                
+
                 const message = [
                     '═══════════════════════════════════════════',
                     isPaused ? '🔴 DEBUG SESSION PAUSED' : '🟢 DEBUG SESSION RUNNING',
@@ -1431,17 +1436,17 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     actionGuidance,
                     '═══════════════════════════════════════════'
                 ].join('\n');
-                
+
                 sendInfo('', {
                     operationName: 'languageModelTool.getDebugSessionInfo',
                     sessionId: session.id,
                     sessionType: session.type,
                     isPaused: String(isPaused),
                     stoppedThreadId: String(stoppedThreadId || ''),
-                    currentFile: currentFile,
+                    currentFile,
                     currentLine: String(currentLine)
                 });
-                
+
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(message)
                 ]);
