@@ -21,7 +21,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.106.3"
+    "vscode": "^1.95.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -1330,7 +1330,7 @@
     ],
     "chatAgents": [
       {
-        "name": "JavaDebugAgent",
+        "name": "JavaDebug",
         "path": "./bundled/agents/debug.agent.md",
         "description": "Custome Agent for debugging Java applications."
       }
