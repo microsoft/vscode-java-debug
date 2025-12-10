@@ -101,9 +101,10 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
 /**
  * Main function to debug a Java application.
  * This function handles:
- * 1. Project type detection
- * 2. Building the project if needed
- * 3. Executing the debugjava command
+ * 1. Cleanup any existing debug session (to avoid port conflicts)
+ * 2. Project type detection
+ * 3. Building the project if needed
+ * 4. Executing the debugjava command
  */
 async function debugJavaApplication(
     input: DebugJavaApplicationInput,
@@ -114,6 +115,34 @@ async function debugJavaApplication(
             success: false,
             message: 'Operation cancelled by user'
         };
+    }
+
+    // Step 0: Cleanup any existing Java debug session to avoid port conflicts
+    const existingSession = vscode.debug.activeDebugSession;
+    if (existingSession && existingSession.type === 'java') {
+        sendInfo('', {
+            operationName: 'languageModelTool.cleanupExistingSession',
+            sessionId: existingSession.id,
+            sessionName: existingSession.name
+        });
+        try {
+            await vscode.debug.stopDebugging(existingSession);
+            // Give VS Code a moment to clean up the session
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            // Log but continue - the old session might already be dead
+            sendInfo('', {
+                operationName: 'languageModelTool.cleanupExistingSessionFailed',
+                error: String(error)
+            });
+        }
+    }
+
+    // Also close any existing "Java Debug" terminals to avoid confusion
+    for (const terminal of vscode.window.terminals) {
+        if (terminal.name === 'Java Debug') {
+            terminal.dispose();
+        }
     }
 
     // Validate workspace path
@@ -1292,7 +1321,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     };
     disposables.push(lmApi.registerTool('remove_java_breakpoints', removeBreakpointsTool));
 
-    // Tool 8: Stop Debug Session
+    // Tool 9: Stop Debug Session
     const stopDebugSessionTool: LanguageModelTool<StopDebugSessionInput> = {
         async invoke(options: { input: StopDebugSessionInput }, _token: vscode.CancellationToken): Promise<any> {
             try {
@@ -1331,7 +1360,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     };
     disposables.push(lmApi.registerTool('stop_debug_session', stopDebugSessionTool));
 
-    // Tool 9: Get Debug Session Info
+    // Tool 10: Get Debug Session Info
     const getDebugSessionInfoTool: LanguageModelTool<GetDebugSessionInfoInput> = {
         async invoke(_options: { input: GetDebugSessionInfoInput }, _token: vscode.CancellationToken): Promise<any> {
             try {
