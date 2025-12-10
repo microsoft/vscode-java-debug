@@ -139,9 +139,9 @@ async function debugJavaApplication(
     }
 
     // Also close any existing "Java Debug" terminals to avoid confusion
-    for (const terminal of vscode.window.terminals) {
-        if (terminal.name === 'Java Debug') {
-            terminal.dispose();
+    for (const existingTerminal of vscode.window.terminals) {
+        if (existingTerminal.name === 'Java Debug') {
+            existingTerminal.dispose();
         }
     }
 
