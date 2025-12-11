@@ -52,13 +52,25 @@ function getJavaCommand() {
 
 const javaCmd = getJavaCommand();
 
+// Helper function to setup signal handlers for graceful termination
+function setupSignalHandlers(child) {
+    const signals = ['SIGINT', 'SIGTERM'];
+    signals.forEach(signal => {
+        process.on(signal, () => {
+            child.kill(signal);
+        });
+    });
+}
+
 if (!isDebugEnabled) {
     // No debugging, just run java normally
     const child = spawn(javaCmd, process.argv.slice(2), {
         stdio: 'inherit',
         shell: false
     });
-    child.on('exit', (code) => process.exit(code || 0));
+    setupSignalHandlers(child);
+    // Use 'close' event to ensure stdio streams are closed before exiting
+    child.on('close', (code) => process.exit(code || 0));
     child.on('error', (err) => {
         console.error(`[Java Debug] Failed to start java: ${err.message}`);
         console.error(`[Java Debug] Make sure Java is installed and either JAVA_HOME is set correctly or 'java' is in your PATH.`);
@@ -70,6 +82,7 @@ if (!isDebugEnabled) {
         stdio: ['inherit', 'pipe', 'pipe'],
         shell: false
     });
+    setupSignalHandlers(child);
 
     let portCaptured = false;
     const jdwpPortRegex = /Listening for transport dt_socket at address:\s*(\d+)/;
@@ -122,7 +135,8 @@ if (!isDebugEnabled) {
         capturePort(output);
     });
 
-    child.on('exit', (code) => process.exit(code || 0));
+    // Use 'close' event to ensure stdio streams are closed before exiting
+    child.on('close', (code) => process.exit(code || 0));
     child.on('error', (err) => {
         console.error(`[Java Debug] Failed to start java: ${err}`);
         process.exit(1);

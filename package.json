@@ -21,7 +21,7 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.95.0"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -42,7 +42,8 @@
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs",
-    "onCommand:JavaDebug.PickJavaProcess"
+    "onCommand:JavaDebug.PickJavaProcess",
+    "onLanguageModelTool:debug_java_application"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -989,7 +990,355 @@
           "default": false
         }
       }
-    }
+    },
+    "languageModelTools": [
+      {
+        "name": "debug_java_application",
+        "displayName": "Debug Java Application",
+        "modelDescription": "Launch or attach to a Java application in debug mode with automatic compilation and classpath resolution. The tool handles building the project, resolving dependencies, starting the JVM with JDWP enabled, and auto-attaching the VS Code debugger. Use this as the first step to establish a debug session. The debug process runs in the background until stopped. Example usage: Debug a main class ('com.example.Main'), a JAR file ('target/app.jar'), or with program arguments (['--port=8080']).",
+        "toolReferenceName": "debugJavaApplication",
+        "tags": [
+          "java",
+          "debug",
+          "debugger",
+          "build",
+          "compile"
+        ],
+        "icon": "$(debug-alt)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "What to debug: 1) Main class name - simple ('App') or fully qualified ('com.example.Main'). Tool auto-detects package from source files. 2) JAR file path ('target/app.jar'). 3) Raw Java command arguments ('-cp bin com.example.Main'). The tool automatically finds the .class file for simple class names."
+            },
+            "workspacePath": {
+              "type": "string",
+              "description": "Absolute path to the Java project root directory containing pom.xml, build.gradle, or .java source files. This is the working directory for compilation and debugging."
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional command-line arguments to pass to the Java main method (e.g., ['arg1', 'arg2', '--flag=value']). These are program arguments, not JVM arguments."
+            },
+            "skipBuild": {
+              "type": "boolean",
+              "description": "Whether to skip compilation before debugging. DEFAULT: false (tool will automatically compile the project). Set to true only when you have already compiled the project and want to use an explicit classpath. In most cases, leave this as false to let the tool handle compilation automatically.",
+              "default": false
+            },
+            "classpath": {
+              "type": "string",
+              "description": "Explicit classpath to use for debugging. REQUIRED when skipBuild is true. Format: absolute paths separated by system path delimiter (';' on Windows, ':' on Unix). Example: 'C:\\project\\target\\classes;C:\\project\\lib\\dep.jar' or '/project/target/classes:/project/lib/dep.jar'. If not provided and skipBuild is false, the tool will automatically resolve the classpath."
+            },
+            "waitForSession": {
+              "type": "boolean",
+              "description": "Whether to wait for the debug session to start before returning. DEFAULT: false (returns immediately after sending debug command). Set to true to wait up to 30 seconds for VS Code to confirm the debug session has started and is ready. Useful when you need to ensure the debugger is attached before proceeding with breakpoint operations.",
+              "default": false
+            }
+          },
+          "required": [
+            "target",
+            "workspacePath"
+          ]
+        }
+      },
+      {
+        "name": "set_java_breakpoint",
+        "displayName": "Set Java Breakpoint",
+        "modelDescription": "Set a breakpoint at a specific line in Java source code to pause execution and inspect program state. Supports conditional breakpoints (break only when condition is true), hit count conditions (break after N hits), and logpoints (log messages without stopping). REQUIRES: Active debug session. Start with 1-2 strategic breakpoints; prefer stepping over setting multiple breakpoints.",
+        "toolReferenceName": "setJavaBreakpoint",
+        "tags": [
+          "java",
+          "debug",
+          "breakpoint"
+        ],
+        "icon": "$(debug-breakpoint)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Absolute path to the Java source file where the breakpoint should be set. Example: 'C:/project/src/main/java/com/example/Main.java' or use ${workspaceFolder} variable."
+            },
+            "lineNumber": {
+              "type": "number",
+              "description": "The line number (1-based) where the breakpoint should be set. Must be a valid executable line (not a comment or blank line)."
+            },
+            "condition": {
+              "type": "string",
+              "description": "Optional condition expression. Breakpoint only triggers when condition evaluates to true. Example: 'count > 10' or 'userName.equals(\"admin\")'. Leave empty for unconditional breakpoint."
+            },
+            "hitCondition": {
+              "type": "string",
+              "description": "Optional hit count condition. Example: '>5' (break after 5th hit), '==3' (break on 3rd hit), '%2' (break every 2nd hit). Leave empty to break on every hit."
+            },
+            "logMessage": {
+              "type": "string",
+              "description": "Optional log message. If provided, instead of breaking, the message will be logged to debug console. Use {expression} for interpolation. Example: 'Counter value: {count}'. This creates a logpoint instead of a breakpoint."
+            }
+          },
+          "required": [
+            "filePath",
+            "lineNumber"
+          ]
+        }
+      },
+      {
+        "name": "debug_step_operation",
+        "displayName": "Debug Step Operation",
+        "modelDescription": "Control program execution flow: stepIn (enter method calls), stepOut (exit current method), stepOver (execute current line), continue (run to next breakpoint), pause (halt execution). REQUIRES: Active debug session in paused state. Prefer stepping through code over setting multiple breakpoints for efficient debugging.",
+        "toolReferenceName": "debugStepOperation",
+        "tags": [
+          "java",
+          "debug",
+          "step",
+          "continue"
+        ],
+        "icon": "$(debug-step-over)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": [
+                "stepIn",
+                "stepOut",
+                "stepOver",
+                "continue",
+                "pause"
+              ],
+              "description": "The step operation to perform: 'stepIn' - step into method calls, 'stepOut' - step out of current method, 'stepOver' - execute current line and move to next, 'continue' - resume execution until next breakpoint, 'pause' - pause running execution."
+            },
+            "threadId": {
+              "type": "number",
+              "description": "Optional thread ID to perform operation on. If not specified, operates on the currently selected thread. Use get_debug_threads to get available thread IDs."
+            }
+          },
+          "required": [
+            "operation"
+          ]
+        }
+      },
+      {
+        "name": "get_debug_variables",
+        "displayName": "Get Debug Variables",
+        "modelDescription": "Inspect variables in a specific thread's stack frame: local variables, method parameters, static fields, and instance fields. Returns variable names, types, and values. Supports filtering by scope type or name pattern. REQUIRES: Active debug session with at least one SUSPENDED thread. For multi-threaded debugging, use threadId to specify which thread's variables to inspect. If no threadId is provided, uses the first suspended thread.",
+        "toolReferenceName": "getDebugVariables",
+        "tags": [
+          "java",
+          "debug",
+          "variables",
+          "inspect"
+        ],
+        "icon": "$(symbol-variable)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "threadId": {
+              "type": "number",
+              "description": "Thread ID to inspect. Use get_debug_threads() to list available threads with their IDs and states. Only SUSPENDED threads can be inspected. If omitted, uses the first suspended thread found."
+            },
+            "frameId": {
+              "type": "number",
+              "description": "Optional stack frame ID. Default is 0 (current/top frame). Use get_debug_stack_trace to get available frame IDs. Higher numbers are deeper in the call stack."
+            },
+            "scopeType": {
+              "type": "string",
+              "enum": [
+                "local",
+                "static",
+                "all"
+              ],
+              "description": "Type of variables to retrieve: 'local' - only local variables and parameters, 'static' - only static class variables, 'all' - both local and static. Default: 'all'."
+            },
+            "filter": {
+              "type": "string",
+              "description": "Optional filter pattern to match variable names. Supports wildcards (*). Example: 'user*' matches 'userName', 'userId'. Leave empty to get all variables."
+            }
+          },
+          "required": []
+        }
+      },
+      {
+        "name": "get_debug_stack_trace",
+        "displayName": "Get Debug Stack Trace",
+        "modelDescription": "Retrieve the call stack showing all method calls leading to the current execution point. Returns method names, source files, and line numbers for each frame. REQUIRES: Active debug session in paused state. Essential for understanding program flow, tracing how code was reached, and identifying unexpected execution paths.",
+        "toolReferenceName": "getDebugStackTrace",
+        "tags": [
+          "java",
+          "debug",
+          "stack",
+          "callstack"
+        ],
+        "icon": "$(call-hierarchy)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "threadId": {
+              "type": "number",
+              "description": "Optional thread ID. If not specified, uses the currently selected thread. Use get_debug_threads to list available threads."
+            },
+            "maxDepth": {
+              "type": "number",
+              "description": "Maximum number of stack frames to retrieve. Default: 50. Use smaller values for shallow inspection, larger for deep call stacks.",
+              "default": 50
+            }
+          },
+          "required": []
+        }
+      },
+      {
+        "name": "evaluate_debug_expression",
+        "displayName": "Evaluate Debug Expression",
+        "modelDescription": "Evaluate a Java expression in a specific thread's debug context. Access local variables, parameters, fields, and invoke methods. Returns the result with type information. REQUIRES: Active debug session with at least one SUSPENDED thread. For multi-threaded debugging, use threadId to specify which thread's context to use. If no threadId is provided, uses the first suspended thread. Examples: 'user.getName()', 'list.size() > 10', 'counter == null'.",
+        "toolReferenceName": "evaluateDebugExpression",
+        "tags": [
+          "java",
+          "debug",
+          "evaluate",
+          "expression"
+        ],
+        "icon": "$(symbol-method)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "description": "The Java expression to evaluate. Can be a variable name, field access, method call, or complex expression. Example: 'user.age', 'calculateTotal()', 'count > 0 && !items.isEmpty()'."
+            },
+            "threadId": {
+              "type": "number",
+              "description": "Thread ID for evaluation context. Use get_debug_threads() to list available threads with their IDs and states. Only SUSPENDED threads can evaluate expressions. If omitted, uses the first suspended thread found."
+            },
+            "frameId": {
+              "type": "number",
+              "description": "Optional stack frame ID for evaluation context. Default: 0 (current frame). Variables and methods from the specified frame will be accessible.",
+              "default": 0
+            },
+            "context": {
+              "type": "string",
+              "enum": [
+                "watch",
+                "repl",
+                "hover"
+              ],
+              "description": "Evaluation context: 'watch' - for watch expressions, 'repl' - for debug console input, 'hover' - for hover tooltips. Affects how side effects are handled. Default: 'repl'.",
+              "default": "repl"
+            }
+          },
+          "required": [
+            "expression"
+          ]
+        }
+      },
+      {
+        "name": "get_debug_threads",
+        "displayName": "Get Debug Threads",
+        "modelDescription": "List all threads in the debugged Java application with their IDs, names, and states (🔴 SUSPENDED or 🟢 RUNNING). For SUSPENDED threads, also shows the current location (file:line). REQUIRES: Active debug session. IMPORTANT: Only SUSPENDED threads can have their variables inspected or expressions evaluated. Use the returned thread IDs with get_debug_variables(threadId=X) or evaluate_debug_expression(threadId=X) to inspect specific threads.",
+        "toolReferenceName": "getDebugThreads",
+        "tags": [
+          "java",
+          "debug",
+          "threads",
+          "concurrent"
+        ],
+        "icon": "$(list-tree)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      {
+        "name": "remove_java_breakpoints",
+        "displayName": "Remove Java Breakpoints",
+        "modelDescription": "Remove breakpoints: specific breakpoint by file and line, all breakpoints in a file, or all breakpoints globally. Use this to clean up after investigation or before setting new breakpoints. Best practice: keep only 1-2 active breakpoints at a time; remove old ones before adding new ones.",
+        "toolReferenceName": "removeJavaBreakpoints",
+        "tags": [
+          "java",
+          "debug",
+          "breakpoint"
+        ],
+        "icon": "$(debug-breakpoint-unverified)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Absolute path to the Java source file. If not provided, removes all breakpoints from all files."
+            },
+            "lineNumber": {
+              "type": "number",
+              "description": "Optional line number. If provided, removes only the breakpoint at this line. If omitted, removes all breakpoints in the specified file."
+            }
+          },
+          "required": []
+        }
+      },
+      {
+        "name": "stop_debug_session",
+        "displayName": "Stop Debug Session",
+        "modelDescription": "Stop the active Java debug session when investigation is complete or when you need to restart debugging. This terminates the running Java process and closes the debug session. Use this to clean up after debugging or when you've identified the root cause and want to end the session. Optional: Provide a reason for stopping (e.g., 'Investigation complete', 'Root cause identified').",
+        "toolReferenceName": "stopDebugSession",
+        "tags": [
+          "java",
+          "debug",
+          "stop",
+          "terminate"
+        ],
+        "icon": "$(debug-stop)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "description": "Optional reason for stopping the debug session (e.g., 'Investigation complete', 'Root cause identified', 'Need to restart'). Default: 'Investigation complete'."
+            }
+          },
+          "required": []
+        }
+      },
+      {
+        "name": "get_debug_session_info",
+        "displayName": "Get Debug Session Info",
+        "modelDescription": "Get information about the currently active Java debug session, including whether it's PAUSED at a breakpoint or RUNNING. CRITICAL: Check status before using inspection tools (get_debug_variables, get_debug_stack_trace, evaluate_debug_expression) or control operations (continue, step). PAUSED status (🔴) means stopped at breakpoint - inspection and control tools available. RUNNING status (🟢) means executing code - only breakpoint setting or session stop available. Returns session ID, name, type, configuration details, and status-specific available actions.",
+        "toolReferenceName": "getDebugSessionInfo",
+        "tags": [
+          "java",
+          "debug",
+          "session",
+          "info",
+          "status",
+          "paused",
+          "running"
+        ],
+        "icon": "$(info)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      }
+    ],
+    "chatAgents": [
+      {
+        "name": "JavaDebug",
+        "path": "./bundled/agents/debug.agent.md",
+        "description": "Custome Agent for debugging Java applications."
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
@@ -1006,7 +1355,7 @@
     "@types/mocha": "^10.0.9",
     "@types/node": "^14.18.63",
     "@types/uuid": "^8.3.4",
-    "@types/vscode": "1.75.0",
+    "@types/vscode": "1.95.0",
     "@vscode/test-electron": "^2.4.1",
     "mocha": "^10.8.2",
     "ts-loader": "^9.5.1",
