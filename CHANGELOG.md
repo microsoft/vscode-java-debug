@@ -4,6 +4,13 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.58.5 - 2025-12-17
+### Added
+- Support custom debug java agent. [#1593](https://github.com/microsoft/vscode-java-debug/pull/1593).
+
+### Fixed
+- Fix `lspFrame.source.path` is null. [java-debug#618](https://github.com/microsoft/java-debug/pull/618).
+
 ## 0.58.4 - 2025-12-09
 ### Added
 - Add command to manage breakpoint exception types in command palette. [#1566](https://github.com/microsoft/vscode-java-debug/pull/1566). Thanks to [Roland Schaer](https://github.com/roele) for contribution.
