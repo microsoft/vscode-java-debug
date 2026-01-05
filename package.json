@@ -1337,6 +1337,11 @@
         "name": "JavaDebug",
         "path": "./bundled/agents/debug.agent.md",
         "description": "Custome Agent for debugging Java applications."
+      },
+      {
+        "name": "JavaTrace",
+        "path": "./bundled/agents/trace.agent.md",
+        "description": "Custom Agent for tracing Java applications."
       }
     ]
   },
