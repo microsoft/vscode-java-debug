@@ -31,6 +31,10 @@ import { registerBreakpointCommands } from "./breakpointCommands";
 import { registerVariableMenuCommands } from "./variableMenu";
 import { promisify } from "util";
 
+// Global cache for debug console output
+export const debugConsoleOutputCache = new Map<string, string[]>();
+const MAX_CONSOLE_LINES_PER_SESSION = 1000; // Limit cache size
+
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await initExpService(context);
@@ -196,6 +200,76 @@ function registerDebugEventListener(context: vscode.ExtensionContext) {
             handleHotCodeReplaceCustomEvent(customEvent);
         } else if (customEvent.event === USER_NOTIFICATION_EVENT) {
             handleUserNotification(customEvent);
+        }
+    }));
+
+    // Clean up cache when debug session ends (delayed to allow reading after session ends)
+    context.subscriptions.push(vscode.debug.onDidTerminateDebugSession((session) => {
+        if (session.type === JAVA_LANGID) {
+            // Keep cache for 5 minutes after session ends to allow agent to read output
+            setTimeout(() => {
+                debugConsoleOutputCache.delete(session.id);
+            }, 5 * 60 * 1000); // 5 minutes
+        }
+    }));
+
+    // Register Debug Adapter Tracker to capture output events
+    // This is the CORRECT way to capture Debug Console output
+    // onDidReceiveDebugSessionCustomEvent only captures custom events, not standard DAP output events
+    context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('java', {
+        createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+            // Initialize cache for this session immediately
+            const sessionId = session.id;
+            if (!debugConsoleOutputCache.has(sessionId)) {
+                debugConsoleOutputCache.set(sessionId, []);
+                sendInfo('', {
+                    operationName: 'debugConsoleOutput.sessionCreated',
+                    sessionId,
+                    sessionName: session.name
+                });
+            }
+            
+            return {
+                onDidSendMessage(message: any): void {
+                    // Capture all messages sent FROM debug adapter TO VS Code
+                    // Standard DAP output events have: type='event', event='output'
+                    if (message.type === 'event' && message.event === 'output') {
+                        const output = message.body?.output;
+                        const category = message.body?.category; // stdout, stderr, console, telemetry
+                        
+                        if (output && typeof output === 'string') {
+                            const outputs = debugConsoleOutputCache.get(sessionId)!;
+                            
+                            // Add category prefix for better filtering
+                            const prefixedOutput = category ? `[${category}] ${output}` : output;
+                            outputs.push(prefixedOutput);
+                            
+                            // Limit cache size to prevent memory issues
+                            if (outputs.length > MAX_CONSOLE_LINES_PER_SESSION) {
+                                outputs.shift(); // Remove oldest entry
+                            }
+                            
+                            sendInfo('', {
+                                operationName: 'debugConsoleOutput.captured',
+                                sessionId,
+                                category: category || 'unknown',
+                                outputLength: output.length,
+                                totalCached: outputs.length
+                            });
+                        }
+                    }
+                },
+                onWillReceiveMessage(message: any): void {
+                    // Also log messages sent FROM VS Code TO debug adapter (for debugging)
+                    if (message.type === 'request' && message.command === 'setBreakpoints') {
+                        sendInfo('', {
+                            operationName: 'debugConsoleOutput.breakpointsSet',
+                            sessionId,
+                            hasLogpoints: message.arguments?.breakpoints?.some((bp: any) => bp.logMessage) || false
+                        });
+                    }
+                }
+            };
         }
     }));
 }

@@ -861,6 +861,17 @@ interface StopDebugSessionInput {
     reason?: string;
 }
 
+interface StartDebugWithLaunchConfigInput {
+    workspacePath: string;
+    configName?: string;  // Optional: specific config name from launch.json
+}
+
+interface GetDebugConsoleOutputInput {
+    maxLines?: number;  // Optional: limit number of lines returned
+    filter?: string;    // Optional: filter output by text pattern
+    sessionId?: string; // Optional: specific session ID to read from
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 type GetDebugSessionInfoInput = Record<string, never>;
 
@@ -1561,6 +1572,177 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     };
     disposables.push(lmApi.registerTool('get_debug_session_info', getDebugSessionInfoTool));
 
+    // Tool 11: Start Debug with Launch Config
+    const startDebugWithLaunchConfigTool: LanguageModelTool<StartDebugWithLaunchConfigInput> = {
+        async invoke(options: { input: StartDebugWithLaunchConfigInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                const result = await startDebugWithLaunchConfig(options.input);
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(result)
+                ]);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to start debug with launch config: ${errorMessage}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('start_debug_with_launch_config', startDebugWithLaunchConfigTool));
+
+    // Tool 12: Get Debug Console Output
+    const getDebugConsoleOutputTool: LanguageModelTool<GetDebugConsoleOutputInput> = {
+        async invoke(options: { input: GetDebugConsoleOutputInput }, _token: vscode.CancellationToken): Promise<any> {
+            try {
+                // Import the cache from extension.ts
+                const { debugConsoleOutputCache } = await import('./extension');
+                
+                let targetSessionId: string | undefined;
+                let sessionName: string = 'Unknown';
+                
+                // Collect diagnostic information
+                const activeSessions = vscode.debug.activeDebugSession ? [vscode.debug.activeDebugSession] : [];
+                const cachedSessions = Array.from(debugConsoleOutputCache.keys());
+                
+                // Determine which session to read from
+                if (options.input.sessionId) {
+                    // Use specified session ID
+                    targetSessionId = options.input.sessionId;
+                    sessionName = `Session ${targetSessionId}`;
+                } else if (vscode.debug.activeDebugSession) {
+                    // Use active session
+                    targetSessionId = vscode.debug.activeDebugSession.id;
+                    sessionName = vscode.debug.activeDebugSession.name;
+                } else if (debugConsoleOutputCache.size > 0) {
+                    // No active session, use the most recent session in cache
+                    const sessions = Array.from(debugConsoleOutputCache.keys());
+                    targetSessionId = sessions[sessions.length - 1];
+                    sessionName = `Most recent session (${targetSessionId})`;
+                } else {
+                    // No sessions available at all - provide diagnostic info
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart(
+                            '❌ No debug session output available.\n\n' +
+                            '**Diagnostic Information:**\n' +
+                            `• Active debug sessions: ${activeSessions.length}\n` +
+                            `• Cached sessions: ${cachedSessions.length}\n` +
+                            `• Cache entries: ${debugConsoleOutputCache.size}\n\n` +
+                            '**This could mean:**\n' +
+                            '• No debug session has been started yet\n' +
+                            '• All session output has been cleaned up\n' +
+                            '• Session ended too long ago (cache timeout: 5 minutes)\n' +
+                            '• DebugAdapterTracker not capturing output (check extension logs)\n\n' +
+                            '**Troubleshooting:**\n' +
+                            '1. Start debug session using startDebugWithLaunchConfig\n' +
+                            '2. Set logpoints BEFORE starting the session\n' +
+                            '3. Let the program run and trigger logpoints\n' +
+                            '4. Check VS Code Debug Console for output\n' +
+                            '5. Call this tool again after logpoints trigger'
+                        )
+                    ]);
+                }
+
+                // At this point targetSessionId is guaranteed to be defined
+                if (!targetSessionId) {
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart('❌ Internal error: Unable to determine session ID.')
+                    ]);
+                }
+
+                const outputs = debugConsoleOutputCache.get(targetSessionId) || [];
+
+                if (outputs.length === 0) {
+                    const isActive = vscode.debug.activeDebugSession?.id === targetSessionId;
+                    const hasCache = debugConsoleOutputCache.has(targetSessionId);
+                    
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart(
+                            `ℹ️ No console output captured for "${sessionName}" (${isActive ? '🟢 ACTIVE' : '⚪ ENDED'})\n\n` +
+                            `**Diagnostic Information:**\n` +
+                            `• Session in cache: ${hasCache ? '✅ Yes' : '❌ No'}\n` +
+                            `• Session status: ${isActive ? 'Running' : 'Ended'}\n` +
+                            `• Output lines captured: 0\n` +
+                            `• All cached sessions: ${Array.from(debugConsoleOutputCache.keys()).join(', ')}\n\n` +
+                            `**Possible reasons:**\n` +
+                            `• The program hasn't produced any output yet\n` +
+                            `• Logpoints haven't been triggered (check if code executed)\n` +
+                            `• The program is still starting up\n` +
+                            `• Logpoints were set AFTER program already executed that code\n` +
+                            `• Output is going to stdout/stderr instead of Debug Console\n\n` +
+                            (isActive ? 
+                                `**Next steps (Session is ACTIVE):**\n` +
+                                `1. Verify logpoints are set correctly (check Debug sidebar)\n` +
+                                `2. Trigger the code path with logpoints\n` +
+                                `3. Check VS Code Debug Console for output\n` +
+                                `4. Wait 2-3 seconds and call this tool again` :
+                                `**Next steps (Session has ENDED):**\n` +
+                                `1. The session ended without producing output\n` +
+                                `2. Set logpoints BEFORE starting debug session\n` +
+                                `3. Start a new debug session\n` +
+                                `4. Ensure code with logpoints executes`)
+                        )
+                    ]);
+                }
+
+                // Apply filter if specified
+                let filteredOutputs = outputs;
+                if (options.input.filter) {
+                    const filterLower = options.input.filter.toLowerCase();
+                    filteredOutputs = outputs.filter(line => line.toLowerCase().includes(filterLower));
+                }
+
+                // Apply max lines limit
+                const maxLines = options.input.maxLines || 100;
+                const limitedOutputs = filteredOutputs.slice(-maxLines); // Get last N lines
+
+                const outputText = limitedOutputs.join('');
+                const totalLines = outputs.length;
+                const filteredCount = filteredOutputs.length;
+                const displayedCount = limitedOutputs.length;
+                const isActive = vscode.debug.activeDebugSession?.id === targetSessionId;
+
+                // Count output by category
+                const categoryCounts: { [key: string]: number } = {};
+                outputs.forEach(line => {
+                    const match = line.match(/^\[([^\]]+)\]/);
+                    const category = match ? match[1] : 'uncategorized';
+                    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+                });
+                
+                let summary = `📋 Debug Console Output (${sessionName})\n`;
+                summary += `Status: ${isActive ? '🟢 ACTIVE' : '⚪ ENDED'}\n`;
+                summary += `Session ID: ${targetSessionId}\n`;
+                summary += `═══════════════════════════════════════════\n`;
+                summary += `Total lines: ${totalLines}\n`;
+                summary += `Categories: ${Object.keys(categoryCounts).map(cat => `${cat}(${categoryCounts[cat]})`).join(', ')}\n`;
+                
+                if (options.input.filter) {
+                    summary += `Filtered lines: ${filteredCount} (filter: "${options.input.filter}")\n`;
+                }
+                
+                summary += `Displayed: ${displayedCount} ${displayedCount < filteredCount ? '(last ' + displayedCount + ' lines)' : ''}\n`;
+                summary += `═══════════════════════════════════════════\n\n`;
+                
+                // Add helpful hints if no console category found
+                if (!categoryCounts['console'] && totalLines > 0) {
+                    summary += `⚠️ **Note:** No [console] category output detected. ` +
+                              `Logpoints should produce [console] category output.\n` +
+                              `If you see [stdout] or [stderr], those are System.out/System.err, not logpoints.\n\n`;
+                }
+
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(summary + outputText)
+                ]);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                return new (vscode as any).LanguageModelToolResult([
+                    new (vscode as any).LanguageModelTextPart(`✗ Failed to get debug console output: ${errorMessage}`)
+                ]);
+            }
+        }
+    };
+    disposables.push(lmApi.registerTool('get_debug_console_output', getDebugConsoleOutputTool));
+
     return disposables;
 }
 
@@ -1574,4 +1756,126 @@ function matchWildcard(text: string, pattern: string): boolean {
 
 function escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ============================================================================
+// Launch Configuration Tool
+// ============================================================================
+
+/**
+ * Starts a debug session using launch.json configuration.
+ * This respects user's existing debug configurations and is equivalent to pressing F5.
+ */
+async function startDebugWithLaunchConfig(input: StartDebugWithLaunchConfigInput): Promise<string> {
+    const workspaceUri = vscode.Uri.file(input.workspacePath);
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(workspaceUri);
+
+    if (!workspaceFolder) {
+        return `✗ Cannot find workspace folder for ${input.workspacePath}`;
+    }
+
+    // Check if launch.json exists
+    const launchJsonPath = path.join(input.workspacePath, '.vscode', 'launch.json');
+    if (!fs.existsSync(launchJsonPath)) {
+        return `✗ No launch.json found at ${launchJsonPath}.\n\n` +
+               `To use this tool, you need a launch.json file. You can:\n` +
+               `1. Create one manually in .vscode/launch.json\n` +
+               `2. Use VS Code's "Run and Debug" view to generate one\n` +
+               `3. Or use the debug_java_application tool as a fallback`;
+    }
+
+    // Read and parse launch.json
+    let launchConfig: any;
+    try {
+        const launchJsonContent = fs.readFileSync(launchJsonPath, 'utf-8');
+        // Remove comments from JSON (launch.json often has comments)
+        const jsonWithoutComments = launchJsonContent.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+        launchConfig = JSON.parse(jsonWithoutComments);
+    } catch (error) {
+        return `✗ Failed to parse launch.json: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    const configurations = launchConfig.configurations || [];
+    if (configurations.length === 0) {
+        return `✗ No debug configurations found in launch.json`;
+    }
+
+    // Find Java debug configurations
+    const javaConfigs = configurations.filter((config: any) => 
+        config.type === 'java' && config.request === 'launch'
+    );
+
+    if (javaConfigs.length === 0) {
+        return `✗ No Java launch configurations found in launch.json.\n\n` +
+               `Found ${configurations.length} configuration(s), but none are Java launch configs.\n` +
+               `Please add a Java debug configuration or use debug_java_application tool instead.`;
+    }
+
+    // Determine which config to use
+    let configToUse: any;
+    if (input.configName) {
+        // Use specified config name
+        configToUse = javaConfigs.find((config: any) => config.name === input.configName);
+        if (!configToUse) {
+            const availableNames = javaConfigs.map((c: any) => c.name).join(', ');
+            return `✗ Configuration "${input.configName}" not found.\n\n` +
+                   `Available Java configurations: ${availableNames}`;
+        }
+    } else {
+        // Use the first Java launch config
+        configToUse = javaConfigs[0];
+    }
+
+    // Clean up any existing Java debug session
+    const existingSession = vscode.debug.activeDebugSession;
+    if (existingSession && existingSession.type === 'java') {
+        try {
+            await vscode.debug.stopDebugging(existingSession);
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            // Ignore cleanup errors
+        }
+    }
+
+    // Start debugging using the configuration name
+    // This is equivalent to selecting the config in UI and pressing F5
+    sendInfo('', {
+        operationName: 'languageModelTool.startDebugWithLaunchConfig',
+        configName: configToUse.name,
+        workspacePath: input.workspacePath
+    });
+
+    try {
+        const started = await vscode.debug.startDebugging(workspaceFolder, configToUse.name);
+        
+        if (!started) {
+            return `✗ Failed to start debug session with configuration "${configToUse.name}".\n\n` +
+                   `This might be due to:\n` +
+                   `• Configuration errors in launch.json\n` +
+                   `• Missing dependencies or compilation errors\n` +
+                   `• Invalid mainClass or other settings\n\n` +
+                   `Check the Debug Console for error messages.`;
+        }
+
+        // Wait a bit for session to start and be detected
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const session = vscode.debug.activeDebugSession;
+        if (session && session.type === 'java') {
+            return `✓ Debug session started successfully using launch.json configuration "${configToUse.name}".\n` +
+                   `Session ID: ${session.id}\n` +
+                   `Session Name: ${session.name}\n\n` +
+                   `The debugger is attached and ready. Any breakpoints/logpoints you set will be active.`;
+        } else {
+            return `⚠️ Debug command sent using configuration "${configToUse.name}", but session not immediately detected.\n\n` +
+                   `The application may still be starting. Use get_debug_session_info() to check if session is now active.`;
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return `✗ Error starting debug session: ${errorMessage}\n\n` +
+               `Check your launch.json configuration and ensure:\n` +
+               `• The mainClass is correct\n` +
+               `• The project is compiled\n` +
+               `• All required settings are valid`;
+    }
 }

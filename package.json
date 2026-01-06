@@ -43,7 +43,9 @@
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs",
     "onCommand:JavaDebug.PickJavaProcess",
-    "onLanguageModelTool:debug_java_application"
+    "onLanguageModelTool:debug_java_application",
+    "onLanguageModelTool:start_debug_with_launch_config",
+    "onLanguageModelTool:get_debug_console_output"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -1328,6 +1330,72 @@
         "inputSchema": {
           "type": "object",
           "properties": {},
+          "required": []
+        }
+      },
+      {
+        "name": "start_debug_with_launch_config",
+        "displayName": "Start Debug with Launch Config",
+        "modelDescription": "Start a debug session using an existing launch.json configuration. This respects user's debug settings (VM args, environment variables, etc.) and is equivalent to pressing F5. PREFERRED over debug_java_application when launch.json exists. Automatically detects Java launch configurations in .vscode/launch.json. Can optionally specify a configuration name, or uses the first Java config by default. Use this for trace agent to honor user's project setup.",
+        "toolReferenceName": "startDebugWithLaunchConfig",
+        "tags": [
+          "java",
+          "debug",
+          "launch",
+          "F5",
+          "configuration",
+          "start"
+        ],
+        "icon": "$(debug-start)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "workspacePath": {
+              "type": "string",
+              "description": "Absolute path to the workspace folder containing .vscode/launch.json"
+            },
+            "configName": {
+              "type": "string",
+              "description": "Optional: Name of the specific launch configuration to use. If omitted, uses the first Java launch configuration found."
+            }
+          },
+          "required": [
+            "workspacePath"
+          ]
+        }
+      },
+      {
+        "name": "get_debug_console_output",
+        "displayName": "Get Debug Console Output",
+        "modelDescription": "Retrieve output from the Debug Console including logpoint messages, program stdout/stderr, and debug adapter messages. CRITICAL for trace agent to verify logpoint output and analyze program behavior. Returns console output from active or recently ended sessions. Supports reading from specific sessions or most recent session. Supports filtering by text pattern and limiting output lines.",
+        "toolReferenceName": "getDebugConsoleOutput",
+        "tags": [
+          "java",
+          "debug",
+          "console",
+          "output",
+          "logpoint",
+          "trace"
+        ],
+        "icon": "$(output)",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "maxLines": {
+              "type": "number",
+              "description": "Optional: Maximum number of lines to return (default: 100). Returns the most recent lines."
+            },
+            "filter": {
+              "type": "string",
+              "description": "Optional: Filter output by text pattern. Only lines containing this text will be returned."
+            },
+            "sessionId": {
+              "type": "string",
+              "description": "Optional: Specific debug session ID to read from. If not provided, uses active session or most recent session. Useful for reading output after session ends."
+            }
+          },
           "required": []
         }
       }
