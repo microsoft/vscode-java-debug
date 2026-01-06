@@ -1331,13 +1331,6 @@
           "required": []
         }
       }
-    ],
-    "chatAgents": [
-      {
-        "name": "JavaDebug",
-        "path": "./bundled/agents/debug.agent.md",
-        "description": "Custome Agent for debugging Java applications."
-      }
     ]
   },
   "scripts": {
