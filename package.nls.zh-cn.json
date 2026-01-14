@@ -70,5 +70,6 @@
     "java.debugger.configuration.vmArgs.description": "启动Java程序的默认VM参数。例如，使用'-Xmx1G -ea'将堆大小增加到1GB并启用断言。如果要为特定的调试会话定制VM参数，请修改launch.json中的'vmArgs'配置。",
     "java.debugger.configuration.silentNotification": "控制是否可以使用通知来报告进度。如果为真，则使用状态栏来报告进度。",
     "java.debugger.configuration.jdwp.async.description": "实验性的：控制是否允许调试器以异步方式发送JDWP命令。异步模式可以提高高延迟网络上的远程调试响应速度。",
-    "java.debugger.configuration.debugSupportOnDecompiledSource.description": "[实验性的]: 在反编译的源代码上启用调试支持。请注意，该功能可能会影响Call Stack试图的加载速度。"
+    "java.debugger.configuration.debugSupportOnDecompiledSource.description": "[实验性的]: 在反编译的源代码上启用调试支持。请注意，该功能可能会影响Call Stack试图的加载速度。",
+    "java.debugger.configuration.suspendAllThreads.description": "当命中断点或因异常停止时暂停所有线程。"
 }

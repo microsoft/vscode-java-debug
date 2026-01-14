@@ -66,5 +66,6 @@
     "java.debugger.configuration.jdwp.limitOfVariablesPerJdwpRequest.description": "一次 JDWP 請求中可以請求的變數或欄位的最大數量。該值越高，在展開變數視圖時，請求偵錯對象的頻率就越低。同時數量過大也會導致 JDWP 請求超時。",
     "java.debugger.configuration.jdwp.requestTimeout.description": "偵錯器與目標 JVM 連線時 JDWP 請求的超時時間（ms）。",
     "java.debugger.configuration.vmArgs.description": "啟動 Java 程式的預設 VM 參數。例如，使用 '-Xmx1G -ea' 將堆大小增加到 1GB 並啟用斷言。如果要為特定的偵錯會話定製 VM 參數，請修改launch.json 中的 'vmArgs' 設定。",
-    "java.debugger.configuration.silentNotification": "控制是否可以使用通知來回報進度。如果為真，則使用狀態欄來回報進度。"
+    "java.debugger.configuration.silentNotification": "控制是否可以使用通知來回報進度。如果為真，則使用狀態欄來回報進度。",
+    "java.debugger.configuration.suspendAllThreads.description": "當命中斷點或因異常停止時暫停所有執行緒。"
 }
