@@ -987,7 +987,7 @@
         "java.debug.settings.suspendAllThreads": {
           "type": "boolean",
           "description": "%java.debugger.configuration.suspendAllThreads.description%",
-          "default": true
+          "default": false
         },
         "java.silentNotification": {
           "type": "boolean",
