@@ -54,7 +54,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     registerBreakpointCommands(context);
     registerVariableMenuCommands(context);
     context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory("java", {
-        createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+        createDebugAdapterTracker(_session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
             return new SuspendAllThreadsTracker();
         }
     }));
