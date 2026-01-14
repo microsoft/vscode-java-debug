@@ -984,6 +984,11 @@
           "description": "%java.debugger.configuration.debugSupportOnDecompiledSource.description%",
           "default": "on"
         },
+        "java.debug.settings.suspendAllThreads": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.suspendAllThreads.description%",
+          "default": true
+        },
         "java.silentNotification": {
           "type": "boolean",
           "description": "%java.debugger.configuration.silentNotification%",

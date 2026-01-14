@@ -29,6 +29,7 @@ import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 import { registerBreakpointCommands } from "./breakpointCommands";
 import { registerVariableMenuCommands } from "./variableMenu";
+import { SuspendAllThreadsTracker } from "./suspendAllThreadsTracker";
 import { promisify } from "util";
 
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
@@ -52,6 +53,11 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     registerDebugEventListener(context);
     registerBreakpointCommands(context);
     registerVariableMenuCommands(context);
+    context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory("java", {
+        createDebugAdapterTracker(session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> {
+            return new SuspendAllThreadsTracker();
+        }
+    }));
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("java", new JavaDebugAdapterDescriptorFactory()));
