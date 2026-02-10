@@ -1365,7 +1365,7 @@
   "dependencies": {
     "compare-versions": "^4.1.4",
     "dotenv": "^16.4.5",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "uuid": "^8.3.2",
     "vscode-extension-telemetry-wrapper": "^0.14.0",
     "vscode-languageclient": "6.0.0-next.9",
