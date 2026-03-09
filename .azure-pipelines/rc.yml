@@ -23,7 +23,7 @@ extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@CustomPipelineTemplates
   parameters:
     pool:
-      name: MSEngSS-MicroBuild2022-1ES
+      name: VSEng-MicroBuildVSStable
     stages:
       - stage: Build
         jobs:
