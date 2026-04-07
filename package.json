@@ -1371,5 +1371,8 @@
     "vscode-languageclient": "6.0.0-next.9",
     "vscode-languageserver-types": "3.16.0",
     "vscode-tas-client": "^0.1.84"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
   }
 }
