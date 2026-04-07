@@ -13,10 +13,12 @@ import { HCR_EVENT, JAVA_LANGID, TELEMETRY_EVENT, USER_NOTIFICATION_EVENT } from
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { initExpService } from "./experimentationService";
+import { registerNoConfigDebug } from "./noConfigDebugInit";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
 import { logJavaException, logJavaInfo } from "./javaLogger";
+import { registerLanguageModelTool, registerDebugSessionTools } from "./languageModelTool";
 import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
@@ -25,17 +27,30 @@ import { progressProvider } from "./progressImpl";
 import { JavaTerminalLinkProvder } from "./terminalLinkProvider";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
+import { registerBreakpointCommands } from "./breakpointCommands";
 import { registerVariableMenuCommands } from "./variableMenu";
 import { promisify } from "util";
 
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await initExpService(context);
+
+    // Register No-Config Debug functionality
+    const noConfigDisposable = await registerNoConfigDebug(
+        context.environmentVariableCollection,
+        context.extensionPath
+    );
+    context.subscriptions.push(noConfigDisposable);
+
+    // Register Language Model Tools after Java Language Server is ready
+    registerLanguageModelToolsWhenReady(context);
+
     return instrumentOperation("activation", initializeExtension)(context);
 }
 
 function initializeExtension(_operationId: string, context: vscode.ExtensionContext): any {
     registerDebugEventListener(context);
+    registerBreakpointCommands(context);
     registerVariableMenuCommands(context);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
@@ -88,6 +103,29 @@ export async function deactivate() {
 }
 
 const delay = promisify(setTimeout);
+
+/**
+ * Register Language Model Tools after Java Language Server is ready.
+ * The debug tools depend on JDT.LS for compilation, classpath resolution,
+ * and executing debug server commands.
+ */
+async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionContext): Promise<void> {
+    // Check if Language Model API is available
+    if (!vscode.lm || typeof vscode.lm.registerTool !== 'function') {
+        return;
+    }
+
+    const javaExt = vscode.extensions.getExtension("redhat.java");
+    if (!javaExt) {
+        return;
+    }
+
+    // Register Language Model Tools for AI-assisted debugging
+    registerLanguageModelTool(context);
+    const debugToolsDisposables = registerDebugSessionTools(context);
+    context.subscriptions.push(...debugToolsDisposables);
+}
+
 async function subscribeToJavaExtensionEvents(): Promise<void> {
     const javaExt = vscode.extensions.getExtension("redhat.java");
     if (!javaExt) {

@@ -17,6 +17,8 @@ A lightweight Java Debugger based on [Java Debug Server](https://github.com/Micr
 - Debug console
 - Evaluation
 - Hot Code Replace
+- No-Config Debug (debug Java apps without launch.json)
+- **[AI]** AI-Assisted Debugging (GitHub Copilot integration)
 
 ## Requirements
 - JDK (version 1.8.0 or later)
@@ -40,6 +42,38 @@ ext install vscode-java-debug
 - Press `F5`
 
 Please also check the documentation of [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) if you have trouble setting up your project.
+
+## No-Config Debug
+
+You can now debug Java applications without creating a `launch.json` file! Simply open a terminal in VS Code and use the `debugjava` command:
+
+```bash
+# Debug a main class
+debugjava -cp bin com.example.Main
+
+# Debug a JAR file
+debugjava -jar target/myapp.jar
+
+# Debug with arguments
+debugjava -cp bin com.example.Main arg1 arg2
+```
+
+The debugger will automatically attach. See [No-Config Debug Documentation](bundled/scripts/noConfigScripts/README.md) for more details.
+
+## AI-Assisted Debugging
+
+When using GitHub Copilot Chat, you can now ask AI to help you debug Java applications! The extension provides a Language Model Tool that enables natural language debugging:
+
+- "Debug my Spring Boot application"
+- "Debug the Main class in this project"
+- "Debug Calculator with arguments 10 and 5"
+
+The AI will automatically:
+1. Detect your project type (Maven/Gradle/VS Code)
+2. Build/compile your project
+3. Start debugging with appropriate configuration
+
+See [Language Model Tool Documentation](bundled/agents/README.md) for more details.
 
 ## Options
 
@@ -159,6 +193,7 @@ Please also check the documentation of [Language Support for Java by Red Hat](ht
   - `off`
 - `java.debug.settings.vmArgs`: The default VM arguments to launch the Java program. Eg. Use '-Xmx1G -ea' to increase the heap size to 1GB and enable assertions. If you want to customize the VM arguments for a specific debug session, please modify the 'vmArgs' config in launch.json.
 - `java.debug.settings.debugSupportOnDecompiledSource`: [Experimental]: Enable debugging support on the decompiled source code. Be aware that this feature may affect the loading speed of Call Stack Viewlet. You also need [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java)@1.20.0 or higher to use this feature.
+- `java.debug.settings.suspendAllThreads`: Suspend all threads when hitting a breakpoint or stopping for an exception. Takes effect only for new debug sessions; changes during a running session don’t apply.
 - `java.silentNotification`: Controls whether notifications can be used to report progress. If true, use status bar to report progress instead. Defaults to `false`.
 
 > Pro Tip: The documentation [Configuration.md](https://github.com/microsoft/vscode-java-debug/blob/master/Configuration.md) provides lots of samples to demonstrate how to use these debug configurations, recommend to take a look.

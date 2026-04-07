@@ -4,6 +4,23 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.58.5 - 2026-01-06
+### Fixed
+- Fix `lspFrame.source.path` is null. [java-debug#618](https://github.com/microsoft/java-debug/pull/618).
+
+## 0.58.4 - 2025-12-09
+### Added
+- Add command to manage breakpoint exception types in command palette. [#1566](https://github.com/microsoft/vscode-java-debug/pull/1566). Thanks to [Roland Schaer](https://github.com/roele) for contribution.
+
+### Fixed
+- Fix `lspFrame.source` NPE on stackTrace request. [java-debug#616](https://github.com/microsoft/java-debug/pull/616). Thanks to [Mathias Fußenegger](https://github.com/mfussenegger) for contribution.
+- Handle unavailable sources in compliance with DAP spec. [java-debug#609](https://github.com/microsoft/java-debug/pull/609), [java-debug#614](https://github.com/microsoft/java-debug/pull/614). Thanks to [Karl-Erik Enkelmann](https://github.com/playdohface) for contribution.
+
+
+## 0.58.3 - 2025-11-03
+### Added
+- No config debug [[#1530](https://github.com/microsoft/vscode-java-debug/issues/1530)]
+
 ## 0.58.2 - 2025-04-28
 ### Fixed
 - Provide graceful shutdown on debug stop action. [#1274](https://github.com/microsoft/vscode-java-debug/issues/1274). Thanks to [Dave Syer](https://github.com/dsyer) for contribution.

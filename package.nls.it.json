@@ -5,5 +5,6 @@
     "java.debugger.configuration.showStaticVariables.description": "Mostra variabili statiche nella scheda \"variabili\".",
     "java.debugger.configuration.showQualifiedNames.description": "Mostra nome completo delle classi nella scheda \"variabili\".",
     "java.debugger.configuration.maxStringLength.description": "Lunghezza massima delle stringhe visualizzate nella scheda \"Variabili\" o \"Console di Debug\", stringhe più lunghe di questo numero verranno tagliate, se 0 nessun taglio viene eseguito.",
-    "java.debugger.configuration.enableRunDebugCodeLens.description": "Abilitare i provider di lenti di codice run e debug sui metodi principali."
+    "java.debugger.configuration.enableRunDebugCodeLens.description": "Abilitare i provider di lenti di codice run e debug sui metodi principali.",
+    "java.debugger.configuration.suspendAllThreads.description": "Sospende tutti i thread quando si raggiunge un punto di interruzione o ci si ferma per un'eccezione. Ha effetto solo nelle nuove sessioni di debug; le modifiche durante una sessione in esecuzione non si applicano."
 }

@@ -1,0 +1,145 @@
+name: AI Triage - Process All Open Issues
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode - only list issues without processing'
+        required: false
+        default: false
+        type: boolean
+      max_issues:
+        description: 'Maximum number of issues to process (0 = all)'
+        required: false
+        default: '0'
+        type: string
+
+permissions:
+  issues: write
+  contents: read
+  actions: write
+
+jobs:
+  get_open_issues:
+    runs-on: ubuntu-latest
+    outputs:
+      issue_numbers: ${{ steps.get_issues.outputs.issue_numbers }}
+      total_count: ${{ steps.get_issues.outputs.total_count }}
+
+    steps:
+      - name: Get all open issues
+        id: get_issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Use Search API to filter issues at API level
+            const { data } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open -label:ai-triaged -label:invalid`,
+              sort: 'created',
+              order: 'desc',
+              per_page: 100
+            });
+
+            const actualIssues = data.items;
+
+            let issuesToProcess = actualIssues;
+            const maxIssues = parseInt('${{ inputs.max_issues }}' || '0');
+
+            if (maxIssues > 0 && actualIssues.length > maxIssues) {
+              issuesToProcess = actualIssues.slice(0, maxIssues);
+              console.log(`Limiting to first ${maxIssues} issues out of ${actualIssues.length} total`);
+            }
+
+            const issueNumbers = issuesToProcess.map(issue => issue.number);
+            const totalCount = issuesToProcess.length;
+
+            console.log(`Found ${actualIssues.length} open issues, processing ${totalCount}:`);
+            issuesToProcess.forEach(issue => {
+              console.log(`  #${issue.number}: ${issue.title}`);
+            });
+
+            core.setOutput('issue_numbers', JSON.stringify(issueNumbers));
+            core.setOutput('total_count', totalCount);
+
+  process_issues:
+    runs-on: ubuntu-latest
+    needs: get_open_issues
+    if: needs.get_open_issues.outputs.total_count > 0
+
+    strategy:
+      # Process issues one by one (max-parallel: 1)
+      max-parallel: 1
+      matrix:
+        issue_number: ${{ fromJSON(needs.get_open_issues.outputs.issue_numbers) }}
+
+    steps:
+      - name: Log current issue being processed
+        run: |
+          echo "🔄 Processing issue #${{ matrix.issue_number }}"
+          echo "Total issues to process: ${{ needs.get_open_issues.outputs.total_count }}"
+
+      - name: Check if dry run mode
+        if: inputs.dry_run == true
+        run: |
+          echo "🔍 DRY RUN MODE: Would process issue #${{ matrix.issue_number }}"
+          echo "Skipping actual triage processing"
+
+      - name: Trigger triage workflow for issue
+        if: inputs.dry_run != true
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = '${{ matrix.issue_number }}';
+
+            try {
+              console.log(`Triggering triage workflow for issue #${issueNumber}`);
+
+              const response = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'triage-agent.yml',
+                ref: 'main',
+                inputs: {
+                  issue_number: issueNumber
+                }
+              });
+
+              console.log(`✅ Successfully triggered triage workflow for issue #${issueNumber}`);
+
+            } catch (error) {
+              console.error(`❌ Failed to trigger triage workflow for issue #${issueNumber}:`, error);
+              core.setFailed(`Failed to process issue #${issueNumber}: ${error.message}`);
+            }
+
+      - name: Wait for workflow completion
+        if: inputs.dry_run != true
+        run: |
+          echo "⏳ Waiting for triage workflow to complete for issue #${{ matrix.issue_number }}..."
+          echo "Timeout: ${{ vars.TRIAGE_AGENT_TIMEOUT }} seconds"
+          sleep ${{ vars.TRIAGE_AGENT_TIMEOUT }}  # Wait for triage workflow completion
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [get_open_issues, process_issues]
+    if: always()
+
+    steps:
+      - name: Print summary
+        run: |
+          echo "## Triage Processing Summary"
+          echo "Total open issues found: ${{ needs.get_open_issues.outputs.total_count }}"
+
+          if [ "${{ inputs.dry_run }}" == "true" ]; then
+            echo "Mode: DRY RUN (no actual processing performed)"
+          else
+            echo "Mode: FULL PROCESSING"
+          fi
+
+          if [ "${{ needs.process_issues.result }}" == "success" ]; then
+            echo "✅ All issues processed successfully"
+          elif [ "${{ needs.process_issues.result }}" == "failure" ]; then
+            echo "❌ Some issues failed to process"
+          elif [ "${{ needs.process_issues.result }}" == "skipped" ]; then
+            echo "⏭️ Processing was skipped (no open issues found)"
+          else
+            echo "⚠️ Processing completed with status: ${{ needs.process_issues.result }}"
+          fi

@@ -1,0 +1,12 @@
+#!/bin/bash
+# Java No-Config Debug Wrapper Script for Unix/Linux/macOS
+# This script intercepts java commands and automatically enables JDWP debugging
+
+# Get the directory of this script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Set environment variables only for the node process, not the current shell
+# This ensures JAVA_TOOL_OPTIONS doesn't affect subsequent commands in the terminal
+JDWP_ADAPTER_ENDPOINTS=$VSCODE_JDWP_ADAPTER_ENDPOINTS \
+JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=0" \
+exec node "$SCRIPT_DIR/jdwp-wrapper.js" "$@"
