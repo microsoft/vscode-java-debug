@@ -44,9 +44,9 @@ extends:
               - checkout: self
                 fetchTags: true
               - task: JavaToolInstaller@0
-                displayName: Use Java 17
+                displayName: Use Java 21
                 inputs:
-                  versionSpec: "17"
+                  versionSpec: "21"
                   jdkArchitectureOption: x64
                   jdkSourceOption: PreInstalled
               - task: Npm@1
