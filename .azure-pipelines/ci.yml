@@ -49,6 +49,10 @@ extends:
                   versionSpec: "21"
                   jdkArchitectureOption: x64
                   jdkSourceOption: PreInstalled
+              - task: NodeTool@0
+                displayName: Use Node 20.x
+                inputs:
+                  versionSpec: 20.x
               - task: Npm@1
                 displayName: npm install
                 inputs:
