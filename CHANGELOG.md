@@ -4,6 +4,19 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.59.0 - 2026-04-09
+### Added
+- Support pause all threads when hit breakpoints. [#1603](https://github.com/microsoft/vscode-java-debug/pull/1603).
+- Support suspend all setting. [java-debug#619](https://github.com/microsoft/java-debug/pull/619).
+
+### Changed
+- Provide graceful shutdown on debug stop action. [java-debug#620](https://github.com/microsoft/java-debug/pull/620).
+
+### Fixed
+- Use JDTUtils.toUri() for decompiled class file URIs. [java-debug#624](https://github.com/microsoft/java-debug/pull/624).
+- Handle NoSuchMethodError for isMainMethodCandidate() on older JDT. [java-debug#622](https://github.com/microsoft/java-debug/pull/622).
+- Exclude Map.Entry from lazy loading to show key:value inline. [java-debug#621](https://github.com/microsoft/java-debug/pull/621).
+
 ## 0.58.5 - 2026-01-06
 ### Fixed
 - Fix `lspFrame.source.path` is null. [java-debug#618](https://github.com/microsoft/java-debug/pull/618).

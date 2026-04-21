@@ -2,7 +2,7 @@
   "name": "vscode-java-debug",
   "displayName": "Debugger for Java",
   "description": "A lightweight Java debugger for Visual Studio Code",
-  "version": "0.58.5",
+  "version": "0.59.0",
   "publisher": "vscjava",
   "preview": false,
   "aiKey": "67d4461e-ccba-418e-8082-1bd0acfe8516",
@@ -1365,11 +1365,14 @@
   "dependencies": {
     "compare-versions": "^4.1.4",
     "dotenv": "^16.4.5",
-    "lodash": "^4.17.23",
+    "lodash": "^4.18.0",
     "uuid": "^8.3.2",
     "vscode-extension-telemetry-wrapper": "^0.14.0",
     "vscode-languageclient": "6.0.0-next.9",
     "vscode-languageserver-types": "3.16.0",
     "vscode-tas-client": "^0.1.84"
+  },
+  "overrides": {
+    "serialize-javascript": "7.0.5"
   }
 }
