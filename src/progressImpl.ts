@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { v4 } from "uuid";
+import * as crypto from "crypto";
 import { CancellationToken, CancellationTokenSource, Disposable, EventEmitter, ProgressLocation,
     StatusBarAlignment, StatusBarItem, window, workspace } from "vscode";
 import { IProgressProvider, IProgressReporter } from "./progressAPI";
 
 const STATUS_COMMAND: string = "java.show.server.task.status";
 class ProgressReporter implements IProgressReporter {
-    private _id: string = v4();
+    private _id: string = crypto.randomUUID();
     private _jobName: string;
     private _progressLocation: ProgressLocation | { viewId: string };
     private _cancellable: boolean = false;
