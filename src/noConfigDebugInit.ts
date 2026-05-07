@@ -93,12 +93,12 @@ export async function registerNoConfigDebug(
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
     const pathSeparator = process.platform === 'win32' ? ';' : ':';
 
-    // Check if the current PATH already ends with a path separator to avoid double separators
-    const currentPath = process.env.PATH || '';
-    const needsSeparator = currentPath.length > 0 && !currentPath.endsWith(pathSeparator);
-    const pathValueToAppend = needsSeparator ? `${pathSeparator}${noConfigScriptsDir}` : noConfigScriptsDir;
-
-    collection.append('PATH', pathValueToAppend);
+    // EnvironmentVariableCollection.append() does literal string concatenation and does
+    // not insert a separator. Always prepend one so we never glue our directory onto the
+    // last entry of the user's PATH. We cannot rely on process.env.PATH ending with a
+    // separator, since the terminal's PATH may differ from the extension host's PATH.
+    // A trailing empty PATH entry (when PATH already ends with the separator) is harmless.
+    collection.append('PATH', `${pathSeparator}${noConfigScriptsDir}`);
 
     // create file system watcher for the debuggerAdapterEndpointFolder for when the communication port is written
     const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
