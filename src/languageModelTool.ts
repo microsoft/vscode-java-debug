@@ -4,7 +4,20 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { sendError, sendInfo } from "vscode-extension-telemetry-wrapper";
+import {
+    classifyBreakpoint,
+    classifyError,
+    classifyEvalContext,
+    classifyRemoveScope,
+    classifyScopeType,
+    classifyStep,
+    classifyTarget,
+    ErrorCategory,
+    recordLaunchInternal,
+    recordToolInvocation,
+    TOOL_NAMES,
+    ToolOutcome,
+} from "./lmToolTelemetry";
 
 // ============================================================================
 // Constants
@@ -63,14 +76,20 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
 
     const tool: LanguageModelTool<DebugJavaApplicationInput> = {
         async invoke(options: { input: DebugJavaApplicationInput }, token: vscode.CancellationToken): Promise<any> {
-            sendInfo('', {
-                operationName: 'languageModelTool.debugJavaApplication.invoke',
-                target: options.input.target,
-                skipBuild: options.input.skipBuild?.toString() || 'false',
-            });
+            const startedAt = Date.now();
+            const targetType = classifyTarget(options.input.target);
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
 
             try {
                 const result = await debugJavaApplication(options.input, token);
+                if (!result.success) {
+                    outcome = result.status === 'timeout' ? 'timeout' : 'failure';
+                    errorCategory = result.success ? undefined : classifyError(result.message);
+                } else if (result.status === 'timeout') {
+                    outcome = 'timeout';
+                    errorCategory = 'timeout';
+                }
 
                 // Format the message for AI - use simple text, not JSON
                 const message = result.success
@@ -82,13 +101,23 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
                     new (vscode as any).LanguageModelTextPart(message)
                 ]);
             } catch (error) {
-                sendError(error as Error);
+                outcome = token.isCancellationRequested ? 'cancelled' : 'failure';
+                errorCategory = classifyError(error);
 
                 const errorMessage = error instanceof Error ? error.message : String(error);
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Debug failed: ${errorMessage}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.DEBUG_JAVA_APPLICATION,
+                    outcome,
+                    errorCategory,
+                    targetType,
+                    skipBuild: !!options.input.skipBuild,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -120,10 +149,8 @@ async function debugJavaApplication(
     // Step 0: Cleanup any existing Java debug session to avoid port conflicts
     const existingSession = vscode.debug.activeDebugSession;
     if (existingSession && existingSession.type === 'java') {
-        sendInfo('', {
-            operationName: 'languageModelTool.cleanupExistingSession',
+        recordLaunchInternal('cleanupExistingSession', {
             sessionId: existingSession.id,
-            sessionName: existingSession.name
         });
         try {
             await vscode.debug.stopDebugging(existingSession);
@@ -131,9 +158,8 @@ async function debugJavaApplication(
             await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
             // Log but continue - the old session might already be dead
-            sendInfo('', {
-                operationName: 'languageModelTool.cleanupExistingSessionFailed',
-                error: String(error)
+            recordLaunchInternal('cleanupExistingSessionFailed', {
+                errorCategory: classifyError(error),
             });
         }
     }
@@ -219,10 +245,8 @@ async function debugJavaApplication(
                         clearTimeout(timeoutHandle);
                     }
 
-                    sendInfo('', {
-                        operationName: 'languageModelTool.debugSessionStarted.eventBased',
+                    recordLaunchInternal('debugSessionStarted.eventBased', {
                         sessionId: session.id,
-                        sessionName: session.name
                     });
 
                     resolve({
@@ -243,10 +267,7 @@ async function debugJavaApplication(
                 if (!sessionStarted) {
                     sessionDisposable.dispose();
 
-                    sendInfo('', {
-                        operationName: 'languageModelTool.debugSessionTimeout.eventBased',
-                        target: targetInfo
-                    });
+                    recordLaunchInternal('debugSessionTimeout.eventBased', {});
 
                     resolve({
                         success: false,
@@ -282,10 +303,9 @@ async function debugJavaApplication(
             if (session && session.type === 'java') {
                 const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
-                sendInfo('', {
-                    operationName: 'languageModelTool.debugSessionDetected',
+                recordLaunchInternal('debugSessionDetected', {
                     sessionId: session.id,
-                    elapsedTime
+                    elapsedTime,
                 });
 
                 return {
@@ -302,10 +322,8 @@ async function debugJavaApplication(
         }
 
         // Timeout: session not detected within 15 seconds
-        sendInfo('', {
-            operationName: 'languageModelTool.debugSessionTimeout.smartPolling',
-            target: targetInfo,
-            maxWaitTime
+        recordLaunchInternal('debugSessionTimeout.smartPolling', {
+            maxWaitTime,
         });
 
         return {
@@ -584,19 +602,16 @@ function constructDebugCommand(
         if (!input.target.includes('.')) {
             const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
             if (detectedClassName) {
-                sendInfo('', {
-                    operationName: 'languageModelTool.classNameDetection',
-                    simpleClassName: input.target,
-                    detectedClassName,
-                    projectType
+                recordLaunchInternal('classNameDetection', {
+                    projectType,
+                    detected: true,
                 });
                 className = detectedClassName;
             } else {
                 // No package detected - class is in default package
-                sendInfo('', {
-                    operationName: 'languageModelTool.classNameDetection.noPackage',
-                    simpleClassName: input.target,
-                    projectType
+                recordLaunchInternal('classNameDetection', {
+                    projectType,
+                    detected: false,
                 });
             }
         }
@@ -917,6 +932,11 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 1: Set Breakpoint
     const setBreakpointTool: LanguageModelTool<SetBreakpointInput> = {
         async invoke(options: { input: SetBreakpointInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            const breakpointKind = classifyBreakpoint(options.input);
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+
             try {
                 const { filePath, lineNumber, condition, hitCondition, logMessage } = options.input;
 
@@ -944,9 +964,19 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to set breakpoint: ${error}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.SET_JAVA_BREAKPOINT,
+                    outcome,
+                    errorCategory,
+                    breakpointKind,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -955,9 +985,16 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 2: Step Operations
     const stepOperationTool: LanguageModelTool<StepOperationInput> = {
         async invoke(options: { input: StepOperationInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            const stepKind = classifyStep(options.input.operation);
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+
             try {
                 const session = vscode.debug.activeDebugSession;
                 if (!session || session.type !== 'java') {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
                     ]);
@@ -987,9 +1024,19 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     new (vscode as any).LanguageModelTextPart(`✓ Executed ${operation}`)
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Step operation failed: ${error}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.DEBUG_STEP_OPERATION,
+                    outcome,
+                    errorCategory,
+                    stepKind,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -998,9 +1045,17 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 3: Get Variables
     const getVariablesTool: LanguageModelTool<GetVariablesInput> = {
         async invoke(options: { input: GetVariablesInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            const scopeTypeEnum = classifyScopeType(options.input.scopeType);
+            const hasFilter = !!options.input.filter;
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+
             try {
                 const session = vscode.debug.activeDebugSession;
                 if (!session || session.type !== 'java') {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
                     ]);
@@ -1018,6 +1073,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 }
 
                 if (!targetThreadId) {
+                    outcome = 'noSuspendedThread';
+                    errorCategory = 'noSuspendedThread';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No suspended thread found. Use get_debug_threads() to see thread states.')
                     ]);
@@ -1031,6 +1088,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 });
 
                 if (!stackResponse.stackFrames || stackResponse.stackFrames.length === 0) {
+                    outcome = 'noStackFrame';
+                    errorCategory = 'noStackFrame';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No stack frame available.')
                     ]);
@@ -1075,9 +1134,20 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to get variables: ${error}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.GET_DEBUG_VARIABLES,
+                    outcome,
+                    errorCategory,
+                    scopeType: scopeTypeEnum,
+                    hasFilter,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -1086,9 +1156,16 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 4: Get Stack Trace
     const getStackTraceTool: LanguageModelTool<GetStackTraceInput> = {
         async invoke(options: { input: GetStackTraceInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+            let frameCount = 0;
+
             try {
                 const session = vscode.debug.activeDebugSession;
                 if (!session || session.type !== 'java') {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
                     ]);
@@ -1103,10 +1180,13 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 });
 
                 if (!stackResponse.stackFrames || stackResponse.stackFrames.length === 0) {
+                    outcome = 'noStackFrame';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('No stack frames available.')
                     ]);
                 }
+
+                frameCount = stackResponse.stackFrames.length;
 
                 const frames = stackResponse.stackFrames.map((frame: any, index: number) => {
                     const location = frame.source ?
@@ -1121,9 +1201,19 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to get stack trace: ${error}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.GET_DEBUG_STACK_TRACE,
+                    outcome,
+                    errorCategory,
+                    frameCount,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -1132,9 +1222,16 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 5: Evaluate Expression
     const evaluateExpressionTool: LanguageModelTool<EvaluateExpressionInput> = {
         async invoke(options: { input: EvaluateExpressionInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            const evalContext = classifyEvalContext(options.input.context);
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+
             try {
                 const session = vscode.debug.activeDebugSession;
                 if (!session || session.type !== 'java') {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
                     ]);
@@ -1168,6 +1265,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                             targetFrameId = stackResponse.stackFrames[0].id;
                         }
                     } catch {
+                        outcome = 'noSuspendedThread';
+                        errorCategory = 'noSuspendedThread';
                         return new (vscode as any).LanguageModelToolResult([
                             new (vscode as any).LanguageModelTextPart(`✗ Thread #${targetThreadId} is not suspended. Cannot evaluate expression.`)
                         ]);
@@ -1175,6 +1274,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 }
 
                 if (!targetThreadId) {
+                    outcome = 'noSuspendedThread';
+                    errorCategory = 'noSuspendedThread';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No suspended thread found. Use get_debug_threads() to see thread states.')
                     ]);
@@ -1194,9 +1295,20 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Evaluation failed: ${error}`)
                 ]);
+            } finally {
+                // NEVER log expression text (may contain user code / secrets)
+                recordToolInvocation({
+                    tool: TOOL_NAMES.EVALUATE_DEBUG_EXPRESSION,
+                    outcome,
+                    errorCategory,
+                    evalContext,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -1205,9 +1317,17 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 6: Get Threads
     const getThreadsTool: LanguageModelTool<{}> = {
         async invoke(_options: { input: {} }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+            let threadCount = 0;
+            let suspendedCount = 0;
+
             try {
                 const session = vscode.debug.activeDebugSession;
                 if (!session || session.type !== 'java') {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('✗ No active Java debug session.')
                     ]);
@@ -1220,6 +1340,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                         new (vscode as any).LanguageModelTextPart('No threads found.')
                     ]);
                 }
+
+                threadCount = threadsResponse.threads.length;
 
                 // Check each thread's state by trying to get its stack trace
                 const threadInfos: string[] = [];
@@ -1236,6 +1358,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
                         if (stackResponse?.stackFrames?.length > 0) {
                             state = '🔴 SUSPENDED';
+                            suspendedCount++;
                             const topFrame = stackResponse.stackFrames[0];
                             if (topFrame.source) {
                                 location = ` at ${topFrame.source.name}:${topFrame.line}`;
@@ -1264,9 +1387,20 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to get threads: ${error}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.GET_DEBUG_THREADS,
+                    outcome,
+                    errorCategory,
+                    threadCount,
+                    suspendedCount,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -1275,6 +1409,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 7: Remove Breakpoints
     const removeBreakpointsTool: LanguageModelTool<RemoveBreakpointsInput> = {
         async invoke(options: { input: RemoveBreakpointsInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            const removeScope = classifyRemoveScope(options.input);
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+            let removedCount = 0;
+
             try {
                 const { filePath, lineNumber } = options.input;
 
@@ -1283,6 +1423,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 if (!filePath) {
                     // Remove all breakpoints (no active session required)
                     const count = breakpoints.length;
+                    removedCount = count;
                     vscode.debug.removeBreakpoints(breakpoints);
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart(`✓ Removed all ${count} breakpoint(s).`)
@@ -1304,6 +1445,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 if (toRemove.length > 0) {
                     vscode.debug.removeBreakpoints(toRemove);
                 }
+                removedCount = toRemove.length;
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
@@ -1313,9 +1455,20 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to remove breakpoints: ${error}`)
                 ]);
+            } finally {
+                recordToolInvocation({
+                    tool: TOOL_NAMES.REMOVE_JAVA_BREAKPOINTS,
+                    outcome,
+                    errorCategory,
+                    removeScope,
+                    removedCount,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -1323,38 +1476,46 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
     // Tool 9: Stop Debug Session
     const stopDebugSessionTool: LanguageModelTool<StopDebugSessionInput> = {
-        async invoke(options: { input: StopDebugSessionInput }, _token: vscode.CancellationToken): Promise<any> {
+        async invoke(_options: { input: StopDebugSessionInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+
             try {
                 const session = vscode.debug.activeDebugSession;
 
                 if (!session) {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('No active debug session to stop.')
                     ]);
                 }
 
-                const sessionInfo = `${session.name} (${session.type})`;
-                const reason = options.input.reason || 'Investigation complete';
+                const sessionType = session.type;
 
                 // Stop the debug session
                 await vscode.debug.stopDebugging(session);
 
-                sendInfo('', {
-                    operationName: 'languageModelTool.stopDebugSession',
-                    sessionId: session.id,
-                    sessionName: session.name,
-                    reason
-                });
-
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(
-                        `✓ Stopped debug session: ${sessionInfo}. Reason: ${reason}`
+                        `✓ Stopped debug session (${sessionType}).`
                     )
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to stop debug session: ${error}`)
                 ]);
+            } finally {
+                // Do NOT log session.name (may include user file path) or input.reason (free text)
+                recordToolInvocation({
+                    tool: TOOL_NAMES.STOP_DEBUG_SESSION,
+                    outcome,
+                    errorCategory,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };
@@ -1363,10 +1524,17 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     // Tool 10: Get Debug Session Info
     const getDebugSessionInfoTool: LanguageModelTool<GetDebugSessionInfoInput> = {
         async invoke(_options: { input: GetDebugSessionInfoInput }, _token: vscode.CancellationToken): Promise<any> {
+            const startedAt = Date.now();
+            let outcome: ToolOutcome = 'success';
+            let errorCategory: ErrorCategory | undefined;
+            let isPausedFlag = false;
+
             try {
                 const session = vscode.debug.activeDebugSession;
 
                 if (!session) {
+                    outcome = 'noActiveSession';
+                    errorCategory = 'noActiveSession';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart(
                             '❌ No active debug session found.\n\n' +
@@ -1457,9 +1625,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     // If we can't even get threads, something is wrong
                     // But session exists, so mark as running
                     isPaused = false;
-                    sendInfo('', {
-                        operationName: 'languageModelTool.getDebugSessionInfo.threadError',
-                        error: String(error)
+                    recordLaunchInternal('getDebugSessionInfo.threadError', {
+                        errorCategory: classifyError(error),
                     });
                 }
 
@@ -1539,23 +1706,26 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     '═══════════════════════════════════════════'
                 ].join('\n');
 
-                sendInfo('', {
-                    operationName: 'languageModelTool.getDebugSessionInfo',
-                    sessionId: session.id,
-                    sessionType: session.type,
-                    isPaused: String(isPaused),
-                    stoppedThreadId: String(stoppedThreadId || ''),
-                    currentFile,
-                    currentLine: String(currentLine)
-                });
+                isPausedFlag = isPaused;
 
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(message)
                 ]);
             } catch (error) {
+                outcome = 'failure';
+                errorCategory = classifyError(error);
                 return new (vscode as any).LanguageModelToolResult([
                     new (vscode as any).LanguageModelTextPart(`✗ Failed to get debug session info: ${error}`)
                 ]);
+            } finally {
+                // Do NOT log currentFile, currentLine, sessionName, stoppedThreadName — those are user data
+                recordToolInvocation({
+                    tool: TOOL_NAMES.GET_DEBUG_SESSION_INFO,
+                    outcome,
+                    errorCategory,
+                    isPaused: isPausedFlag,
+                    durationMs: Date.now() - startedAt,
+                });
             }
         }
     };

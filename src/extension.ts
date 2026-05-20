@@ -19,6 +19,7 @@ import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorF
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
 import { logJavaException, logJavaInfo } from "./javaLogger";
 import { registerLanguageModelTool, registerDebugSessionTools } from "./languageModelTool";
+import { recordChatActivation } from "./lmToolTelemetry";
 import { IMainClassOption, IMainMethod, resolveMainMethod } from "./languageServerPlugin";
 import { mainClassPicker  } from "./mainClassPicker";
 import { pickJavaProcess } from "./processPicker";
@@ -124,6 +125,29 @@ async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionCont
     registerLanguageModelTool(context);
     const debugToolsDisposables = registerDebugSessionTools(context);
     context.subscriptions.push(...debugToolsDisposables);
+
+    // One-shot activation snapshot so we can track coverage of the new chat surfaces over time.
+    // Counts only — no user data, no file paths, no class names.
+    try {
+        const pkg = context.extension?.packageJSON as {
+            version?: string;
+            contributes?: {
+                languageModelTools?: unknown[];
+                chatSkills?: unknown[];
+                chatInstructions?: unknown[];
+            };
+        } | undefined;
+        const contrib = pkg?.contributes ?? {};
+        recordChatActivation({
+            javaLSReadyAtActivation: !!javaExt.isActive,
+            lmtCount: contrib.languageModelTools?.length ?? 0,
+            chatSkillsCount: contrib.chatSkills?.length ?? 0,
+            chatInstructionsCount: contrib.chatInstructions?.length ?? 0,
+            extensionVersion: pkg?.version ?? "unknown",
+        });
+    } catch {
+        // Telemetry must never break activation.
+    }
 }
 
 async function subscribeToJavaExtensionEvents(): Promise<void> {
