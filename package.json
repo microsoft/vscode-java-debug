@@ -1011,6 +1011,7 @@
         ],
         "icon": "$(debug-alt)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1062,6 +1063,7 @@
         ],
         "icon": "$(debug-breakpoint)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1105,6 +1107,7 @@
         ],
         "icon": "$(debug-step-over)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady && inDebugMode && debugType == 'java'",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1142,6 +1145,7 @@
         ],
         "icon": "$(symbol-variable)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady && inDebugMode && debugType == 'java'",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1183,6 +1187,7 @@
         ],
         "icon": "$(call-hierarchy)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady && inDebugMode && debugType == 'java'",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1212,6 +1217,7 @@
         ],
         "icon": "$(symbol-method)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady && inDebugMode && debugType == 'java'",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1257,6 +1263,7 @@
         ],
         "icon": "$(list-tree)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady && inDebugMode && debugType == 'java'",
         "inputSchema": {
           "type": "object",
           "properties": {},
@@ -1275,6 +1282,7 @@
         ],
         "icon": "$(debug-breakpoint-unverified)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1303,6 +1311,7 @@
         ],
         "icon": "$(debug-stop)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady && inDebugMode && debugType == 'java'",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1330,11 +1339,28 @@
         ],
         "icon": "$(info)",
         "canBeReferencedInPrompt": true,
+        "when": "javaLSReady",
         "inputSchema": {
           "type": "object",
           "properties": {},
           "required": []
         }
+      }
+    ],
+    "chatSkills": [
+      {
+        "path": "./resources/skills/java-launch-troubleshooting/SKILL.md",
+        "when": "javaLSReady"
+      },
+      {
+        "path": "./resources/skills/java-debug-inspection/SKILL.md",
+        "when": "javaLSReady && inDebugMode && debugType == 'java'"
+      }
+    ],
+    "chatInstructions": [
+      {
+        "path": "./resources/instruments/javaDebugContext.instructions.md",
+        "when": "javaLSReady"
       }
     ]
   },
