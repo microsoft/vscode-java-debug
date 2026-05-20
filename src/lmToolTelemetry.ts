@@ -76,7 +76,7 @@ export type BreakpointKind =
     | 'hitCount'
     | 'logpoint';
 
-export type StepKind = 'in' | 'out' | 'over' | 'continue' | 'pause';
+export type StepKind = 'in' | 'out' | 'over' | 'continue' | 'pause' | 'unknown';
 
 export type EvalContext = 'watch' | 'repl' | 'hover' | 'unknown';
 
@@ -215,7 +215,7 @@ export function classifyStep(operation: string | undefined): StepKind {
         case 'pause':
             return 'pause';
         default:
-            return 'over';
+            return 'unknown';
     }
 }
 
@@ -309,29 +309,81 @@ export interface ToolInvocationRecord {
 /**
  * Record a single tool-invocation outcome. Replaces ad-hoc `sendInfo`
  * calls inside individual tools.
+ *
+ * Before sending, the record is normalized so that `outcome` and
+ * `errorCategory` stay aligned for the six shared terminal values
+ * (cancelled / timeout / lsNotReady / noActiveSession / noSuspendedThread /
+ * noStackFrame). See {@link normalizeToolInvocationRecord}.
  */
 export function recordToolInvocation(record: ToolInvocationRecord): void {
+    const normalized = normalizeToolInvocationRecord(record);
     sanitizedSend({
-        operationName: `languageModelTool.${record.tool}.invoke`,
-        outcome: record.outcome,
-        errorCategory: record.errorCategory,
-        durationMs: record.durationMs,
-        targetType: record.targetType,
-        breakpointKind: record.breakpointKind,
-        stepKind: record.stepKind,
-        evalContext: record.evalContext,
-        removeScope: record.removeScope,
-        scopeType: record.scopeType,
-        isPaused: record.isPaused,
-        skipBuild: record.skipBuild,
-        hasFilter: record.hasFilter,
-        frameCount: record.frameCount,
-        threadCount: record.threadCount,
-        suspendedCount: record.suspendedCount,
-        removedCount: record.removedCount,
-        sessionId: record.sessionId,
-        sessionType: record.sessionType,
+        operationName: `languageModelTool.${normalized.tool}.invoke`,
+        outcome: normalized.outcome,
+        errorCategory: normalized.errorCategory,
+        durationMs: normalized.durationMs,
+        targetType: normalized.targetType,
+        breakpointKind: normalized.breakpointKind,
+        stepKind: normalized.stepKind,
+        evalContext: normalized.evalContext,
+        removeScope: normalized.removeScope,
+        scopeType: normalized.scopeType,
+        isPaused: normalized.isPaused,
+        skipBuild: normalized.skipBuild,
+        hasFilter: normalized.hasFilter,
+        frameCount: normalized.frameCount,
+        threadCount: normalized.threadCount,
+        suspendedCount: normalized.suspendedCount,
+        removedCount: normalized.removedCount,
+        sessionId: normalized.sessionId,
+        sessionType: normalized.sessionType,
     });
+}
+
+/**
+ * Values that exist in both {@link ToolOutcome} and {@link ErrorCategory}.
+ * For these, the two fields must stay in lock-step so dashboard queries
+ * filtering on either one produce identical results.
+ */
+const SHARED_TERMINAL_VALUES = [
+    'cancelled',
+    'timeout',
+    'lsNotReady',
+    'noActiveSession',
+    'noSuspendedThread',
+    'noStackFrame',
+] as const;
+
+type SharedTerminal = typeof SHARED_TERMINAL_VALUES[number];
+
+function isSharedTerminal(value: string | undefined): value is SharedTerminal {
+    return value !== undefined && (SHARED_TERMINAL_VALUES as readonly string[]).includes(value);
+}
+
+/**
+ * Reconcile `outcome` and `errorCategory` for the six shared terminal
+ * values so downstream queries can rely on either field. Returns a NEW
+ * record; the input is not mutated.
+ *
+ * Rules:
+ *  - If `errorCategory` is a shared terminal value, promote `outcome` to
+ *    that value (callers that only set `errorCategory` get a consistent
+ *    `outcome` for free).
+ *  - If `outcome` is a shared terminal value and `errorCategory` is
+ *    absent, fill it with the matching value (callers that only set
+ *    `outcome` get a consistent `errorCategory`).
+ */
+function normalizeToolInvocationRecord(record: ToolInvocationRecord): ToolInvocationRecord {
+    let outcome: ToolOutcome = record.outcome;
+    let errorCategory: ErrorCategory | undefined = record.errorCategory;
+
+    if (isSharedTerminal(errorCategory)) {
+        outcome = errorCategory;
+    } else if (isSharedTerminal(outcome) && errorCategory === undefined) {
+        errorCategory = outcome;
+    }
+
+    return { ...record, outcome, errorCategory };
 }
 
 export interface ChatActivationRecord {
@@ -359,16 +411,40 @@ export function recordChatActivation(record: ChatActivationRecord): void {
 }
 
 /**
+ * Project type detected by the launch flow. Free-form values are
+ * forbidden so this stays a closed enum.
+ */
+export type LaunchProjectType = 'maven' | 'gradle' | 'vscode' | 'unknown';
+
+/**
+ * Discriminated union of every launch-flow internal event the recorder
+ * is allowed to emit. Each variant lists its allowed properties so the
+ * type system rejects unknown event names and unknown property keys.
+ *
+ * Note: `sessionId` here is VS Code's opaque debug-session GUID, never
+ * the user-visible `launch.json` session name.
+ */
+export type LaunchInternalEvent =
+    | { name: 'cleanupExistingSession'; sessionId: string }
+    | { name: 'cleanupExistingSessionFailed'; errorCategory: ErrorCategory }
+    | { name: 'debugSessionStarted.eventBased'; sessionId: string }
+    | { name: 'debugSessionTimeout.eventBased' }
+    | { name: 'debugSessionDetected'; sessionId: string; elapsedMs: number }
+    | { name: 'debugSessionTimeout.smartPolling'; maxWaitTime: number }
+    | { name: 'classNameDetection'; projectType: LaunchProjectType; detected: boolean }
+    | { name: 'getDebugSessionInfo.threadError'; errorCategory: ErrorCategory };
+
+/**
  * Internal-debug event for the launch-flow nested instrumentation
  * (session-detected / cleanup / timeout). Re-uses the sanitised sender so
- * no PII can slip in.
+ * no PII can slip in. Accepts only the discriminated-union shapes defined
+ * in {@link LaunchInternalEvent} — unknown event names or unexpected
+ * property keys are rejected at compile time.
  */
-export function recordLaunchInternal(
-    operationName: string,
-    properties: Record<string, SafeValue>,
-): void {
+export function recordLaunchInternal(event: LaunchInternalEvent): void {
+    const { name, ...properties } = event;
     sanitizedSend({
-        operationName: `languageModelTool.${operationName}`,
+        operationName: `languageModelTool.${name}`,
         ...properties,
     });
 }

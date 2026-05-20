@@ -149,7 +149,8 @@ async function debugJavaApplication(
     // Step 0: Cleanup any existing Java debug session to avoid port conflicts
     const existingSession = vscode.debug.activeDebugSession;
     if (existingSession && existingSession.type === 'java') {
-        recordLaunchInternal('cleanupExistingSession', {
+        recordLaunchInternal({
+            name: 'cleanupExistingSession',
             sessionId: existingSession.id,
         });
         try {
@@ -158,7 +159,8 @@ async function debugJavaApplication(
             await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
             // Log but continue - the old session might already be dead
-            recordLaunchInternal('cleanupExistingSessionFailed', {
+            recordLaunchInternal({
+                name: 'cleanupExistingSessionFailed',
                 errorCategory: classifyError(error),
             });
         }
@@ -245,7 +247,8 @@ async function debugJavaApplication(
                         clearTimeout(timeoutHandle);
                     }
 
-                    recordLaunchInternal('debugSessionStarted.eventBased', {
+                    recordLaunchInternal({
+                        name: 'debugSessionStarted.eventBased',
                         sessionId: session.id,
                     });
 
@@ -267,7 +270,7 @@ async function debugJavaApplication(
                 if (!sessionStarted) {
                     sessionDisposable.dispose();
 
-                    recordLaunchInternal('debugSessionTimeout.eventBased', {});
+                    recordLaunchInternal({ name: 'debugSessionTimeout.eventBased' });
 
                     resolve({
                         success: false,
@@ -301,11 +304,13 @@ async function debugJavaApplication(
             // Check if debug session has started
             const session = vscode.debug.activeDebugSession;
             if (session && session.type === 'java') {
-                const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                const elapsedMs = Date.now() - startTime;
+                const elapsedTime = (elapsedMs / 1000).toFixed(1);
 
-                recordLaunchInternal('debugSessionDetected', {
+                recordLaunchInternal({
+                    name: 'debugSessionDetected',
                     sessionId: session.id,
-                    elapsedTime,
+                    elapsedMs,
                 });
 
                 return {
@@ -322,7 +327,8 @@ async function debugJavaApplication(
         }
 
         // Timeout: session not detected within 15 seconds
-        recordLaunchInternal('debugSessionTimeout.smartPolling', {
+        recordLaunchInternal({
+            name: 'debugSessionTimeout.smartPolling',
             maxWaitTime,
         });
 
@@ -602,14 +608,16 @@ function constructDebugCommand(
         if (!input.target.includes('.')) {
             const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
             if (detectedClassName) {
-                recordLaunchInternal('classNameDetection', {
+                recordLaunchInternal({
+                    name: 'classNameDetection',
                     projectType,
                     detected: true,
                 });
                 className = detectedClassName;
             } else {
                 // No package detected - class is in default package
-                recordLaunchInternal('classNameDetection', {
+                recordLaunchInternal({
+                    name: 'classNameDetection',
                     projectType,
                     detected: false,
                 });
@@ -1012,6 +1020,14 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                 };
 
                 const command = commandMap[operation];
+                if (!command) {
+                    outcome = 'failure';
+                    errorCategory = 'other';
+                    return new (vscode as any).LanguageModelToolResult([
+                        new (vscode as any).LanguageModelTextPart(`✗ Unknown step operation: ${operation}`)
+                    ]);
+                }
+
                 if (threadId !== undefined) {
                     // For thread-specific operations, use custom request
                     await session.customRequest(operation, { threadId });
@@ -1181,6 +1197,7 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
 
                 if (!stackResponse.stackFrames || stackResponse.stackFrames.length === 0) {
                     outcome = 'noStackFrame';
+                    errorCategory = 'noStackFrame';
                     return new (vscode as any).LanguageModelToolResult([
                         new (vscode as any).LanguageModelTextPart('No stack frames available.')
                     ]);
@@ -1625,7 +1642,8 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     // If we can't even get threads, something is wrong
                     // But session exists, so mark as running
                     isPaused = false;
-                    recordLaunchInternal('getDebugSessionInfo.threadError', {
+                    recordLaunchInternal({
+                        name: 'getDebugSessionInfo.threadError',
                         errorCategory: classifyError(error),
                     });
                 }
