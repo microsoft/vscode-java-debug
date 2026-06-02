@@ -9,6 +9,14 @@ import * as vscode from 'vscode';
 import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
 import { getJavaHome } from "./utility";
 import { buildNoConfigPathAppendValue } from "./pathUtil";
+import { applyAppendIfChanged, applyReplaceIfChanged, deleteIfPresent } from "./envVarSync";
+
+// Environment variables that older versions of this extension contributed but
+// no longer manage. They are cleaned up explicitly on activation so they do
+// not linger in the persistent EnvironmentVariableCollection. See issue #1647.
+const LEGACY_ENV_VARS = ["JAVA_TOOL_OPTIONS"];
+
+const ENV_VAR_COLLECTION_DESCRIPTION = "Java No-Config Debug";
 
 /**
  * Registers the configuration-less debugging setup for the extension.
@@ -21,7 +29,7 @@ import { buildNoConfigPathAppendValue } from "./pathUtil";
  *
  * Environment Variables:
  * - `VSCODE_JDWP_ADAPTER_ENDPOINTS`: Path to the file containing the debugger adapter endpoint.
- * - `JAVA_TOOL_OPTIONS`: JDWP configuration for automatic debugging.
+ * - `VSCODE_JAVA_EXEC`: Path to the java executable from the Java Language Server (when available).
  * - `PATH`: Appends the path to the noConfigScripts directory.
  */
 export async function registerNoConfigDebug(
@@ -69,22 +77,38 @@ export async function registerNoConfigDebug(
         }
     }
 
-    // clear the env var collection to remove any existing env vars
-    collection.clear();
+    // Surface a description in VS Code's environment variable UI so users can
+    // see which extension is contributing these variables.
+    if (collection.description !== ENV_VAR_COLLECTION_DESCRIPTION) {
+        collection.description = ENV_VAR_COLLECTION_DESCRIPTION;
+    }
 
-    // Add env var for VSCODE_JDWP_ADAPTER_ENDPOINTS
+    // Remove any variables that older versions of this extension used to set
+    // but no longer manage. Doing this idempotently (only when present) keeps
+    // subsequent reloads from triggering the "restart terminal" prompt.
+    for (const legacy of LEGACY_ENV_VARS) {
+        deleteIfPresent(collection, legacy);
+    }
+
+    // Apply our managed variables using diff-aware helpers. On a typical
+    // window reload the values are unchanged and these calls are no-ops, so
+    // VS Code does not prompt the user to restart their existing terminals.
+    // See issue #1647.
+    //
     // Note: We do NOT set JAVA_TOOL_OPTIONS globally to avoid affecting all Java processes
     // (javac, maven, gradle, language server, etc.). Instead, JAVA_TOOL_OPTIONS is set
     // only in the debugjava wrapper scripts (debugjava.ps1, debugjava.bat, debugjava)
-    collection.replace('VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
+    applyReplaceIfChanged(collection, 'VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
 
     // Try to get Java executable from Java Language Server
-    // This ensures we use the same Java version as the project is compiled with
+    // This ensures we use the same Java version as the project is compiled with.
+    // If detection fails or returns nothing, we deliberately keep any previously
+    // set VSCODE_JAVA_EXEC to avoid churn from transient startup failures.
     try {
         const javaHome = await getJavaHome();
         if (javaHome) {
             const javaExec = path.join(javaHome, 'bin', 'java');
-            collection.replace('VSCODE_JAVA_EXEC', javaExec);
+            applyReplaceIfChanged(collection, 'VSCODE_JAVA_EXEC', javaExec);
         }
     } catch (error) {
         // If we can't get Java from Language Server, that's okay
@@ -92,7 +116,7 @@ export async function registerNoConfigDebug(
     }
 
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
-    collection.append('PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
+    applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
 
     // create file system watcher for the debuggerAdapterEndpointFolder for when the communication port is written
     const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
