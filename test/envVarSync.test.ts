@@ -7,7 +7,6 @@ import * as vscode from "vscode";
 import {
     applyAppendIfChanged,
     applyReplaceIfChanged,
-    deleteIfPresent,
 } from "../src/envVarSync";
 
 interface FakeMutator {
@@ -187,26 +186,6 @@ suite("envVarSync", () => {
             assert.strictEqual(changed, true);
             assert.strictEqual(c.__calls.append, 1);
             assert.strictEqual(c.get("PATH")!.type, vscode.EnvironmentVariableMutatorType.Append);
-        });
-    });
-
-    suite("deleteIfPresent", () => {
-        test("deletes the mutator when present", () => {
-            const c = createFakeCollection();
-            applyReplaceIfChanged(c, "FOO", "bar");
-
-            const removed = deleteIfPresent(c, "FOO");
-
-            assert.strictEqual(removed, true);
-            assert.strictEqual(c.__calls.delete, 1);
-            assert.strictEqual(c.get("FOO"), undefined);
-        });
-
-        test("is a no-op when no mutator is set", () => {
-            const c = createFakeCollection();
-            const removed = deleteIfPresent(c, "FOO");
-            assert.strictEqual(removed, false);
-            assert.strictEqual(c.__calls.delete, 0);
         });
     });
 

@@ -93,18 +93,3 @@ export function applyAppendIfChanged(
     return true;
 }
 
-/**
- * Deletes the mutator for `variable` only when one is currently present.
- *
- * @returns `true` if a mutator was deleted.
- */
-export function deleteIfPresent(
-    collection: vscode.EnvironmentVariableCollection,
-    variable: string,
-): boolean {
-    if (collection.get(variable)) {
-        collection.delete(variable);
-        return true;
-    }
-    return false;
-}
