@@ -9,12 +9,7 @@ import * as vscode from 'vscode';
 import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
 import { getJavaHome } from "./utility";
 import { buildNoConfigPathAppendValue } from "./pathUtil";
-import { applyAppendIfChanged, applyReplaceIfChanged, deleteIfPresent } from "./envVarSync";
-
-// Environment variables that older versions of this extension contributed but
-// no longer manage. They are cleaned up explicitly on activation so they do
-// not linger in the persistent EnvironmentVariableCollection. See issue #1647.
-const LEGACY_ENV_VARS = ["JAVA_TOOL_OPTIONS"];
+import { applyAppendIfChanged, applyReplaceIfChanged } from "./envVarSync";
 
 const ENV_VAR_COLLECTION_DESCRIPTION = "Java No-Config Debug";
 
@@ -81,13 +76,6 @@ export async function registerNoConfigDebug(
     // see which extension is contributing these variables.
     if (collection.description !== ENV_VAR_COLLECTION_DESCRIPTION) {
         collection.description = ENV_VAR_COLLECTION_DESCRIPTION;
-    }
-
-    // Remove any variables that older versions of this extension used to set
-    // but no longer manage. Doing this idempotently (only when present) keeps
-    // subsequent reloads from triggering the "restart terminal" prompt.
-    for (const legacy of LEGACY_ENV_VARS) {
-        deleteIfPresent(collection, legacy);
     }
 
     // Apply our managed variables using diff-aware helpers. On a typical
