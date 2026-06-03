@@ -491,11 +491,20 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         for (const p of paths) {
             if (p.startsWith("!")) {
                 let exclude = p.substr(1);
+                let isDirect: boolean;
                 if (!path.isAbsolute(exclude)) {
                     exclude = path.join(folder?.uri.fsPath || "", exclude);
                 }
+
+                if (exclude.endsWith("/")) {
+                    exclude = exclude.substr(0, exclude.length - 1);
+                    isDirect = true;
+                } else {
+                    isDirect = this.isFilePath(exclude);
+                }
+
                 // use Uri to normalize the fs path
-                excludes.set(vscode.Uri.file(exclude).fsPath, this.isFilePath(exclude));
+                excludes.set(vscode.Uri.file(exclude).fsPath, isDirect);
                 continue;
             }
 
@@ -503,12 +512,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
 
         return result.filter((r) => {
-            for (const [excludedPath, isFile] of excludes.entries()) {
-                if (isFile && r === excludedPath) {
+            for (const [excludedPath, isDirect] of excludes.entries()) {
+                if (isDirect && r === excludedPath) {
                     return false;
                 }
 
-                if (!isFile && r.startsWith(excludedPath)) {
+                if (!isDirect && r.startsWith(excludedPath)) {
                     return false;
                 }
             }
