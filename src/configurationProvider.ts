@@ -496,7 +496,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
                     exclude = path.join(folder?.uri.fsPath || "", exclude);
                 }
 
-                if (exclude.endsWith("/")) {
+                if (exclude.endsWith(process.platform === 'win32' ? '\\' : '/')) {
                     exclude = exclude.substr(0, exclude.length - 1);
                     isDirect = true;
                 } else {
