@@ -199,9 +199,15 @@ async function debugJavaApplication(
     // here so we can reuse the result for both the command construction and
     // the user-facing targetInfo message below. Previously these two paths
     // each called findFullyQualifiedClassName independently, which:
-    //  - duplicated the file system walk on the hot launch path
-    //  - emitted two classNameDetection events per invoke, inflating the
-    //    detection failure rate in telemetry by 2x
+    //  - duplicated the file system walk on the hot launch path (the FS walk
+    //    is the actual user-visible slowdown — it stats every .java file
+    //    under src/main/java up to MAX_FILE_SEARCH_DEPTH)
+    //  - made the call sites harder to reason about, since detection
+    //    ownership was split across constructDebugCommand and the targetInfo
+    //    formatting block
+    //
+    // After this refactor, the caller owns detection and its telemetry,
+    // and constructDebugCommand accepts a pre-resolved name.
     let detectedClassName: string | null = null;
     if (!input.target.endsWith('.jar')
         && !input.target.startsWith('-')
@@ -245,7 +251,7 @@ async function debugJavaApplication(
     } else {
         // Simple class name - reuse the detection result from Step 3 above
         // (do NOT call findFullyQualifiedClassName again — it walks the FS
-        // and was double-emitting the classNameDetection telemetry event).
+        // and the result is already in `detectedClassName`).
         if (detectedClassName) {
             targetInfo = `${detectedClassName} (detected from ${input.target})`;
         } else {
