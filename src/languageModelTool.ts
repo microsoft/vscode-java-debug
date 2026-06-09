@@ -19,6 +19,7 @@ import {
     ClassNameDetectionStrategy,
     completeAttempt,
     ErrorCategory,
+    InvocationGuard,
     LaunchProjectType,
     nextAttempt,
     OperatingSystem,
@@ -136,7 +137,7 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
             let errorCategory: ErrorCategory | undefined;
 
             try {
-                const result = await debugJavaApplication(options.input, token);
+                const result = await debugJavaApplication(options.input, token, guard);
                 if (!result.success) {
                     outcome = result.status === 'timeout' ? 'timeout' : 'failure';
                     errorCategory = result.success ? undefined : classifyError(result.message);
@@ -178,7 +179,17 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
                     previousOutcome: attempt.previousOutcome,
                 });
                 completeAttempt(TOOL_NAMES.DEBUG_JAVA_APPLICATION, outcome);
-                guard.markOutcomeRecorded();
+                // Do NOT call guard.markOutcomeRecorded() here. The wrapper
+                // recordToolInvocation above is a separate event from the
+                // launchInternal stream that the guard is tracking; marking
+                // it would mask every silent / cancelled / exception path
+                // and defeat the closed-loop attribution this PR exists for.
+                // `markOutcomeRecorded()` is now called inline at the four
+                // session-terminal recordLaunchInternal sites inside
+                // `debugJavaApplication` (started / timeout, both
+                // eventBased and smartPolling). For cancelled / exception
+                // we fall through to guard.close() so it can emit
+                // debugSession.cancelled / debugSession.exception.
                 guard.close();
             }
         }
@@ -199,7 +210,8 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
  */
 async function debugJavaApplication(
     input: DebugJavaApplicationInput,
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
+    guard?: InvocationGuard,
 ): Promise<DebugJavaApplicationResult> {
     if (token.isCancellationRequested) {
         return {
@@ -285,10 +297,14 @@ async function debugJavaApplication(
     } else if (input.target.includes('.')) {
         targetInfo = input.target;
     } else {
-        // Simple class name - check if we successfully detected the full name
-        const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
-        if (detectedClassName) {
-            targetInfo = `${detectedClassName} (detected from ${input.target})`;
+        // Simple class name - check if we successfully detected the full name.
+        // `findFullyQualifiedClassName` returns a structured result: a
+        // non-null `.className` means we resolved a package, while null means
+        // we could not. Stringifying the whole object here would render as
+        // `[object Object]`, so unpack explicitly.
+        const detection = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
+        if (detection.className !== null) {
+            targetInfo = `${detection.className} (detected from ${input.target})`;
         } else {
             targetInfo = input.target;
             warningNote = ' ⚠️ Note: Could not auto-detect package name. If you see "ClassNotFoundException", please provide the fully qualified class name (e.g., "com.example.App" instead of "App").';
@@ -316,6 +332,7 @@ async function debugJavaApplication(
                         elapsedMs: Date.now() - waitStartedAt,
                         thresholdMs: CONSTANTS.SESSION_WAIT_TIMEOUT,
                     });
+                    guard?.markOutcomeRecorded();
 
                     resolve({
                         success: true,
@@ -340,6 +357,7 @@ async function debugJavaApplication(
                         elapsedMs: Date.now() - waitStartedAt,
                         thresholdMs: CONSTANTS.SESSION_WAIT_TIMEOUT,
                     });
+                    guard?.markOutcomeRecorded();
 
                     resolve({
                         success: false,
@@ -381,6 +399,7 @@ async function debugJavaApplication(
                     sessionId: session.id,
                     elapsedMs,
                 });
+                guard?.markOutcomeRecorded();
 
                 return {
                     success: true,
@@ -401,6 +420,7 @@ async function debugJavaApplication(
             maxWaitTime,
             elapsedMs: Date.now() - startTime,
         });
+        guard?.markOutcomeRecorded();
 
         return {
             success: true,
@@ -677,7 +697,7 @@ function constructDebugCommand(
         // try to detect the fully qualified class name
         if (!input.target.includes('.')) {
             const detection = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
-            if (detection.className) {
+            if (detection.className !== null) {
                 recordLaunchInternal({
                     name: 'classNameDetection',
                     projectType,
@@ -722,12 +742,32 @@ function constructDebugCommand(
  * (sourceDirMissing / fileNotFound / parseError / noPackageDeclaration)
  * into one bucket and made on-call triage impossible.
  */
-interface ClassNameDetectionResult {
-    className: string | null;
-    failureReason: ClassNameDetectionFailure;
-    /** Which source-directory layout was used (or last tried, on failure). */
-    strategy: ClassNameDetectionStrategy;
-}
+/**
+ * Result of `findFullyQualifiedClassName` — a discriminated union so the
+ * type system enforces that callers handle the failure case without an
+ * easy-to-misread sentinel string.
+ *
+ * On success: `className` carries the resolved FQN and `failureReason` is
+ * absent. On failure: `className` is null and `failureReason` is the
+ * structured root cause. The boolean `detected: true/false` event was
+ * historically the only signal — it collapsed four very different root
+ * causes (sourceDirMissing / fileNotFound / parseError /
+ * noPackageDeclaration) into one bucket and made on-call triage
+ * impossible.
+ */
+type ClassNameDetectionResult =
+    | {
+        className: string;
+        /** Which source-directory layout was used. */
+        strategy: ClassNameDetectionStrategy;
+        failureReason?: undefined;
+    }
+    | {
+        className: null;
+        /** Which source-directory layout was last tried. */
+        strategy: ClassNameDetectionStrategy;
+        failureReason: ClassNameDetectionFailure;
+    };
 
 function strategyForProjectType(projectType: LaunchProjectType): ClassNameDetectionStrategy {
     switch (projectType) {
@@ -794,20 +834,21 @@ function findFullyQualifiedClassName(
                 if (packageName) {
                     return {
                         className: `${packageName}.${simpleClassName}`,
-                        failureReason: 'noPackageDeclaration', // unused on success
-                        strategy: defaultStrategy,
-                    };
-                } else {
-                    // Found the file but no package — fall back to the simple
-                    // name (default package). This succeeds for class lookup
-                    // but is still surfaced via the original `detected: true`
-                    // event upstream.
-                    return {
-                        className: simpleClassName,
-                        failureReason: 'noPackageDeclaration', // unused on success
                         strategy: defaultStrategy,
                     };
                 }
+                // Found the file but no package declaration. Surface this
+                // as a structured failure (className: null) so callers can
+                // emit `classNameDetection.failed` with
+                // failureReason='noPackageDeclaration'. Callers already
+                // fall back to `input.target` on null, which preserves the
+                // previous command behaviour for default-package classes
+                // while making the telemetry distinguishable.
+                return {
+                    className: null,
+                    failureReason: 'noPackageDeclaration',
+                    strategy: defaultStrategy,
+                };
             }
         } catch (error) {
             // We at least reached the file system but could not read/scan it.
@@ -819,11 +860,11 @@ function findFullyQualifiedClassName(
     if (sawParseError) {
         failureReason = 'parseError';
     } else if (anyFileFound) {
-        // Found the file but `extractPackageName` returned null (no package
-        // line). Note that the success branch above also handles this and
-        // returns the simple name, so this branch is only reached if the
-        // file was found but parsed to null AND we kept walking — keep it
-        // here for completeness and future safety.
+        // Defensive: the no-package case already returns above with
+        // failureReason='noPackageDeclaration', so reaching this branch
+        // means a future refactor has left the function falling through
+        // with anyFileFound=true. Preserve the same classification rather
+        // than silently bucketing into fileNotFound.
         failureReason = 'noPackageDeclaration';
     } else if (anyDirExisted) {
         failureReason = 'fileNotFound';
