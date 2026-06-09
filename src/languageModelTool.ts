@@ -347,7 +347,8 @@ async function debugJavaApplication(
                    + `Recommended next actions (in order):\n`
                    + `1. Call get_debug_session_info() to check whether the session has since become active.\n`
                    + `2. Call debug_java_application again — most timeout cases recover on retry. `
-                   + `Pass waitForSession=true to extend the wait window for slow-starting apps.\n`
+                   + `In the input arguments, set "waitForSession": true (JSON object syntax) to `
+                   + `extend the wait window for slow-starting apps.\n`
                    + `3. If retrying still times out, inspect terminal '${terminal.name}' for compilation `
                    + `errors or startup failures, then retry.${warningNote}`,
             terminalName: terminal.name
