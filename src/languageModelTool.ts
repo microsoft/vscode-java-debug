@@ -275,17 +275,21 @@ async function debugJavaApplication(
                     resolve({
                         success: false,
                         status: 'timeout',
-                        message: `❌ Debug session failed to start within ${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds for ${targetInfo}.\n\n` +
-                                 `This usually indicates a problem:\n` +
-                                 `• Compilation errors preventing startup\n` +
-                                 `• ClassNotFoundException or NoClassDefFoundError\n` +
-                                 `• Application crashed during initialization\n` +
-                                 `• Incorrect main class or classpath configuration\n\n` +
-                                 `Action required:\n` +
-                                 `1. Check terminal '${terminal.name}' for error messages\n` +
-                                 `2. Verify the target class name is correct\n` +
-                                 `3. Ensure the project is compiled successfully\n` +
-                                 `4. Use get_debug_session_info() to confirm session status${warningNote}`,
+                        message: `⏳ Debug session not yet detected for ${targetInfo} after `
+                               + `${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds.\n\n`
+                               + `This is often transient — the JVM may still be starting up (large `
+                               + `projects, cold class-loading, or remote workspaces can need additional `
+                               + `time). Telemetry shows that retrying a timed-out launch succeeds for `
+                               + `the majority of cases.\n\n`
+                               + `Recommended next actions (in order):\n`
+                               + `1. Call debug_java_application again — most timeout cases recover on retry.\n`
+                               + `2. Call get_debug_session_info() to check whether the session has since `
+                               + `become active.\n`
+                               + `3. If retrying still times out, inspect terminal '${terminal.name}' for `
+                               + `compilation errors, ClassNotFoundException, NoClassDefFoundError, or `
+                               + `other startup failures.\n`
+                               + `4. Verify the target class name and classpath are correct, then retry.`
+                               + `${warningNote}`,
                         terminalName: terminal.name
                     });
                 }
@@ -335,15 +339,18 @@ async function debugJavaApplication(
         return {
             success: true,
             status: 'timeout',
-            message: `⚠️ Debug command sent for ${targetInfo}, but session not detected within ${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n` +
-                     `Possible reasons:\n` +
-                     `• Application is still starting (large projects may take longer)\n` +
-                     `• Compilation errors (check terminal '${terminal.name}' for errors)\n` +
-                     `• Application may have started and already terminated\n\n` +
-                     `Next steps:\n` +
-                     `• Use get_debug_session_info() to check if session is now active\n` +
-                     `• Check terminal '${terminal.name}' for error messages\n` +
-                     `• If starting slowly, wait a bit longer and check again${warningNote}`,
+            message: `⏳ Debug command sent for ${targetInfo}; session not yet detected within `
+                   + `${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n`
+                   + `This is often transient — the application may still be starting in terminal `
+                   + `'${terminal.name}'. Telemetry shows that retrying or polling for status is more `
+                   + `likely to succeed than treating this as a permanent failure.\n\n`
+                   + `Recommended next actions (in order):\n`
+                   + `1. Call get_debug_session_info() to check whether the session has since become active.\n`
+                   + `2. Call debug_java_application again — most timeout cases recover on retry. `
+                   + `In the input arguments, set "waitForSession": true (JSON object syntax) to `
+                   + `extend the wait window for slow-starting apps.\n`
+                   + `3. If retrying still times out, inspect terminal '${terminal.name}' for compilation `
+                   + `errors or startup failures, then retry.${warningNote}`,
             terminalName: terminal.name
         };
     }
