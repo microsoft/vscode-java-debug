@@ -268,7 +268,49 @@ async function debugJavaApplication(
     }
 
     // Step 3: Construct and execute the debugjava command
-    const debugCommand = constructDebugCommand(input, projectType);
+    //
+    // For simple class names (no dot), resolve the fully-qualified class once
+    // here so we can reuse the result for both the command construction and
+    // the user-facing targetInfo message below. Previously these two paths
+    // each called findFullyQualifiedClassName independently, which:
+    //  - duplicated the file system walk on the hot launch path (the FS walk
+    //    is the actual user-visible slowdown — it stats every .java file
+    //    under src/main/java up to MAX_FILE_SEARCH_DEPTH)
+    //  - made the call sites harder to reason about, since detection
+    //    ownership was split across constructDebugCommand and the targetInfo
+    //    formatting block
+    //
+    // After this refactor, the caller owns detection and its telemetry, and
+    // constructDebugCommand accepts a pre-resolved name. Detection now
+    // returns a structured result so we can emit `classNameDetection.failed`
+    // with a precise failureReason instead of a single boolean bucket.
+    let detectedClassName: string | null = null;
+    if (!input.target.endsWith('.jar')
+        && !input.target.startsWith('-')
+        && !input.target.includes('.')) {
+        const detection = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
+        detectedClassName = detection.className;
+        if (detection.className !== null) {
+            recordLaunchInternal({
+                name: 'classNameDetection',
+                projectType,
+                detected: true,
+            });
+        } else {
+            // Detection failed. Emit the structured failure event so we can
+            // distinguish "no candidate src dir" from "found file but no
+            // package" — the previous boolean `detected: false` collapsed all
+            // four root causes into one bucket.
+            recordLaunchInternal({
+                name: 'classNameDetection.failed',
+                projectType,
+                strategy: detection.strategy,
+                failureReason: detection.failureReason,
+            });
+        }
+    }
+
+    const debugCommand = constructDebugCommand(input, projectType, detectedClassName);
 
     // Validate that we can construct a valid command
     if (!debugCommand || debugCommand === 'debugjava') {
@@ -297,14 +339,11 @@ async function debugJavaApplication(
     } else if (input.target.includes('.')) {
         targetInfo = input.target;
     } else {
-        // Simple class name - check if we successfully detected the full name.
-        // `findFullyQualifiedClassName` returns a structured result: a
-        // non-null `.className` means we resolved a package, while null means
-        // we could not. Stringifying the whole object here would render as
-        // `[object Object]`, so unpack explicitly.
-        const detection = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
-        if (detection.className !== null) {
-            targetInfo = `${detection.className} (detected from ${input.target})`;
+        // Simple class name - reuse the detection result resolved once in
+        // Step 3 above (do NOT call findFullyQualifiedClassName again — it
+        // walks the FS and the result is already in `detectedClassName`).
+        if (detectedClassName) {
+            targetInfo = `${detectedClassName} (detected from ${input.target})`;
         } else {
             targetInfo = input.target;
             warningNote = ' ⚠️ Note: Could not auto-detect package name. If you see "ClassNotFoundException", please provide the fully qualified class name (e.g., "com.example.App" instead of "App").';
@@ -362,17 +401,21 @@ async function debugJavaApplication(
                     resolve({
                         success: false,
                         status: 'timeout',
-                        message: `❌ Debug session failed to start within ${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds for ${targetInfo}.\n\n` +
-                                 `This usually indicates a problem:\n` +
-                                 `• Compilation errors preventing startup\n` +
-                                 `• ClassNotFoundException or NoClassDefFoundError\n` +
-                                 `• Application crashed during initialization\n` +
-                                 `• Incorrect main class or classpath configuration\n\n` +
-                                 `Action required:\n` +
-                                 `1. Check terminal '${terminal.name}' for error messages\n` +
-                                 `2. Verify the target class name is correct\n` +
-                                 `3. Ensure the project is compiled successfully\n` +
-                                 `4. Use get_debug_session_info() to confirm session status${warningNote}`,
+                        message: `⏳ Debug session not yet detected for ${targetInfo} after `
+                               + `${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds.\n\n`
+                               + `This is often transient — the JVM may still be starting up (large `
+                               + `projects, cold class-loading, or remote workspaces can need additional `
+                               + `time). Telemetry shows that retrying a timed-out launch succeeds for `
+                               + `the majority of cases.\n\n`
+                               + `Recommended next actions (in order):\n`
+                               + `1. Call debug_java_application again — most timeout cases recover on retry.\n`
+                               + `2. Call get_debug_session_info() to check whether the session has since `
+                               + `become active.\n`
+                               + `3. If retrying still times out, inspect terminal '${terminal.name}' for `
+                               + `compilation errors, ClassNotFoundException, NoClassDefFoundError, or `
+                               + `other startup failures.\n`
+                               + `4. Verify the target class name and classpath are correct, then retry.`
+                               + `${warningNote}`,
                         terminalName: terminal.name
                     });
                 }
@@ -425,15 +468,18 @@ async function debugJavaApplication(
         return {
             success: true,
             status: 'timeout',
-            message: `⚠️ Debug command sent for ${targetInfo}, but session not detected within ${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n` +
-                     `Possible reasons:\n` +
-                     `• Application is still starting (large projects may take longer)\n` +
-                     `• Compilation errors (check terminal '${terminal.name}' for errors)\n` +
-                     `• Application may have started and already terminated\n\n` +
-                     `Next steps:\n` +
-                     `• Use get_debug_session_info() to check if session is now active\n` +
-                     `• Check terminal '${terminal.name}' for error messages\n` +
-                     `• If starting slowly, wait a bit longer and check again${warningNote}`,
+            message: `⏳ Debug command sent for ${targetInfo}; session not yet detected within `
+                   + `${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n`
+                   + `This is often transient — the application may still be starting in terminal `
+                   + `'${terminal.name}'. Telemetry shows that retrying or polling for status is more `
+                   + `likely to succeed than treating this as a permanent failure.\n\n`
+                   + `Recommended next actions (in order):\n`
+                   + `1. Call get_debug_session_info() to check whether the session has since become active.\n`
+                   + `2. Call debug_java_application again — most timeout cases recover on retry. `
+                   + `In the input arguments, set "waitForSession": true (JSON object syntax) to `
+                   + `extend the wait window for slow-starting apps.\n`
+                   + `3. If retrying still times out, inspect terminal '${terminal.name}' for compilation `
+                   + `errors or startup failures, then retry.${warningNote}`,
             terminalName: terminal.name
         };
     }
@@ -674,10 +720,17 @@ async function ensureVSCodeCompilation(workspaceUri: vscode.Uri): Promise<DebugJ
 
 /**
  * Constructs the debugjava command based on input parameters.
+ *
+ * @param preDetectedClassName Fully-qualified class name pre-resolved by the
+ *   caller (and already reported via the `classNameDetection` telemetry event).
+ *   When non-null and the target is a simple class name, this is used instead
+ *   of re-running findFullyQualifiedClassName here. The caller is expected to
+ *   handle telemetry emission so we do not double-count detection outcomes.
  */
 function constructDebugCommand(
     input: DebugJavaApplicationInput,
-    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown'
+    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown',
+    preDetectedClassName: string | null = null
 ): string {
     let command = 'debugjava';
 
@@ -693,29 +746,12 @@ function constructDebugCommand(
     else {
         let className = input.target;
 
-        // If target doesn't contain a dot and we can find the Java file,
-        // try to detect the fully qualified class name
-        if (!input.target.includes('.')) {
-            const detection = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
-            if (detection.className !== null) {
-                recordLaunchInternal({
-                    name: 'classNameDetection',
-                    projectType,
-                    detected: true,
-                });
-                className = detection.className;
-            } else {
-                // Detection failed. Emit the structured failure event so we can
-                // distinguish "no candidate src dir" from "found file but no
-                // package" — previous boolean `detected: false` collapsed all
-                // four root causes into one bucket.
-                recordLaunchInternal({
-                    name: 'classNameDetection.failed',
-                    projectType,
-                    strategy: detection.strategy,
-                    failureReason: detection.failureReason,
-                });
-            }
+        // Use the caller-supplied detection result; we deliberately do not
+        // call findFullyQualifiedClassName a second time here (see the
+        // dedupe note at the call site in debugJavaApplication Step 3).
+        // Detection telemetry is owned by the caller.
+        if (!input.target.includes('.') && preDetectedClassName) {
+            className = preDetectedClassName;
         }
 
         // Use provided classpath if available, otherwise infer it
@@ -732,16 +768,6 @@ function constructDebugCommand(
     return command;
 }
 
-/**
- * Result of the launch-time fully-qualified class name lookup.
- *
- * `className` is non-null on success; on failure we expose the structured
- * `failureReason` + `strategy` so telemetry can pinpoint why detection
- * gave up. The boolean `detected: true / false` event was historically
- * the only signal — it collapsed four very different root causes
- * (sourceDirMissing / fileNotFound / parseError / noPackageDeclaration)
- * into one bucket and made on-call triage impossible.
- */
 /**
  * Result of `findFullyQualifiedClassName` — a discriminated union so the
  * type system enforces that callers handle the failure case without an
