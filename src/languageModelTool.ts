@@ -194,7 +194,33 @@ async function debugJavaApplication(
     }
 
     // Step 3: Construct and execute the debugjava command
-    const debugCommand = constructDebugCommand(input, projectType);
+    //
+    // For simple class names (no dot), resolve the fully-qualified class once
+    // here so we can reuse the result for both the command construction and
+    // the user-facing targetInfo message below. Previously these two paths
+    // each called findFullyQualifiedClassName independently, which:
+    //  - duplicated the file system walk on the hot launch path (the FS walk
+    //    is the actual user-visible slowdown — it stats every .java file
+    //    under src/main/java up to MAX_FILE_SEARCH_DEPTH)
+    //  - made the call sites harder to reason about, since detection
+    //    ownership was split across constructDebugCommand and the targetInfo
+    //    formatting block
+    //
+    // After this refactor, the caller owns detection and its telemetry,
+    // and constructDebugCommand accepts a pre-resolved name.
+    let detectedClassName: string | null = null;
+    if (!input.target.endsWith('.jar')
+        && !input.target.startsWith('-')
+        && !input.target.includes('.')) {
+        detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
+        recordLaunchInternal({
+            name: 'classNameDetection',
+            projectType,
+            detected: !!detectedClassName,
+        });
+    }
+
+    const debugCommand = constructDebugCommand(input, projectType, detectedClassName);
 
     // Validate that we can construct a valid command
     if (!debugCommand || debugCommand === 'debugjava') {
@@ -223,8 +249,9 @@ async function debugJavaApplication(
     } else if (input.target.includes('.')) {
         targetInfo = input.target;
     } else {
-        // Simple class name - check if we successfully detected the full name
-        const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
+        // Simple class name - reuse the detection result from Step 3 above
+        // (do NOT call findFullyQualifiedClassName again — it walks the FS
+        // and the result is already in `detectedClassName`).
         if (detectedClassName) {
             targetInfo = `${detectedClassName} (detected from ${input.target})`;
         } else {
@@ -591,10 +618,17 @@ async function ensureVSCodeCompilation(workspaceUri: vscode.Uri): Promise<DebugJ
 
 /**
  * Constructs the debugjava command based on input parameters.
+ *
+ * @param preDetectedClassName Fully-qualified class name pre-resolved by the
+ *   caller (and already reported via the `classNameDetection` telemetry event).
+ *   When non-null and the target is a simple class name, this is used instead
+ *   of re-running findFullyQualifiedClassName here. The caller is expected to
+ *   handle telemetry emission so we do not double-count detection outcomes.
  */
 function constructDebugCommand(
     input: DebugJavaApplicationInput,
-    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown'
+    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown',
+    preDetectedClassName: string | null = null
 ): string {
     let command = 'debugjava';
 
@@ -610,25 +644,12 @@ function constructDebugCommand(
     else {
         let className = input.target;
 
-        // If target doesn't contain a dot and we can find the Java file,
-        // try to detect the fully qualified class name
-        if (!input.target.includes('.')) {
-            const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
-            if (detectedClassName) {
-                recordLaunchInternal({
-                    name: 'classNameDetection',
-                    projectType,
-                    detected: true,
-                });
-                className = detectedClassName;
-            } else {
-                // No package detected - class is in default package
-                recordLaunchInternal({
-                    name: 'classNameDetection',
-                    projectType,
-                    detected: false,
-                });
-            }
+        // Use the caller-supplied detection result; we deliberately do not
+        // call findFullyQualifiedClassName a second time here (see the
+        // dedupe note at the call site). Detection telemetry is owned by
+        // the caller.
+        if (!input.target.includes('.') && preDetectedClassName) {
+            className = preDetectedClassName;
         }
 
         // Use provided classpath if available, otherwise infer it
