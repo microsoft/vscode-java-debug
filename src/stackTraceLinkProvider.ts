@@ -25,10 +25,6 @@ const ALLOWED_SOURCE_SCHEMES = new Set<string>(["file", "jdt"]);
 // Cap how much of the clipboard we scan when deciding whether to prefill (ReDoS hygiene).
 const MAX_CLIPBOARD_SCAN_LENGTH = 20000;
 
-// Records one content-free "impression" per document that first yields links, so feature reach
-// (documents containing navigable traces) can be tracked separately from click engagement.
-const impressionRecorded = new WeakSet<TextDocument>();
-
 interface IStackFrameLinkArgs {
     stackTrace: string;
     methodName: string;
@@ -82,19 +78,6 @@ export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
             links.push(new DocumentLink(range, target));
         }
 
-        if (links.length > 0 && !impressionRecorded.has(document)) {
-            impressionRecorded.add(document);
-            /* __GDPR__
-               "provideJavaStackTraceLinks" : {
-                   "owner": "vscode-java-debug",
-                   "comment": "Emitted once per document that first yields navigable Java stack-trace links; measures feature reach.",
-                   "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-                   "documentSource": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
-               }
-             */
-            sendInfo("", { operationName: "provideJavaStackTraceLinks", documentSource });
-        }
-
         return links;
     }
 }
@@ -108,41 +91,30 @@ async function navigateToStackFrame(args: IStackFrameLinkArgs): Promise<void> {
         return;
     }
 
-    const uri = await resolveSourceUri(args.stackTrace);
-    const parsed = uri ? Uri.parse(uri) : undefined;
-
-    let resolution: string;
-    if (!parsed) {
-        resolution = "fallbackQuickPick";
-    } else if (ALLOWED_SOURCE_SCHEMES.has(parsed.scheme)) {
-        resolution = "resolved";
-    } else {
-        resolution = "schemeRejected";
-    }
-
-    // Content-free telemetry: only categorical dimensions, never the pasted text.
+    // Content-free telemetry: a single usage signal, mirroring the terminal link provider.
+    // `documentSource` is the only dimension (paste vs. opened log), never the pasted text.
     /* __GDPR__
        "navigateToJavaStackFrame" : {
            "owner": "vscode-java-debug",
-           "comment": "Emitted when a user clicks a linkified Java stack frame; measures click engagement and resolution success.",
+           "comment": "Emitted when a user clicks a linkified Java stack frame; measures feature usage.",
            "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-           "documentSource": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-           "resolution": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+           "documentSource": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
        }
      */
-    sendInfo("", {
-        operationName: "navigateToJavaStackFrame",
-        documentSource: args.documentSource || "unknown",
-        resolution,
-    });
+    sendInfo("", { operationName: "navigateToJavaStackFrame", documentSource: args.documentSource || "unknown" });
 
-    if (parsed && ALLOWED_SOURCE_SCHEMES.has(parsed.scheme)) {
+    const uri = await resolveSourceUri(args.stackTrace);
+    if (uri) {
+        const parsed = Uri.parse(uri);
+        if (!ALLOWED_SOURCE_SCHEMES.has(parsed.scheme)) {
+            return;
+        }
         const targetLine = Math.max(args.lineNumber - 1, 0);
         window.showTextDocument(parsed, {
             preserveFocus: true,
             selection: new Range(new Position(targetLine, 0), new Position(targetLine, 0)),
         });
-    } else if (!parsed) {
+    } else {
         // No source found: open the symbol quick pick scoped to the class name.
         const fullyQualifiedName = args.methodName.substring(0, args.methodName.lastIndexOf("."));
         const className = fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf(".") + 1);
@@ -155,20 +127,11 @@ async function navigateToStackFrame(args: IStackFrameLinkArgs): Promise<void> {
  * stack trace, it is prefilled so the frames become clickable immediately.
  */
 async function analyzeStackTrace(): Promise<void> {
+    // The command itself is auto-instrumented via instrumentOperationAsVsCodeCommand, so no
+    // manual telemetry is needed here to track invocations.
     const clipboard = await env.clipboard.readText();
-    const prefilled = STACK_FRAME_REGEX.test(clipboard.slice(0, MAX_CLIPBOARD_SCAN_LENGTH));
-
-    /* __GDPR__
-       "analyzeJavaStackTrace" : {
-           "owner": "vscode-java-debug",
-           "comment": "Emitted when a user runs the 'Analyze Stack Trace' command; measures explicit entry-point usage.",
-           "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-           "prefilledFromClipboard": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
-       }
-     */
-    sendInfo("", { operationName: "analyzeJavaStackTrace", prefilledFromClipboard: String(prefilled) });
-
-    const document = await workspace.openTextDocument({ language: "log", content: prefilled ? clipboard : "" });
+    const content = STACK_FRAME_REGEX.test(clipboard.slice(0, MAX_CLIPBOARD_SCAN_LENGTH)) ? clipboard : "";
+    const document = await workspace.openTextDocument({ language: "log", content });
     await window.showTextDocument(document);
 }
 
