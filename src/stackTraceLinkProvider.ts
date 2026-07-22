@@ -6,9 +6,18 @@ import { CancellationToken, commands, DocumentLink, DocumentLinkProvider, Docume
     window, workspace } from "vscode";
 import { instrumentOperationAsVsCodeCommand, sendInfo } from "vscode-extension-telemetry-wrapper";
 import { resolveSourceUri } from "./languageServerPlugin";
+import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
 
 const ANALYZE_STACK_TRACE_COMMAND = "java.debug.analyzeStackTrace";
 const NAVIGATE_TO_STACK_FRAME_COMMAND = "_java.debug.navigateToStackFrame";
+
+// Documents we linkify: pasted traces (untitled), the `log` language, and `.log` files. Kept
+// narrow on purpose so we don't scan every plaintext file the user opens.
+const STACK_TRACE_DOCUMENT_SELECTOR: DocumentSelector = [
+    { scheme: "untitled" },
+    { language: "log" },
+    { pattern: "**/*.log" },
+];
 
 // Matches a Java stack frame such as `at module/com.foo.Bar.baz(Bar.java:42)`.
 // Group 2: optional module prefix, group 3: fully-qualified method, group 5: `File.java:line`.
@@ -136,15 +145,45 @@ async function analyzeStackTrace(): Promise<void> {
 }
 
 export function registerStackTraceLinkProvider(context: ExtensionContext): void {
-    const selector: DocumentSelector = [
-        { scheme: "untitled" },
-        { language: "log" },
-        { pattern: "**/*.log" },
-    ];
-
+    // The commands are always available: the palette command must not depend on server
+    // readiness, and the click handler is only ever reached from links the provider creates.
     context.subscriptions.push(
-        languages.registerDocumentLinkProvider(selector, new JavaStackTraceLinkProvider()),
         commands.registerCommand(NAVIGATE_TO_STACK_FRAME_COMMAND, navigateToStackFrame),
         instrumentOperationAsVsCodeCommand(ANALYZE_STACK_TRACE_COMMAND, analyzeStackTrace),
     );
+
+    // Linkifying a frame is only meaningful once the Java language server is in Standard mode,
+    // because resolving a frame to source (resolveSourceUri) requires a fully-loaded workspace.
+    // Defer registering the link provider until then, mirroring the run/debug CodeLens provider.
+    registerLinkProviderWhenReady(context);
+}
+
+function registerLinkProviderWhenReady(context: ExtensionContext): void {
+    // Without the Java language server, frames cannot be resolved to source - nothing to linkify.
+    if (!isJavaExtEnabled()) {
+        return;
+    }
+
+    const doRegister = () => context.subscriptions.push(
+        languages.registerDocumentLinkProvider(STACK_TRACE_DOCUMENT_SELECTOR, new JavaStackTraceLinkProvider()),
+    );
+
+    getJavaExtensionAPI().then((api) => {
+        if (!api) {
+            return;
+        }
+
+        if (api.serverMode === ServerMode.LIGHTWEIGHT || api.serverMode === ServerMode.HYBRID) {
+            let registered = false;
+            context.subscriptions.push(api.onDidServerModeChange((mode: string) => {
+                if (mode === ServerMode.STANDARD && !registered) {
+                    registered = true;
+                    doRegister();
+                }
+            }));
+        } else {
+            // Already in Standard mode.
+            doRegister();
+        }
+    });
 }
