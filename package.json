@@ -39,6 +39,7 @@
   ],
   "activationEvents": [
     "onLanguage:java",
+    "workspaceContains:**/*.java",
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs",
