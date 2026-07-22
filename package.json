@@ -151,6 +151,11 @@
       {
         "command": "java.debug.variables.manualExpandLazyVariables",
         "title": "Manual Expand Lazy Variables"
+      },
+      {
+        "command": "java.debug.analyzeStackTrace",
+        "title": "Analyze Stack Trace",
+        "category": "Java"
       }
     ],
     "menus": {
