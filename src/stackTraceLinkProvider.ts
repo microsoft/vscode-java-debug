@@ -38,18 +38,6 @@ interface IStackFrameLinkArgs {
     stackTrace: string;
     methodName: string;
     lineNumber: number;
-    documentSource: string;
-}
-
-// Categorizes where a trace lives without leaking the file path (telemetry stays content-free).
-function categorizeDocumentSource(document: TextDocument): string {
-    if (document.uri.scheme === "untitled") {
-        return "untitled";
-    }
-    if (document.uri.scheme === "file") {
-        return document.languageId === "log" ? "logFile" : "otherFile";
-    }
-    return "other";
 }
 
 /**
@@ -60,7 +48,6 @@ function categorizeDocumentSource(document: TextDocument): string {
  */
 export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
     public provideDocumentLinks(document: TextDocument, token: CancellationToken): ProviderResult<DocumentLink[]> {
-        const documentSource = categorizeDocumentSource(document);
         const links: DocumentLink[] = [];
         for (let i = 0; i < document.lineCount; i++) {
             if (token.isCancellationRequested || links.length >= MAX_LINKS_PER_DOCUMENT) {
@@ -82,7 +69,7 @@ export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
             const startIndex = result.index + result[1].length;
             const range = new Range(new Position(i, startIndex), new Position(i, startIndex + stackTrace.length));
 
-            const args: IStackFrameLinkArgs = { stackTrace, methodName: result[3], lineNumber, documentSource };
+            const args: IStackFrameLinkArgs = { stackTrace, methodName: result[3], lineNumber };
             const target = Uri.parse(`command:${NAVIGATE_TO_STACK_FRAME_COMMAND}?${encodeURIComponent(JSON.stringify(args))}`);
             links.push(new DocumentLink(range, target));
         }
@@ -100,17 +87,16 @@ async function navigateToStackFrame(args: IStackFrameLinkArgs): Promise<void> {
         return;
     }
 
-    // Content-free telemetry: a single usage signal, mirroring the terminal link provider.
-    // `documentSource` is the only dimension (paste vs. opened log), never the pasted text.
+    // Content-free telemetry: a single usage signal (click count), mirroring the terminal link
+    // provider. No dimensions - the pasted text is never recorded.
     /* __GDPR__
        "navigateToJavaStackFrame" : {
            "owner": "vscode-java-debug",
            "comment": "Emitted when a user clicks a linkified Java stack frame; measures feature usage.",
-           "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-           "documentSource": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+           "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
        }
      */
-    sendInfo("", { operationName: "navigateToJavaStackFrame", documentSource: args.documentSource || "unknown" });
+    sendInfo("", { operationName: "navigateToJavaStackFrame" });
 
     const uri = await resolveSourceUri(args.stackTrace);
     if (uri) {
