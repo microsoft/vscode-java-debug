@@ -27,8 +27,9 @@ const MAX_LINKS_PER_DOCUMENT = 2000;
 // Only resolve to source locations the language server is expected to return.
 const ALLOWED_SOURCE_SCHEMES = new Set<string>(["file", "jdt"]);
 
-// Cap how much of the clipboard we scan when deciding whether to prefill (ReDoS hygiene).
-const MAX_CLIPBOARD_SCAN_LENGTH = 20000;
+// Bound both stack-trace detection and scratch-document prefill so a large clipboard cannot create
+// an expensive untitled document (and keeps the detection regex input bounded).
+const MAX_CLIPBOARD_PREFILL_LENGTH = 20000;
 
 interface IStackFrameLinkArgs {
     stackTrace: string;
@@ -131,15 +132,16 @@ async function analyzeStackTrace(): Promise<void> {
     // The command itself is auto-instrumented via instrumentOperationAsVsCodeCommand, so no
     // manual telemetry is needed here to track invocations.
     const clipboard = await env.clipboard.readText();
-    const looksLikeTrace = parseJavaStackFrame(clipboard.slice(0, MAX_CLIPBOARD_SCAN_LENGTH)) !== undefined;
-    const content = looksLikeTrace ? clipboard : "";
+    const clipboardContent = clipboard.slice(0, MAX_CLIPBOARD_PREFILL_LENGTH);
+    const looksLikeTrace = parseJavaStackFrame(clipboardContent) !== undefined;
+    const content = looksLikeTrace ? clipboardContent : "";
     const document = await workspace.openTextDocument({ language: "log", content });
     await window.showTextDocument(document);
 }
 
 export function registerStackTraceLinkProvider(context: ExtensionContext): void {
-    // The commands are always available: the palette command must not depend on server
-    // readiness, and the click handler is only ever reached from links the provider creates.
+    // Register handlers immediately for programmatic invocations and existing command links.
+    // Palette visibility and creation of new links are gated on language-server readiness elsewhere.
     context.subscriptions.push(
         commands.registerCommand(NAVIGATE_TO_STACK_FRAME_COMMAND, navigateToStackFrame),
         instrumentOperationAsVsCodeCommand(ANALYZE_STACK_TRACE_COMMAND, analyzeStackTrace),
