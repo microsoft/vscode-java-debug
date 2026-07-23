@@ -18,7 +18,7 @@ export interface IParsedStackFrame {
 }
 
 /**
- * Parses the first Java stack frame (e.g. `at module/com.foo.Bar.baz(Bar.java:42)`) out of a line,
+ * Parses the first Java stack frame (e.g. `\tat module/com.foo.Bar.baz(Bar.java:42)`) out of a line,
  * or returns undefined when none is present.
  *
  * A fresh `RegExp` is created per call on purpose: provider callbacks can overlap asynchronously,

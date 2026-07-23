@@ -38,22 +38,23 @@ interface IStackFrameLinkArgs {
 }
 
 function isStackFrameLinkArgs(args: unknown): args is IStackFrameLinkArgs {
-    if (typeof args !== "object" || args === null
-            || !("stackTrace" in args) || typeof args.stackTrace !== "string"
-            || !("methodName" in args) || typeof args.methodName !== "string"
-            || !("lineNumber" in args) || typeof args.lineNumber !== "number") {
+    if (typeof args !== "object" || args === null) {
         return false;
     }
 
-    if (args.stackTrace.length === 0 || args.stackTrace.length > MAX_SCANNED_LINE_LENGTH
-            || !Number.isSafeInteger(args.lineNumber) || args.lineNumber <= 0) {
+    const stackTrace = "stackTrace" in args ? args.stackTrace : undefined;
+    const methodName = "methodName" in args ? args.methodName : undefined;
+    const lineNumber = "lineNumber" in args ? args.lineNumber : undefined;
+    if (typeof stackTrace !== "string" || typeof methodName !== "string" || typeof lineNumber !== "number"
+            || stackTrace.length === 0 || stackTrace.length > MAX_SCANNED_LINE_LENGTH
+            || !Number.isSafeInteger(lineNumber) || lineNumber <= 0) {
         return false;
     }
 
-    const frame = parseJavaStackFrame(` at ${args.stackTrace}`);
-    return frame?.stackTrace === args.stackTrace
-        && frame.methodName === args.methodName
-        && frame.lineNumber === args.lineNumber;
+    const frame = parseJavaStackFrame(` at ${stackTrace}`);
+    return frame?.stackTrace === stackTrace
+        && frame.methodName === methodName
+        && frame.lineNumber === lineNumber;
 }
 
 /**
