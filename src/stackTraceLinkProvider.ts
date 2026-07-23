@@ -12,24 +12,22 @@ import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
 const ANALYZE_STACK_TRACE_COMMAND = "java.debug.analyzeStackTrace";
 const NAVIGATE_TO_STACK_FRAME_COMMAND = "_java.debug.navigateToStackFrame";
 
-// Only linkify pasted traces in untitled (scratch) documents - including the one opened by the
-// `Analyze Stack Trace` command. Kept deliberately narrow: a `.log` opened without a Java project
-// couldn't resolve anyway, so we don't scan `.log` files or every plaintext file the user opens.
+// Linkify stack traces in scratch documents and .log files. Other plaintext documents stay
+// excluded so the extension does not passively scan unrelated files.
 const STACK_TRACE_DOCUMENT_SELECTOR: DocumentSelector = [
     { scheme: "untitled" },
+    { pattern: "**/*.log" },
 ];
 
-// Guard against pathological input: cap the length of a scanned line (mitigates ReDoS on the
-// nested-quantifier regex) and the number of links produced for very large pasted traces.
+// Bound the work performed for large documents and pathological input. The per-line cap mitigates
+// ReDoS in the nested-quantifier regex; the document budgets keep large logs from being fully scanned.
 const MAX_SCANNED_LINE_LENGTH = 1000;
+const MAX_SCANNED_LINES_PER_DOCUMENT = 10000;
+const MAX_SCANNED_CHARACTERS_PER_DOCUMENT = 1000000;
 const MAX_LINKS_PER_DOCUMENT = 2000;
 
 // Only resolve to source locations the language server is expected to return.
 const ALLOWED_SOURCE_SCHEMES = new Set<string>(["file", "jdt"]);
-
-// Bound both stack-trace detection and scratch-document prefill so a large clipboard cannot create
-// an expensive untitled document (and keeps the detection regex input bounded).
-const MAX_CLIPBOARD_PREFILL_LENGTH = 20000;
 
 interface IStackFrameLinkArgs {
     stackTrace: string;
@@ -66,12 +64,20 @@ function isStackFrameLinkArgs(args: unknown): args is IStackFrameLinkArgs {
 export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
     public provideDocumentLinks(document: TextDocument, token: CancellationToken): ProviderResult<DocumentLink[]> {
         const links: DocumentLink[] = [];
-        for (let i = 0; i < document.lineCount; i++) {
+        let scannedCharacters = 0;
+        const linesToScan = Math.min(document.lineCount, MAX_SCANNED_LINES_PER_DOCUMENT);
+        for (let i = 0; i < linesToScan; i++) {
             if (token.isCancellationRequested || links.length >= MAX_LINKS_PER_DOCUMENT) {
                 break;
             }
 
             const lineText = document.lineAt(i).text;
+            const lineScanCost = lineText.length + 1;
+            if (scannedCharacters + lineScanCost > MAX_SCANNED_CHARACTERS_PER_DOCUMENT) {
+                break;
+            }
+            scannedCharacters += lineScanCost;
+
             if (lineText.length > MAX_SCANNED_LINE_LENGTH) {
                 continue;
             }
@@ -145,14 +151,13 @@ async function navigateToStackFrame(args: unknown): Promise<void> {
 }
 
 /**
- * Opens a scratch document prefilled with bounded clipboard content. The document link provider
- * scans the content after the document opens and makes any stack frames clickable.
+ * Opens a scratch document prefilled with the clipboard content. The document link provider scans
+ * a bounded portion after the document opens and makes any stack frames clickable.
  */
 async function analyzeStackTrace(): Promise<void> {
     // The command itself is auto-instrumented via instrumentOperationAsVsCodeCommand, so no
     // manual telemetry is needed here to track invocations.
-    const clipboard = await env.clipboard.readText();
-    const clipboardContent = clipboard.slice(0, MAX_CLIPBOARD_PREFILL_LENGTH);
+    const clipboardContent = await env.clipboard.readText();
     const document = await workspace.openTextDocument({ language: "log", content: clipboardContent });
     await window.showTextDocument(document);
 }

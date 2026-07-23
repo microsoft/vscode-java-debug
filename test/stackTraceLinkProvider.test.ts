@@ -7,30 +7,45 @@ import { CancellationTokenSource, workspace } from "vscode";
 import { JavaStackTraceLinkProvider } from "../src/stackTraceLinkProvider";
 
 suite("JavaStackTraceLinkProvider", () => {
-    test("encodes command URI arguments as an array", async () => {
-        const stackTrace = "com.example.App.main(App.java:42)";
-        const document = await workspace.openTextDocument({
-            language: "log",
-            content: `\tat ${stackTrace}`,
-        });
+    async function provideLinks(content: string) {
+        const document = await workspace.openTextDocument({ language: "log", content });
         const cancellation = new CancellationTokenSource();
 
         try {
-            const links = await Promise.resolve(
+            return await Promise.resolve(
                 new JavaStackTraceLinkProvider().provideDocumentLinks(document, cancellation.token),
             );
-            assert.ok(links);
-            assert.strictEqual(links.length, 1);
-
-            const target = links[0].target;
-            assert.ok(target);
-            assert.deepStrictEqual(JSON.parse(decodeURIComponent(target.query)), [{
-                stackTrace,
-                methodName: "com.example.App.main",
-                lineNumber: 42,
-            }]);
         } finally {
             cancellation.dispose();
         }
+    }
+
+    test("encodes command URI arguments as an array", async () => {
+        const stackTrace = "com.example.App.main(App.java:42)";
+        const links = await provideLinks(`\tat ${stackTrace}`);
+
+        assert.ok(links);
+        assert.strictEqual(links.length, 1);
+
+        const target = links[0].target;
+        assert.ok(target);
+        assert.deepStrictEqual(JSON.parse(decodeURIComponent(target.query)), [{
+            stackTrace,
+            methodName: "com.example.App.main",
+            lineNumber: 42,
+        }]);
+    });
+
+    test("stops scanning after the document character budget", async () => {
+        const longPrefix = `${"x".repeat(1000)}\n`.repeat(1000);
+        const links = await provideLinks(`${longPrefix}\tat com.example.App.main(App.java:42)`);
+
+        assert.deepStrictEqual(links, []);
+    });
+
+    test("stops scanning after the document line budget", async () => {
+        const links = await provideLinks(`${"\n".repeat(10000)}\tat com.example.App.main(App.java:42)`);
+
+        assert.deepStrictEqual(links, []);
     });
 });
