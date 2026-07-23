@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Get all open issues
         id: get_issues
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410  # v6
         with:
           script: |
             // Use Search API to filter issues at API level
@@ -85,7 +85,7 @@ jobs:
 
       - name: Trigger triage workflow for issue
         if: inputs.dry_run != true
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410  # v6
         with:
           script: |
             const issueNumber = '${{ matrix.issue_number }}';
