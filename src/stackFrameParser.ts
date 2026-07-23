@@ -9,7 +9,7 @@ export interface IParsedStackFrame {
     stackTrace: string;
     // The fully-qualified method (`com.foo.Bar.baz`), used for the class-name quick-pick fallback.
     methodName: string;
-    // The 1-based source line number parsed from the frame.
+    // The positive, safe 1-based source line number parsed from the frame.
     lineNumber: number;
     // Offset of the frame within the input line (points at the class name, past the leading `at `).
     startIndex: number;
@@ -33,10 +33,15 @@ export function parseJavaStackFrame(line: string): IParsedStackFrame | undefined
     }
 
     const stackTrace = `${result[2] || ""}${result[3]}(${result[5]})`;
+    const lineNumber = Number(result[5].split(":")[1]);
+    if (!Number.isSafeInteger(lineNumber) || lineNumber <= 0) {
+        return undefined;
+    }
+
     return {
         stackTrace,
         methodName: result[3],
-        lineNumber: Number(result[5].split(":")[1]),
+        lineNumber,
         startIndex: result.index + result[1].length,
         length: stackTrace.length,
     };

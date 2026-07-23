@@ -40,4 +40,9 @@ suite("parseJavaStackFrame", () => {
         assert.strictEqual(frame.length, stackTrace.length);
         assert.strictEqual(line.substring(frame.startIndex, frame.startIndex + frame.length), stackTrace);
     });
+
+    test("rejects non-positive and unsafe line numbers", () => {
+        assert.strictEqual(parseJavaStackFrame("\tat com.example.App.main(App.java:0)"), undefined);
+        assert.strictEqual(parseJavaStackFrame("\tat com.example.App.main(App.java:9007199254740992)"), undefined);
+    });
 });
