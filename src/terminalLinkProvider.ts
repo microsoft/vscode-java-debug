@@ -5,6 +5,7 @@ import { CancellationToken, commands, Position, ProviderResult, Range, TerminalL
     TerminalLinkProvider, Uri, window } from "vscode";
 import { sendInfo } from "vscode-extension-telemetry-wrapper";
 import { resolveSourceUri } from "./languageServerPlugin";
+import { parseJavaStackFrame } from "./stackFrameParser";
 
 export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTerminalLink> {
     /**
@@ -17,17 +18,14 @@ export class JavaTerminalLinkProvder implements TerminalLinkProvider<IJavaTermin
      */
     public provideTerminalLinks(context: TerminalLinkContext, _token: CancellationToken): ProviderResult<IJavaTerminalLink[]> {
         const isDebuggerTerminal: boolean = context.terminal.name.startsWith("Run:") || context.terminal.name.startsWith("Debug:");
-        const regex = new RegExp("(\\sat\\s+)([\\w$\\.]+\\/)?(([\\w$]+\\.)+[<\\w$>]+)\\(([\\w-$]+\\.java:\\d+)\\)");
-        const result: RegExpExecArray | null = regex.exec(context.line);
-        if (result && result.length) {
-            const stackTrace = `${result[2] || ""}${result[3]}(${result[5]})`;
-            const sourceLineNumber = Number(result[5].split(":")[1]);
+        const frame = parseJavaStackFrame(context.line);
+        if (frame) {
             return [{
-                startIndex: result.index + result[1].length,
-                length: stackTrace.length,
-                methodName: result[3],
-                stackTrace,
-                lineNumber: sourceLineNumber,
+                startIndex: frame.startIndex,
+                length: frame.length,
+                methodName: frame.methodName,
+                stackTrace: frame.stackTrace,
+                lineNumber: frame.lineNumber,
                 isDebuggerTerminal,
             }];
         }

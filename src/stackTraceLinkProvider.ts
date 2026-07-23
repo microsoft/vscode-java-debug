@@ -6,6 +6,7 @@ import { CancellationToken, commands, DocumentLink, DocumentLinkProvider, Docume
     window, workspace } from "vscode";
 import { instrumentOperationAsVsCodeCommand, sendInfo } from "vscode-extension-telemetry-wrapper";
 import { resolveSourceUri } from "./languageServerPlugin";
+import { parseJavaStackFrame } from "./stackFrameParser";
 import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
 
 const ANALYZE_STACK_TRACE_COMMAND = "java.debug.analyzeStackTrace";
@@ -17,10 +18,6 @@ const NAVIGATE_TO_STACK_FRAME_COMMAND = "_java.debug.navigateToStackFrame";
 const STACK_TRACE_DOCUMENT_SELECTOR: DocumentSelector = [
     { scheme: "untitled" },
 ];
-
-// Matches a Java stack frame such as `at module/com.foo.Bar.baz(Bar.java:42)`.
-// Group 2: optional module prefix, group 3: fully-qualified method, group 5: `File.java:line`.
-const STACK_FRAME_REGEX = /(\sat\s+)([\w$.]+\/)?(([\w$]+\.)+[<\w$>]+)\(([\w-$]+\.java:\d+)\)/;
 
 // Guard against pathological input: cap the length of a scanned line (mitigates ReDoS on the
 // nested-quantifier regex) and the number of links produced for very large pasted traces.
@@ -58,17 +55,21 @@ export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
                 continue;
             }
 
-            const result = STACK_FRAME_REGEX.exec(lineText);
-            if (!result || !result.length) {
+            const frame = parseJavaStackFrame(lineText);
+            if (!frame) {
                 continue;
             }
 
-            const stackTrace = `${result[2] || ""}${result[3]}(${result[5]})`;
-            const lineNumber = Number(result[5].split(":")[1]);
-            const startIndex = result.index + result[1].length;
-            const range = new Range(new Position(i, startIndex), new Position(i, startIndex + stackTrace.length));
+            const range = new Range(
+                new Position(i, frame.startIndex),
+                new Position(i, frame.startIndex + frame.length),
+            );
 
-            const args: IStackFrameLinkArgs = { stackTrace, methodName: result[3], lineNumber };
+            const args: IStackFrameLinkArgs = {
+                stackTrace: frame.stackTrace,
+                methodName: frame.methodName,
+                lineNumber: frame.lineNumber,
+            };
             const target = Uri.parse(`command:${NAVIGATE_TO_STACK_FRAME_COMMAND}?${encodeURIComponent(JSON.stringify(args))}`);
             links.push(new DocumentLink(range, target));
         }
@@ -97,22 +98,28 @@ async function navigateToStackFrame(args: IStackFrameLinkArgs): Promise<void> {
      */
     sendInfo("", { operationName: "navigateToJavaStackFrame" });
 
-    const uri = await resolveSourceUri(args.stackTrace);
-    if (uri) {
-        const parsed = Uri.parse(uri);
-        if (!ALLOWED_SOURCE_SCHEMES.has(parsed.scheme)) {
-            return;
+    try {
+        const uri = await resolveSourceUri(args.stackTrace);
+        if (uri) {
+            const parsed = Uri.parse(uri);
+            if (!ALLOWED_SOURCE_SCHEMES.has(parsed.scheme)) {
+                return;
+            }
+            const targetLine = Math.max(args.lineNumber - 1, 0);
+            await window.showTextDocument(parsed, {
+                preserveFocus: true,
+                selection: new Range(new Position(targetLine, 0), new Position(targetLine, 0)),
+            });
+        } else {
+            // No source found: open the symbol quick pick scoped to the class name.
+            const fullyQualifiedName = args.methodName.substring(0, args.methodName.lastIndexOf("."));
+            const className = fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf(".") + 1);
+            await commands.executeCommand("workbench.action.quickOpen", "#" + className);
         }
-        const targetLine = Math.max(args.lineNumber - 1, 0);
-        window.showTextDocument(parsed, {
-            preserveFocus: true,
-            selection: new Range(new Position(targetLine, 0), new Position(targetLine, 0)),
-        });
-    } else {
-        // No source found: open the symbol quick pick scoped to the class name.
-        const fullyQualifiedName = args.methodName.substring(0, args.methodName.lastIndexOf("."));
-        const className = fullyQualifiedName.substring(fullyQualifiedName.lastIndexOf(".") + 1);
-        commands.executeCommand("workbench.action.quickOpen", "#" + className);
+    } catch {
+        // The internal navigate command is always registered, but resolving a frame needs the Java
+        // language server in Standard mode. If it isn't (e.g. server restarting/downgraded) or the
+        // resolved document fails to open, fail quietly instead of surfacing an unhandled rejection.
     }
 }
 
@@ -124,7 +131,8 @@ async function analyzeStackTrace(): Promise<void> {
     // The command itself is auto-instrumented via instrumentOperationAsVsCodeCommand, so no
     // manual telemetry is needed here to track invocations.
     const clipboard = await env.clipboard.readText();
-    const content = STACK_FRAME_REGEX.test(clipboard.slice(0, MAX_CLIPBOARD_SCAN_LENGTH)) ? clipboard : "";
+    const looksLikeTrace = parseJavaStackFrame(clipboard.slice(0, MAX_CLIPBOARD_SCAN_LENGTH)) !== undefined;
+    const content = looksLikeTrace ? clipboard : "";
     const document = await workspace.openTextDocument({ language: "log", content });
     await window.showTextDocument(document);
 }

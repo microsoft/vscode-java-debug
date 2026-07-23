@@ -240,6 +240,10 @@
       ],
       "commandPalette": [
         {
+          "command": "java.debug.analyzeStackTrace",
+          "when": "javaLSReady"
+        },
+        {
           "command": "java.debug.hotCodeReplace",
           "when": "false"
         },
