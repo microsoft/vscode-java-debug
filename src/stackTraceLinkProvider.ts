@@ -11,12 +11,11 @@ import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
 const ANALYZE_STACK_TRACE_COMMAND = "java.debug.analyzeStackTrace";
 const NAVIGATE_TO_STACK_FRAME_COMMAND = "_java.debug.navigateToStackFrame";
 
-// Documents we linkify: pasted traces (untitled), the `log` language, and `.log` files. Kept
-// narrow on purpose so we don't scan every plaintext file the user opens.
+// Only linkify pasted traces in untitled (scratch) documents - including the one opened by the
+// `Analyze Stack Trace` command. Kept deliberately narrow: a `.log` opened without a Java project
+// couldn't resolve anyway, so we don't scan `.log` files or every plaintext file the user opens.
 const STACK_TRACE_DOCUMENT_SELECTOR: DocumentSelector = [
     { scheme: "untitled" },
-    { language: "log" },
-    { pattern: "**/*.log" },
 ];
 
 // Matches a Java stack frame such as `at module/com.foo.Bar.baz(Bar.java:42)`.
@@ -24,7 +23,7 @@ const STACK_TRACE_DOCUMENT_SELECTOR: DocumentSelector = [
 const STACK_FRAME_REGEX = /(\sat\s+)([\w$.]+\/)?(([\w$]+\.)+[<\w$>]+)\(([\w-$]+\.java:\d+)\)/;
 
 // Guard against pathological input: cap the length of a scanned line (mitigates ReDoS on the
-// nested-quantifier regex) and the number of links produced for very large logs.
+// nested-quantifier regex) and the number of links produced for very large pasted traces.
 const MAX_SCANNED_LINE_LENGTH = 1000;
 const MAX_LINKS_PER_DOCUMENT = 2000;
 
@@ -41,10 +40,10 @@ interface IStackFrameLinkArgs {
 }
 
 /**
- * Linkifies Java stack frames in text documents (e.g. pasted traces or opened `.log` files),
- * so that each frame can be clicked to jump to the corresponding source line - without requiring
- * an active debug session. Resolution reuses the session-independent `resolveSourceUri` backend
- * and is performed lazily, only when a link is clicked.
+ * Linkifies Java stack frames pasted into untitled (scratch) documents, so that each frame can be
+ * clicked to jump to the corresponding source line - without requiring an active debug session.
+ * Resolution reuses the session-independent `resolveSourceUri` backend and is performed lazily,
+ * only when a link is clicked.
  */
 export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
     public provideDocumentLinks(document: TextDocument, token: CancellationToken): ProviderResult<DocumentLink[]> {
