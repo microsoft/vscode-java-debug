@@ -145,17 +145,15 @@ async function navigateToStackFrame(args: unknown): Promise<void> {
 }
 
 /**
- * Opens a scratch document for pasting an external stack trace. If the clipboard already holds a
- * stack trace, it is prefilled so the frames become clickable immediately.
+ * Opens a scratch document prefilled with bounded clipboard content. The document link provider
+ * scans the content after the document opens and makes any stack frames clickable.
  */
 async function analyzeStackTrace(): Promise<void> {
     // The command itself is auto-instrumented via instrumentOperationAsVsCodeCommand, so no
     // manual telemetry is needed here to track invocations.
     const clipboard = await env.clipboard.readText();
     const clipboardContent = clipboard.slice(0, MAX_CLIPBOARD_PREFILL_LENGTH);
-    const looksLikeTrace = parseJavaStackFrame(clipboardContent) !== undefined;
-    const content = looksLikeTrace ? clipboardContent : "";
-    const document = await workspace.openTextDocument({ language: "log", content });
+    const document = await workspace.openTextDocument({ language: "log", content: clipboardContent });
     await window.showTextDocument(document);
 }
 
@@ -190,12 +188,14 @@ function registerLinkProviderWhenReady(context: ExtensionContext): void {
 
         if (api.serverMode === ServerMode.LIGHTWEIGHT || api.serverMode === ServerMode.HYBRID) {
             let registered = false;
-            context.subscriptions.push(api.onDidServerModeChange((mode: string) => {
+            const serverModeListener = api.onDidServerModeChange((mode: string) => {
                 if (mode === ServerMode.STANDARD && !registered) {
                     registered = true;
+                    serverModeListener.dispose();
                     doRegister();
                 }
-            }));
+            });
+            context.subscriptions.push(serverModeListener);
         } else {
             // Already in Standard mode.
             doRegister();
