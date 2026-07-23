@@ -39,6 +39,7 @@
   ],
   "activationEvents": [
     "onLanguage:java",
+    "workspaceContains:**/*.java",
     "onDebugInitialConfigurations",
     "onDebugResolve:java",
     "onCommand:JavaDebug.SpecifyProgramArgs",
@@ -151,6 +152,11 @@
       {
         "command": "java.debug.variables.manualExpandLazyVariables",
         "title": "Manual Expand Lazy Variables"
+      },
+      {
+        "command": "java.debug.analyzeStackTrace",
+        "title": "Analyze Stack Trace",
+        "category": "Java"
       }
     ],
     "menus": {
@@ -233,6 +239,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "java.debug.analyzeStackTrace",
+          "when": "javaLSReady"
+        },
         {
           "command": "java.debug.hotCodeReplace",
           "when": "false"
