@@ -37,6 +37,25 @@ interface IStackFrameLinkArgs {
     lineNumber: number;
 }
 
+function isStackFrameLinkArgs(args: unknown): args is IStackFrameLinkArgs {
+    if (typeof args !== "object" || args === null
+            || !("stackTrace" in args) || typeof args.stackTrace !== "string"
+            || !("methodName" in args) || typeof args.methodName !== "string"
+            || !("lineNumber" in args) || typeof args.lineNumber !== "number") {
+        return false;
+    }
+
+    if (args.stackTrace.length === 0 || args.stackTrace.length > MAX_SCANNED_LINE_LENGTH
+            || !Number.isSafeInteger(args.lineNumber) || args.lineNumber <= 0) {
+        return false;
+    }
+
+    const frame = parseJavaStackFrame(` at ${args.stackTrace}`);
+    return frame?.stackTrace === args.stackTrace
+        && frame.methodName === args.methodName
+        && frame.lineNumber === args.lineNumber;
+}
+
 /**
  * Linkifies Java stack frames pasted into untitled (scratch) documents, so that each frame can be
  * clicked to jump to the corresponding source line - without requiring an active debug session.
@@ -71,7 +90,7 @@ export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
                 methodName: frame.methodName,
                 lineNumber: frame.lineNumber,
             };
-            const target = Uri.parse(`command:${NAVIGATE_TO_STACK_FRAME_COMMAND}?${encodeURIComponent(JSON.stringify(args))}`);
+            const target = Uri.parse(`command:${NAVIGATE_TO_STACK_FRAME_COMMAND}?${encodeURIComponent(JSON.stringify([args]))}`);
             links.push(new DocumentLink(range, target));
         }
 
@@ -83,8 +102,8 @@ export class JavaStackTraceLinkProvider implements DocumentLinkProvider {
  * Resolves a stack frame to its source location and navigates to it. Mirrors the behavior of the
  * terminal link provider: jump to the resolved source line, or fall back to a symbol quick pick.
  */
-async function navigateToStackFrame(args: IStackFrameLinkArgs): Promise<void> {
-    if (!args || !args.stackTrace) {
+async function navigateToStackFrame(args: unknown): Promise<void> {
+    if (!isStackFrameLinkArgs(args)) {
         return;
     }
 
