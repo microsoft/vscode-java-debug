@@ -55,10 +55,8 @@ extends:
                 inputs:
                   versionSpec: 20.x
               - template: /.azure-pipelines/npm-cfs.yml@self
-              - task: Npm@1
+              - script: npm install
                 displayName: npm install
-                inputs:
-                  verbose: false
               - task: CmdLine@2
                 displayName: build server
                 inputs:

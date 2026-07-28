@@ -74,10 +74,8 @@ extends:
                     del server\com.microsoft.java.debug.plugin-*-sources.jar
                     del server\com.microsoft.java.debug.plugin-*-javadoc.jar
               - template: /.azure-pipelines/npm-cfs.yml@self
-              - task: Npm@1
+              - script: npm install
                 displayName: npm install
-                inputs:
-                  verbose: false
               - task: CmdLine@2
                 displayName: Replace AI key
                 inputs:

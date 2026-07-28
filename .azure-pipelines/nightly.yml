@@ -72,10 +72,8 @@ extends:
                   Contents: 'com.microsoft.java.debug.plugin-*.jar'
                   TargetFolder: $(Build.SourcesDirectory)/server
               - template: /.azure-pipelines/npm-cfs.yml@self
-              - task: Npm@1
+              - script: npm install
                 displayName: npm install
-                inputs:
-                  verbose: false
               - task: CmdLine@2
                 displayName: Update nightly vsix version
                 inputs:
