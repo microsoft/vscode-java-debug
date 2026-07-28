@@ -2,6 +2,7 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
   - name: Codeql.Enabled
     value: true
+  - template: /.azure-pipelines/npm-cfs-variables.yml@self
 resources:
   repositories:
     - repository: self
@@ -53,6 +54,7 @@ extends:
                 displayName: Use Node 20.x
                 inputs:
                   versionSpec: 20.x
+              - template: /.azure-pipelines/npm-cfs.yml@self
               - task: Npm@1
                 displayName: npm install
                 inputs:

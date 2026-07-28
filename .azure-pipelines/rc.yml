@@ -2,6 +2,7 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
   - name: Codeql.Enabled
     value: true
+  - template: /.azure-pipelines/npm-cfs-variables.yml@self
 resources:
   pipelines:
     - pipeline: microsoft.java-debug.signjars.rc
@@ -72,6 +73,7 @@ extends:
                   script: |
                     del server\com.microsoft.java.debug.plugin-*-sources.jar
                     del server\com.microsoft.java.debug.plugin-*-javadoc.jar
+              - template: /.azure-pipelines/npm-cfs.yml@self
               - task: Npm@1
                 displayName: npm install
                 inputs:
