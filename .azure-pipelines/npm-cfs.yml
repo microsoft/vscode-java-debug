@@ -1,0 +1,58 @@
+# Routes npm package restore through the Central Feed Service (CFS), as required by
+# SFI Network Isolation. Consumed by every build pipeline in this directory.
+#
+# Pipelines must also include the companion variables template:
+#   variables:
+#     - template: /.azure-pipelines/npm-cfs-variables.yml@self
+# which declares the feed URL and the generated .npmrc path. The redirect itself is
+# carried by the npm_config_registry environment variable that template exports; see
+# its header for why the generated .npmrc alone is not enough.
+#
+# The .npmrc is generated at build time into the agent temp directory rather than
+# being committed to the repository, so that:
+#   * open source contributors and the GitHub Actions workflows keep restoring from
+#     the public npm registry -- npm rewrites the host of every `resolved` URL in
+#     package-lock.json to the configured registry, so a single lockfile serves both;
+#   * the credential that NpmAuthenticate injects never lands inside the workspace;
+#   * the configuration does not depend on the repository being checked out, so
+#     release jobs consuming a prebuilt artifact work the same way as build jobs.
+#
+# The registry is still written into that file because NpmAuthenticate discovers the
+# registries to authenticate by reading it. npm then takes the URL from the
+# environment and the matching credential from this file.
+#
+# The file is written with `npm config set` rather than a shell redirect because
+# these pipelines span both Linux and Windows pools. `script:` maps to CmdLine@2,
+# which runs on both, and the npm invocation itself is shell agnostic. PowerShell@2
+# is avoided because it resolves `pwsh` before `powershell` and hard fails when
+# neither is on PATH, which is not guaranteed on a custom Linux image.
+#
+# This template must run after the Node install task, and before any step that
+# restores packages -- including `npx`, which resolves downloads through the
+# configured registry.
+#
+# Consumers must reference this file as `/.azure-pipelines/npm-cfs.yml@self`. A
+# relative path is resolved against the file doing the including, which for these
+# pipelines is the 1ES extends template in another repository, so the unqualified
+# form is looked up in 1ESPipelineTemplates and fails YAML compilation.
+
+steps:
+  - script: npm config set registry $(npm_config_registry) --location=user --userconfig="$(npm_config_userconfig)"
+    displayName: Configure CFS npm registry
+
+  # Appends `//pkgs.dev.azure.com/.../registry/:_authToken=<token>` for every
+  # registry it finds in the file above. `always-auth` is deliberately not written:
+  # it is not read by this task and is rejected outright by the npm 10 shipped with
+  # Node 20.
+  - task: NpmAuthenticate@0
+    displayName: Authenticate to CFS feed
+    inputs:
+      workingFile: $(npm_config_userconfig)
+
+  # Restore silently falling back to the public registry is the failure mode this
+  # whole template exists to prevent, and it leaves no trace in the build log, so it
+  # is asserted rather than assumed. Written in node, which the agent already
+  # provides, to avoid shell differences between the Linux and Windows pools.
+  - script: >-
+      node -e "const cp=require('child_process');const r=cp.execSync('npm config get registry').toString().trim();console.log('npm registry -> '+r);if(!r.startsWith('https://pkgs.dev.azure.com/')){console.error('##vso[task.logissue type=error]npm is not configured against the CFS feed');process.exit(1);}"
+    displayName: Verify CFS npm registry
