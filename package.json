@@ -1390,7 +1390,7 @@
     "@types/node": "^14.18.63",
     "@types/uuid": "^8.3.4",
     "@types/vscode": "1.95.0",
-    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-electron": "^3.1.0",
     "mocha": "^10.8.2",
     "ts-loader": "^9.5.1",
     "tslint": "^6.1.3",
