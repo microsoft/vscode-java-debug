@@ -1,0 +1,19 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"
+    # CI restores packages from the Central Feed Service, which withholds
+    # upstream versions until they are roughly a week old (measured at ~6.8
+    # days; both the packument entry and the tarball return 404 before then).
+    # Dependabot's built-in cooldown is only 3 days, so bumps otherwise land in
+    # a window where the feed 404s and the build fails. 10 days leaves margin
+    # in case the feed's ingestion lag drifts.
+    cooldown:
+      default-days: 10
