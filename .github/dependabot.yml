@@ -17,3 +17,12 @@ updates:
     # in case the feed's ingestion lag drifts.
     cooldown:
       default-days: 10
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
