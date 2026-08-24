@@ -8,6 +8,7 @@ name: $(Date:yyyyMMdd).$(Rev:r) # Use the current date and a revision number for
 variables:
   - name: Codeql.Enabled
     value: true
+  - template: /.azure-pipelines/npm-cfs-variables.yml@self
 resources:
   repositories:
     - repository: self
@@ -46,6 +47,7 @@ extends:
                 displayName: 'Use Node.js 20.x'
                 inputs:
                   version: '20.x'
+              - template: /.azure-pipelines/npm-cfs.yml@self
               - task: AzureCLI@2
                 displayName: 'Publish Extension'
                 inputs:

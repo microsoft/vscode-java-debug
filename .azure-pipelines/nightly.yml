@@ -2,6 +2,7 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
   - name: Codeql.Enabled
     value: true
+  - template: /.azure-pipelines/npm-cfs-variables.yml@self
 schedules:
   - cron: 0 7 * * 1,2,3,4,5
     branches:
@@ -70,10 +71,9 @@ extends:
                   SourceFolder: '$(System.ArtifactsDirectory)/plugin/jars'
                   Contents: 'com.microsoft.java.debug.plugin-*.jar'
                   TargetFolder: $(Build.SourcesDirectory)/server
-              - task: Npm@1
+              - template: /.azure-pipelines/npm-cfs.yml@self
+              - script: npm install
                 displayName: npm install
-                inputs:
-                  verbose: false
               - task: CmdLine@2
                 displayName: Update nightly vsix version
                 inputs:

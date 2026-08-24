@@ -1,0 +1,28 @@
+# Variables required to route npm package restore through the Central Feed Service
+# (CFS). Consumed by every pipeline in this directory alongside the npm-cfs.yml steps
+# template, which is where these values are actually applied.
+#
+# Both are declared here rather than in each pipeline so the feed URL exists in
+# exactly one place.
+#
+# npm_config_registry is not redundant with the registry written into the generated
+# .npmrc. npm resolves configuration in the order cli > environment > project .npmrc
+# > user .npmrc, so a registry supplied only through the user config is outranked by
+# anything the agent image already configures -- Microsoft hosted images ship a user
+# level .npmrc pointing at an internal proxy, and a pool that exports
+# npm_config_registry would win outright. Restore would then quietly resolve from
+# somewhere other than CFS while the build still reported success. Declaring the
+# variable here puts the redirect at environment precedence, where only an explicit
+# command line flag can override it.
+#
+# npm matches npm_config_* environment variables case insensitively, so the
+# uppercased form that Azure Pipelines exports applies to every step on every OS.
+# That matters because package restore here is not driven by a single task: the Npm
+# tasks, `npx json`, `npx @vscode/vsce` and the vsce invocation inside AzureCLI@2
+# all inherit the agent environment rather than reading a task input.
+
+variables:
+  - name: npm_config_registry
+    value: https://pkgs.dev.azure.com/mseng/VSJava/_packaging/vscjava/npm/registry/
+  - name: npm_config_userconfig
+    value: $(Agent.TempDirectory)/.npmrc

@@ -68,6 +68,46 @@ export type ErrorCategory =
     | 'cancelled'
     | 'other';
 
+/**
+ * Why the launch-time classname detection failed to resolve a fully-qualified
+ * class name. Replaces the previous boolean `detected: false` so we can
+ * distinguish "we never had a chance" (sourceDirMissing) from "we found the
+ * file but it has no package" (noPackageDeclaration).
+ */
+export type ClassNameDetectionFailure =
+    | 'sourceDirMissing'   // None of the candidate src directories existed.
+    | 'fileNotFound'       // We walked the candidate dirs but never found ClassName.java.
+    | 'parseError'         // We found the file but could not read or scan it.
+    | 'noPackageDeclaration'; // We found and parsed the file; it has no `package ...;`.
+
+/**
+ * Which candidate source-directory layout the detector was using when it
+ * decided the outcome. Together with {@link ClassNameDetectionFailure} this
+ * lets us correlate failures to project layouts.
+ */
+export type ClassNameDetectionStrategy =
+    | 'mavenStandard'   // <ws>/src/main/java
+    | 'gradleStandard'  // <ws>/src/main/java (same path, different driver)
+    | 'vscodeSrc'       // <ws>/src
+    | 'workspaceRoot';  // <ws>/
+
+/**
+ * Coarse OS classification. Kept as a closed enum so we can slice telemetry
+ * by platform without depending on Common Schema `common.os` (which is
+ * stripped by some downstream telemetry filters).
+ */
+export type OperatingSystem = 'win32' | 'darwin' | 'linux' | 'other';
+
+/**
+ * The outermost reason an invocation ended without emitting any of the
+ * regular outcome events. Used by the InvocationGuard to close the loop on
+ * silently-returning paths.
+ */
+export type SentinelOutcome =
+    | 'silentReturn'      // The invoke function returned without recording an outcome.
+    | 'cancelled'         // CancellationToken fired before any outcome was recorded.
+    | 'exception';        // An unhandled exception propagated out of invoke.
+
 export type TargetType = 'mainClass' | 'jar' | 'rawArgs' | 'unknown';
 
 export type BreakpointKind =
@@ -254,6 +294,53 @@ export function classifyScopeType(scopeType: string | undefined): ScopeType {
     }
 }
 
+/**
+ * Coerce a Node `process.platform` string into the closed {@link OperatingSystem}
+ * enum so telemetry sliced by `os` always matches `common.os` semantics.
+ */
+export function classifyPlatform(platform: string | undefined): OperatingSystem {
+    switch (platform) {
+        case 'win32':
+        case 'darwin':
+        case 'linux':
+            return platform;
+        default:
+            return 'other';
+    }
+}
+
+/**
+ * Extract the Java major version from a `java -version` (or
+ * `Runtime.version()`) style string. Returns `'unknown'` when the input
+ * is empty or unrecognised. Examples:
+ *   "21.0.1"          -> "21"
+ *   "1.8.0_392"       -> "8"
+ *   "17.0.5+9"        -> "17"
+ *   "openjdk 21 2023" -> "21"
+ *
+ * Only the major version is emitted so we cannot fingerprint a build.
+ */
+export function classifyJavaMajorVersion(versionString: string | undefined | null): string {
+    if (!versionString) {
+        return 'unknown';
+    }
+    const trimmed = String(versionString).trim();
+    if (!trimmed) {
+        return 'unknown';
+    }
+    // Legacy "1.X" naming (Java 8 and earlier).
+    const legacy = trimmed.match(/(?:^|\s|"|\()1\.(\d+)(?:[._]|$)/);
+    if (legacy) {
+        return legacy[1];
+    }
+    // Modern major-only naming, e.g. "21", "21.0.1", "openjdk 17".
+    const modern = trimmed.match(/(?:^|\s|"|\()(\d{1,3})(?:[.+_]|$|\s)/);
+    if (modern) {
+        return modern[1];
+    }
+    return 'unknown';
+}
+
 // ============================================================================
 // Recording helpers — the only entrypoints to `sendInfo` inside LMT code
 // ============================================================================
@@ -304,6 +391,26 @@ export interface ToolInvocationRecord {
     sessionId?: string;
     /** vscode-java-debug's own adapter type — value is constant `'java'`. */
     sessionType?: string;
+    /**
+     * Cross-cutting diagnostic context. These are redundant with Common
+     * Schema fields (`common.os`, etc.) but are emitted explicitly so
+     * dashboards can slice without a join and downstream telemetry
+     * filters do not strip them.
+     */
+    os?: OperatingSystem;
+    /** Java major version e.g. "21", "17", "8". Use `'unknown'` if not yet probed. */
+    javaMajorVersion?: string;
+    /** Project flavour detected at launch time; same enum as launch-internal events. */
+    projectSystem?: LaunchProjectType;
+    /**
+     * Retry instrumentation. `retryCount` is 0 for the first attempt within
+     * a VS Code session for this tool, 1 for the next, etc.
+     * `previousOutcome` is the terminal outcome of the immediately previous
+     * attempt, so we can distinguish auto-retry (LM driven, immediate) from
+     * user-driven retry (after editing code).
+     */
+    retryCount?: number;
+    previousOutcome?: ToolOutcome;
 }
 
 /**
@@ -317,6 +424,36 @@ export interface ToolInvocationRecord {
  */
 export function recordToolInvocation(record: ToolInvocationRecord): void {
     const normalized = normalizeToolInvocationRecord(record);
+    /* __GDPR__
+       "languageModelTool.<tool>.invoke" : {
+           "owner": "vscode-java-debug",
+           "comment": "Outcome of a single Language Model Tool invocation.",
+           "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "outcome": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "errorCategory": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
+           "durationMs": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+           "targetType": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "breakpointKind": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "stepKind": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "evalContext": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "removeScope": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "scopeType": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "isPaused": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "skipBuild": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "hasFilter": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "frameCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "threadCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "suspendedCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "removedCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "sessionId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "sessionType": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "os": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "javaMajorVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "projectSystem": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "retryCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "previousOutcome": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" }
+       }
+     */
     sanitizedSend({
         operationName: `languageModelTool.${normalized.tool}.invoke`,
         outcome: normalized.outcome,
@@ -337,6 +474,11 @@ export function recordToolInvocation(record: ToolInvocationRecord): void {
         removedCount: normalized.removedCount,
         sessionId: normalized.sessionId,
         sessionType: normalized.sessionType,
+        os: normalized.os,
+        javaMajorVersion: normalized.javaMajorVersion,
+        projectSystem: normalized.projectSystem,
+        retryCount: normalized.retryCount,
+        previousOutcome: normalized.previousOutcome,
     });
 }
 
@@ -400,6 +542,18 @@ export interface ChatActivationRecord {
  * post-ship without per-turn cost.
  */
 export function recordChatActivation(record: ChatActivationRecord): void {
+    /* __GDPR__
+       "languageModelTool.chatActivationSnapshot" : {
+           "owner": "vscode-java-debug",
+           "comment": "Emitted once at Language Model Tool registration time; reports adoption surface.",
+           "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "javaLSReadyAtActivation": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "lmtCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "chatSkillsCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "chatInstructionsCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+           "extensionVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+       }
+     */
     sanitizedSend({
         operationName: 'languageModelTool.chatActivationSnapshot',
         javaLSReadyAtActivation: record.javaLSReadyAtActivation,
@@ -423,16 +577,31 @@ export type LaunchProjectType = 'maven' | 'gradle' | 'vscode' | 'unknown';
  *
  * Note: `sessionId` here is VS Code's opaque debug-session GUID, never
  * the user-visible `launch.json` session name.
+ *
+ * Sentinel / silentReturn / cancelled / exception are the closed-loop
+ * variants emitted by {@link InvocationGuard}: they guarantee that every
+ * `debug_java_application` invocation produces at least one terminal
+ * event, even on code paths that previously silently returned.
  */
 export type LaunchInternalEvent =
     | { name: 'cleanupExistingSession'; sessionId: string }
     | { name: 'cleanupExistingSessionFailed'; errorCategory: ErrorCategory }
-    | { name: 'debugSessionStarted.eventBased'; sessionId: string }
-    | { name: 'debugSessionTimeout.eventBased' }
+    | { name: 'debugSessionStarted.eventBased'; sessionId: string; elapsedMs?: number; thresholdMs?: number }
+    | { name: 'debugSessionTimeout.eventBased'; elapsedMs?: number; thresholdMs?: number }
     | { name: 'debugSessionDetected'; sessionId: string; elapsedMs: number }
-    | { name: 'debugSessionTimeout.smartPolling'; maxWaitTime: number }
+    | { name: 'debugSessionTimeout.smartPolling'; maxWaitTime: number; elapsedMs?: number }
     | { name: 'classNameDetection'; projectType: LaunchProjectType; detected: boolean }
-    | { name: 'getDebugSessionInfo.threadError'; errorCategory: ErrorCategory };
+    | {
+          name: 'classNameDetection.failed';
+          projectType: LaunchProjectType;
+          strategy: ClassNameDetectionStrategy;
+          failureReason: ClassNameDetectionFailure;
+      }
+    | { name: 'getDebugSessionInfo.threadError'; errorCategory: ErrorCategory }
+    | { name: 'debugSession.sentinel'; os: OperatingSystem; javaMajorVersion: string; projectSystem?: LaunchProjectType }
+    | { name: 'debugSession.silentReturn'; durationMs: number }
+    | { name: 'debugSession.cancelled'; durationMs: number }
+    | { name: 'debugSession.exception'; errorCategory: ErrorCategory; durationMs: number };
 
 /**
  * Internal-debug event for the launch-flow nested instrumentation
@@ -443,8 +612,179 @@ export type LaunchInternalEvent =
  */
 export function recordLaunchInternal(event: LaunchInternalEvent): void {
     const { name, ...properties } = event;
+    /* __GDPR__
+       "languageModelTool.<launchInternalEventName>" : {
+           "owner": "vscode-java-debug",
+           "comment": "Internal launch-flow instrumentation; one of the LaunchInternalEvent variants.",
+           "operationName": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "sessionId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "errorCategory": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
+           "elapsedMs": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+           "thresholdMs": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+           "maxWaitTime": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+           "durationMs": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+           "projectType": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "projectSystem": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "detected": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "strategy": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "failureReason": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
+           "os": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+           "javaMajorVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+       }
+     */
     sanitizedSend({
         operationName: `languageModelTool.${name}`,
         ...properties,
     });
+}
+
+// ============================================================================
+// InvocationGuard — closed-loop sentinel for debug_java_application
+// ============================================================================
+//
+// Background: dashboards show ~33 % of `debug_java_application` invocations
+// produce NO terminal event (neither started / timeout / cleanup / classname
+// failed). The cause is silent-return paths inside the invoke handler. This
+// guard wraps the handler so that any code path that exits without recording
+// an outcome emits `debugSession.silentReturn`, and exceptions / cancellation
+// are surfaced as their own dedicated events.
+//
+// Usage:
+//   const guard = beginDebugSessionInvocation(context, retryContext);
+//   try {
+//       const result = await actualWork();
+//       guard.markOutcomeRecorded();   // call this whenever a regular event has fired
+//       return result;
+//   } catch (e) {
+//       guard.markException(e);
+//       throw e;
+//   } finally {
+//       guard.close();                  // emits silentReturn / cancelled if needed
+//   }
+//
+// The guard is intentionally NOT a try/finally helper itself so callers can
+// keep their existing control flow and let the type system check that
+// `markOutcomeRecorded` is reached on the happy path.
+
+export interface InvocationContext {
+    os: OperatingSystem;
+    javaMajorVersion: string;
+    projectSystem?: LaunchProjectType;
+    /** Cancellation token; checked when the guard closes so we can emit `cancelled` instead of `silentReturn`. */
+    isCancelled: () => boolean;
+}
+
+export interface InvocationGuard {
+    /** Mark that some other terminal event (`started`, `timeout`, `classNameDetection.failed`, ...) was emitted. */
+    markOutcomeRecorded(): void;
+    /** Mark that an unhandled exception is about to propagate. Pre-computes the errorCategory. */
+    markException(err: unknown): void;
+    /** Always call from `finally`. Emits a closing event if nothing else did. */
+    close(): void;
+}
+
+/**
+ * Open an InvocationGuard for a `debug_java_application` call. Immediately
+ * emits a `debugSession.sentinel` event so we have a complete invocation
+ * count even if everything downstream fails.
+ */
+export function beginDebugSessionInvocation(context: InvocationContext): InvocationGuard {
+    const startedAt = Date.now();
+    recordLaunchInternal({
+        name: 'debugSession.sentinel',
+        os: context.os,
+        javaMajorVersion: context.javaMajorVersion,
+        projectSystem: context.projectSystem,
+    });
+
+    let outcomeRecorded = false;
+    let exceptionCategory: ErrorCategory | undefined;
+
+    return {
+        markOutcomeRecorded(): void {
+            outcomeRecorded = true;
+        },
+        markException(err: unknown): void {
+            exceptionCategory = classifyError(err);
+        },
+        close(): void {
+            if (outcomeRecorded) {
+                return;
+            }
+            const durationMs = Date.now() - startedAt;
+            if (exceptionCategory !== undefined) {
+                recordLaunchInternal({
+                    name: 'debugSession.exception',
+                    errorCategory: exceptionCategory,
+                    durationMs,
+                });
+                return;
+            }
+            if (context.isCancelled()) {
+                recordLaunchInternal({
+                    name: 'debugSession.cancelled',
+                    durationMs,
+                });
+                return;
+            }
+            recordLaunchInternal({
+                name: 'debugSession.silentReturn',
+                durationMs,
+            });
+        },
+    };
+}
+
+// ============================================================================
+// SessionInvocationTracker — per-VS-Code-session retry attribution
+// ============================================================================
+//
+// We want each `recordToolInvocation` to carry `retryCount` (0-based) and
+// `previousOutcome` so we can distinguish:
+//   - LM auto-retry (immediate, same session, previous outcome = timeout/failure)
+//   - User-driven retry (delayed, possibly different inputs)
+//   - First attempt
+//
+// The tracker is in-process only (lifetime = VS Code window) and stores no
+// user-identifying data — it remembers only the previous outcome enum per
+// tool name.
+
+interface ToolAttempt {
+    count: number;
+    previousOutcome?: ToolOutcome;
+}
+
+const sessionAttempts = new Map<ToolName, ToolAttempt>();
+
+/**
+ * Return the retry attribution for the next invocation of `tool`. Always
+ * call BEFORE the actual work so the returned `retryCount` reflects the
+ * attempt about to happen (0 for the first call).
+ */
+export function nextAttempt(tool: ToolName): { retryCount: number; previousOutcome?: ToolOutcome } {
+    const prev = sessionAttempts.get(tool);
+    return {
+        retryCount: prev?.count ?? 0,
+        previousOutcome: prev?.previousOutcome,
+    };
+}
+
+/**
+ * Record the terminal outcome of an attempt so the next call to
+ * {@link nextAttempt} can return the updated retry context.
+ */
+export function completeAttempt(tool: ToolName, outcome: ToolOutcome): void {
+    const prev = sessionAttempts.get(tool);
+    sessionAttempts.set(tool, {
+        count: (prev?.count ?? 0) + 1,
+        previousOutcome: outcome,
+    });
+}
+
+/**
+ * Test-only helper: reset the attempt map. Production code should never
+ * call this — VS Code session lifetime IS the intended scope.
+ */
+export function __resetAttemptsForTests(): void {
+    sessionAttempts.clear();
 }

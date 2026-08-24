@@ -26,6 +26,7 @@ import { pickJavaProcess } from "./processPicker";
 import { IProgressReporter } from "./progressAPI";
 import { progressProvider } from "./progressImpl";
 import { JavaTerminalLinkProvder } from "./terminalLinkProvider";
+import { registerStackTraceLinkProvider } from "./stackTraceLinkProvider";
 import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 import { registerBreakpointCommands } from "./breakpointCommands";
@@ -54,6 +55,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     registerBreakpointCommands(context);
     registerVariableMenuCommands(context);
     context.subscriptions.push(vscode.window.registerTerminalLinkProvider(new JavaTerminalLinkProvder()));
+    registerStackTraceLinkProvider(context);
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("java", new JavaDebugConfigurationProvider()));
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("java", new JavaDebugAdapterDescriptorFactory()));
     context.subscriptions.push(instrumentOperationAsVsCodeCommand("JavaDebug.SpecifyProgramArgs", async () => {

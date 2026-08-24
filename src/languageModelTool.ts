@@ -5,14 +5,24 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import {
+    beginDebugSessionInvocation,
     classifyBreakpoint,
     classifyError,
     classifyEvalContext,
+    classifyJavaMajorVersion,
+    classifyPlatform,
     classifyRemoveScope,
     classifyScopeType,
     classifyStep,
     classifyTarget,
+    ClassNameDetectionFailure,
+    ClassNameDetectionStrategy,
+    completeAttempt,
     ErrorCategory,
+    InvocationGuard,
+    LaunchProjectType,
+    nextAttempt,
+    OperatingSystem,
     recordLaunchInternal,
     recordToolInvocation,
     TOOL_NAMES,
@@ -23,10 +33,18 @@ import {
 // Constants
 // ============================================================================
 const CONSTANTS = {
-    /** Timeout for waitForSession mode (ms) */
-    SESSION_WAIT_TIMEOUT: 45000,
-    /** Maximum wait time for smart polling (ms) */
-    SMART_POLLING_MAX_WAIT: 15000,
+    /**
+     * Timeout for waitForSession mode (ms). Set high enough to cover Started P95
+     * (~100s in 30d telemetry); previous 45s clipped ~10% of legitimate starts
+     * as timeouts.
+     */
+    SESSION_WAIT_TIMEOUT: 120000,
+    /**
+     * Maximum wait time for smart polling (ms). Previous 15s only covered ~60%
+     * of successful starts; bumped to align with the eventBased threshold so we
+     * do not bias data by polling strategy.
+     */
+    SMART_POLLING_MAX_WAIT: 90000,
     /** Interval between polling checks (ms) */
     SMART_POLLING_INTERVAL: 300,
     /** Timeout for build tasks (ms) */
@@ -38,6 +56,34 @@ const CONSTANTS = {
     /** Maximum depth for recursive file search */
     MAX_FILE_SEARCH_DEPTH: 10
 };
+
+// ----------------------------------------------------------------------------
+// Process-wide context probed lazily on first use. The value is constant for
+// the VS Code session lifetime, so we cache it.
+// ----------------------------------------------------------------------------
+let cachedJavaMajorVersion: string | undefined;
+
+function getJavaMajorVersion(): string {
+    if (cachedJavaMajorVersion !== undefined) {
+        return cachedJavaMajorVersion;
+    }
+    // Best-effort probe: read JAVA_HOME / PATH-resolved `java -version` output.
+    // We DO NOT shell out here (extension activation perf budget) — instead we
+    // look at the redhat.java extension's resolved JDK if available.
+    try {
+        const javaExt = vscode.extensions.getExtension('redhat.java');
+        const apiVersion = (javaExt?.exports as { javaRequirement?: { java_version?: string } } | undefined)
+            ?.javaRequirement?.java_version;
+        cachedJavaMajorVersion = classifyJavaMajorVersion(apiVersion ?? process.env.JAVA_VERSION);
+    } catch {
+        cachedJavaMajorVersion = 'unknown';
+    }
+    return cachedJavaMajorVersion;
+}
+
+function getOs(): OperatingSystem {
+    return classifyPlatform(process.platform);
+}
 
 interface DebugJavaApplicationInput {
     target: string;
@@ -78,11 +124,20 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
         async invoke(options: { input: DebugJavaApplicationInput }, token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
             const targetType = classifyTarget(options.input.target);
+            const attempt = nextAttempt(TOOL_NAMES.DEBUG_JAVA_APPLICATION);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
+            const guard = beginDebugSessionInvocation({
+                os,
+                javaMajorVersion,
+                projectSystem: undefined, // resolved inside debugJavaApplication; not yet known here
+                isCancelled: () => token.isCancellationRequested,
+            });
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
 
             try {
-                const result = await debugJavaApplication(options.input, token);
+                const result = await debugJavaApplication(options.input, token, guard);
                 if (!result.success) {
                     outcome = result.status === 'timeout' ? 'timeout' : 'failure';
                     errorCategory = result.success ? undefined : classifyError(result.message);
@@ -103,6 +158,7 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
             } catch (error) {
                 outcome = token.isCancellationRequested ? 'cancelled' : 'failure';
                 errorCategory = classifyError(error);
+                guard.markException(error);
 
                 const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -117,7 +173,24 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
                     targetType,
                     skipBuild: !!options.input.skipBuild,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.DEBUG_JAVA_APPLICATION, outcome);
+                // Do NOT call guard.markOutcomeRecorded() here. The wrapper
+                // recordToolInvocation above is a separate event from the
+                // launchInternal stream that the guard is tracking; marking
+                // it would mask every silent / cancelled / exception path
+                // and defeat the closed-loop attribution this PR exists for.
+                // `markOutcomeRecorded()` is now called inline at the four
+                // session-terminal recordLaunchInternal sites inside
+                // `debugJavaApplication` (started / timeout, both
+                // eventBased and smartPolling). For cancelled / exception
+                // we fall through to guard.close() so it can emit
+                // debugSession.cancelled / debugSession.exception.
+                guard.close();
             }
         }
     };
@@ -137,7 +210,8 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
  */
 async function debugJavaApplication(
     input: DebugJavaApplicationInput,
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
+    guard?: InvocationGuard,
 ): Promise<DebugJavaApplicationResult> {
     if (token.isCancellationRequested) {
         return {
@@ -194,7 +268,49 @@ async function debugJavaApplication(
     }
 
     // Step 3: Construct and execute the debugjava command
-    const debugCommand = constructDebugCommand(input, projectType);
+    //
+    // For simple class names (no dot), resolve the fully-qualified class once
+    // here so we can reuse the result for both the command construction and
+    // the user-facing targetInfo message below. Previously these two paths
+    // each called findFullyQualifiedClassName independently, which:
+    //  - duplicated the file system walk on the hot launch path (the FS walk
+    //    is the actual user-visible slowdown — it stats every .java file
+    //    under src/main/java up to MAX_FILE_SEARCH_DEPTH)
+    //  - made the call sites harder to reason about, since detection
+    //    ownership was split across constructDebugCommand and the targetInfo
+    //    formatting block
+    //
+    // After this refactor, the caller owns detection and its telemetry, and
+    // constructDebugCommand accepts a pre-resolved name. Detection now
+    // returns a structured result so we can emit `classNameDetection.failed`
+    // with a precise failureReason instead of a single boolean bucket.
+    let detectedClassName: string | null = null;
+    if (!input.target.endsWith('.jar')
+        && !input.target.startsWith('-')
+        && !input.target.includes('.')) {
+        const detection = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
+        detectedClassName = detection.className;
+        if (detection.className !== null) {
+            recordLaunchInternal({
+                name: 'classNameDetection',
+                projectType,
+                detected: true,
+            });
+        } else {
+            // Detection failed. Emit the structured failure event so we can
+            // distinguish "no candidate src dir" from "found file but no
+            // package" — the previous boolean `detected: false` collapsed all
+            // four root causes into one bucket.
+            recordLaunchInternal({
+                name: 'classNameDetection.failed',
+                projectType,
+                strategy: detection.strategy,
+                failureReason: detection.failureReason,
+            });
+        }
+    }
+
+    const debugCommand = constructDebugCommand(input, projectType, detectedClassName);
 
     // Validate that we can construct a valid command
     if (!debugCommand || debugCommand === 'debugjava') {
@@ -223,8 +339,9 @@ async function debugJavaApplication(
     } else if (input.target.includes('.')) {
         targetInfo = input.target;
     } else {
-        // Simple class name - check if we successfully detected the full name
-        const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
+        // Simple class name - reuse the detection result resolved once in
+        // Step 3 above (do NOT call findFullyQualifiedClassName again — it
+        // walks the FS and the result is already in `detectedClassName`).
         if (detectedClassName) {
             targetInfo = `${detectedClassName} (detected from ${input.target})`;
         } else {
@@ -237,6 +354,7 @@ async function debugJavaApplication(
     if (input.waitForSession) {
         return new Promise<DebugJavaApplicationResult>((resolve) => {
             let sessionStarted = false;
+            const waitStartedAt = Date.now();
 
             // Listen for debug session start
             const sessionDisposable = vscode.debug.onDidStartDebugSession((session) => {
@@ -250,7 +368,10 @@ async function debugJavaApplication(
                     recordLaunchInternal({
                         name: 'debugSessionStarted.eventBased',
                         sessionId: session.id,
+                        elapsedMs: Date.now() - waitStartedAt,
+                        thresholdMs: CONSTANTS.SESSION_WAIT_TIMEOUT,
                     });
+                    guard?.markOutcomeRecorded();
 
                     resolve({
                         success: true,
@@ -270,22 +391,31 @@ async function debugJavaApplication(
                 if (!sessionStarted) {
                     sessionDisposable.dispose();
 
-                    recordLaunchInternal({ name: 'debugSessionTimeout.eventBased' });
+                    recordLaunchInternal({
+                        name: 'debugSessionTimeout.eventBased',
+                        elapsedMs: Date.now() - waitStartedAt,
+                        thresholdMs: CONSTANTS.SESSION_WAIT_TIMEOUT,
+                    });
+                    guard?.markOutcomeRecorded();
 
                     resolve({
                         success: false,
                         status: 'timeout',
-                        message: `❌ Debug session failed to start within ${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds for ${targetInfo}.\n\n` +
-                                 `This usually indicates a problem:\n` +
-                                 `• Compilation errors preventing startup\n` +
-                                 `• ClassNotFoundException or NoClassDefFoundError\n` +
-                                 `• Application crashed during initialization\n` +
-                                 `• Incorrect main class or classpath configuration\n\n` +
-                                 `Action required:\n` +
-                                 `1. Check terminal '${terminal.name}' for error messages\n` +
-                                 `2. Verify the target class name is correct\n` +
-                                 `3. Ensure the project is compiled successfully\n` +
-                                 `4. Use get_debug_session_info() to confirm session status${warningNote}`,
+                        message: `⏳ Debug session not yet detected for ${targetInfo} after `
+                               + `${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds.\n\n`
+                               + `This is often transient — the JVM may still be starting up (large `
+                               + `projects, cold class-loading, or remote workspaces can need additional `
+                               + `time). Telemetry shows that retrying a timed-out launch succeeds for `
+                               + `the majority of cases.\n\n`
+                               + `Recommended next actions (in order):\n`
+                               + `1. Call debug_java_application again — most timeout cases recover on retry.\n`
+                               + `2. Call get_debug_session_info() to check whether the session has since `
+                               + `become active.\n`
+                               + `3. If retrying still times out, inspect terminal '${terminal.name}' for `
+                               + `compilation errors, ClassNotFoundException, NoClassDefFoundError, or `
+                               + `other startup failures.\n`
+                               + `4. Verify the target class name and classpath are correct, then retry.`
+                               + `${warningNote}`,
                         terminalName: terminal.name
                     });
                 }
@@ -312,6 +442,7 @@ async function debugJavaApplication(
                     sessionId: session.id,
                     elapsedMs,
                 });
+                guard?.markOutcomeRecorded();
 
                 return {
                     success: true,
@@ -326,24 +457,29 @@ async function debugJavaApplication(
             await new Promise(resolve => setTimeout(resolve, pollInterval));
         }
 
-        // Timeout: session not detected within 15 seconds
+        // Timeout: session not detected within polling window
         recordLaunchInternal({
             name: 'debugSessionTimeout.smartPolling',
             maxWaitTime,
+            elapsedMs: Date.now() - startTime,
         });
+        guard?.markOutcomeRecorded();
 
         return {
             success: true,
             status: 'timeout',
-            message: `⚠️ Debug command sent for ${targetInfo}, but session not detected within ${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n` +
-                     `Possible reasons:\n` +
-                     `• Application is still starting (large projects may take longer)\n` +
-                     `• Compilation errors (check terminal '${terminal.name}' for errors)\n` +
-                     `• Application may have started and already terminated\n\n` +
-                     `Next steps:\n` +
-                     `• Use get_debug_session_info() to check if session is now active\n` +
-                     `• Check terminal '${terminal.name}' for error messages\n` +
-                     `• If starting slowly, wait a bit longer and check again${warningNote}`,
+            message: `⏳ Debug command sent for ${targetInfo}; session not yet detected within `
+                   + `${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n`
+                   + `This is often transient — the application may still be starting in terminal `
+                   + `'${terminal.name}'. Telemetry shows that retrying or polling for status is more `
+                   + `likely to succeed than treating this as a permanent failure.\n\n`
+                   + `Recommended next actions (in order):\n`
+                   + `1. Call get_debug_session_info() to check whether the session has since become active.\n`
+                   + `2. Call debug_java_application again — most timeout cases recover on retry. `
+                   + `In the input arguments, set "waitForSession": true (JSON object syntax) to `
+                   + `extend the wait window for slow-starting apps.\n`
+                   + `3. If retrying still times out, inspect terminal '${terminal.name}' for compilation `
+                   + `errors or startup failures, then retry.${warningNote}`,
             terminalName: terminal.name
         };
     }
@@ -584,10 +720,17 @@ async function ensureVSCodeCompilation(workspaceUri: vscode.Uri): Promise<DebugJ
 
 /**
  * Constructs the debugjava command based on input parameters.
+ *
+ * @param preDetectedClassName Fully-qualified class name pre-resolved by the
+ *   caller (and already reported via the `classNameDetection` telemetry event).
+ *   When non-null and the target is a simple class name, this is used instead
+ *   of re-running findFullyQualifiedClassName here. The caller is expected to
+ *   handle telemetry emission so we do not double-count detection outcomes.
  */
 function constructDebugCommand(
     input: DebugJavaApplicationInput,
-    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown'
+    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown',
+    preDetectedClassName: string | null = null
 ): string {
     let command = 'debugjava';
 
@@ -603,25 +746,12 @@ function constructDebugCommand(
     else {
         let className = input.target;
 
-        // If target doesn't contain a dot and we can find the Java file,
-        // try to detect the fully qualified class name
-        if (!input.target.includes('.')) {
-            const detectedClassName = findFullyQualifiedClassName(input.workspacePath, input.target, projectType);
-            if (detectedClassName) {
-                recordLaunchInternal({
-                    name: 'classNameDetection',
-                    projectType,
-                    detected: true,
-                });
-                className = detectedClassName;
-            } else {
-                // No package detected - class is in default package
-                recordLaunchInternal({
-                    name: 'classNameDetection',
-                    projectType,
-                    detected: false,
-                });
-            }
+        // Use the caller-supplied detection result; we deliberately do not
+        // call findFullyQualifiedClassName a second time here (see the
+        // dedupe note at the call site in debugJavaApplication Step 3).
+        // Detection telemetry is owned by the caller.
+        if (!input.target.includes('.') && preDetectedClassName) {
+            className = preDetectedClassName;
         }
 
         // Use provided classpath if available, otherwise infer it
@@ -639,14 +769,52 @@ function constructDebugCommand(
 }
 
 /**
+ * Result of `findFullyQualifiedClassName` — a discriminated union so the
+ * type system enforces that callers handle the failure case without an
+ * easy-to-misread sentinel string.
+ *
+ * On success: `className` carries the resolved FQN and `failureReason` is
+ * absent. On failure: `className` is null and `failureReason` is the
+ * structured root cause. The boolean `detected: true/false` event was
+ * historically the only signal — it collapsed four very different root
+ * causes (sourceDirMissing / fileNotFound / parseError /
+ * noPackageDeclaration) into one bucket and made on-call triage
+ * impossible.
+ */
+type ClassNameDetectionResult =
+    | {
+        className: string;
+        /** Which source-directory layout was used. */
+        strategy: ClassNameDetectionStrategy;
+        failureReason?: undefined;
+    }
+    | {
+        className: null;
+        /** Which source-directory layout was last tried. */
+        strategy: ClassNameDetectionStrategy;
+        failureReason: ClassNameDetectionFailure;
+    };
+
+function strategyForProjectType(projectType: LaunchProjectType): ClassNameDetectionStrategy {
+    switch (projectType) {
+        case 'maven': return 'mavenStandard';
+        case 'gradle': return 'gradleStandard';
+        case 'vscode': return 'vscodeSrc';
+        case 'unknown': return 'workspaceRoot';
+    }
+}
+
+/**
  * Tries to find the fully qualified class name by searching for the Java file.
  * This helps when user provides just "App" instead of "com.example.App".
  */
 function findFullyQualifiedClassName(
     workspacePath: string,
     simpleClassName: string,
-    projectType: 'maven' | 'gradle' | 'vscode' | 'unknown'
-): string | null {
+    projectType: LaunchProjectType
+): ClassNameDetectionResult {
+    const defaultStrategy = strategyForProjectType(projectType);
+
     // Determine source directories based on project type
     const sourceDirs: string[] = [];
 
@@ -670,30 +838,71 @@ function findFullyQualifiedClassName(
             break;
     }
 
-    // Search for the Java file
+    // Track the dominant failure reason as we walk the candidate dirs.
+    // Priority on success: returned immediately.
+    // Priority on failure: parseError > noPackageDeclaration > fileNotFound > sourceDirMissing.
+    let anyDirExisted = false;
+    let anyFileFound = false;
+    let sawParseError = false;
+
     for (const srcDir of sourceDirs) {
         if (!fs.existsSync(srcDir)) {
             continue;
         }
+        anyDirExisted = true;
 
         try {
             const javaFile = findJavaFile(srcDir, simpleClassName, 0);
             if (javaFile) {
+                anyFileFound = true;
                 // Extract package name from the file
                 const packageName = extractPackageName(javaFile);
                 if (packageName) {
-                    return `${packageName}.${simpleClassName}`;
-                } else {
-                    // No package, use simple name
-                    return simpleClassName;
+                    return {
+                        className: `${packageName}.${simpleClassName}`,
+                        strategy: defaultStrategy,
+                    };
                 }
+                // Found the file but no package declaration. Surface this
+                // as a structured failure (className: null) so callers can
+                // emit `classNameDetection.failed` with
+                // failureReason='noPackageDeclaration'. Callers already
+                // fall back to `input.target` on null, which preserves the
+                // previous command behaviour for default-package classes
+                // while making the telemetry distinguishable.
+                return {
+                    className: null,
+                    failureReason: 'noPackageDeclaration',
+                    strategy: defaultStrategy,
+                };
             }
         } catch (error) {
-            // Continue searching in other directories
+            // We at least reached the file system but could not read/scan it.
+            sawParseError = true;
         }
     }
 
-    return null;
+    let failureReason: ClassNameDetectionFailure;
+    if (sawParseError) {
+        failureReason = 'parseError';
+    } else if (anyFileFound) {
+        // Defensive: the no-package case already returns above with
+        // failureReason='noPackageDeclaration', so reaching this branch
+        // means a future refactor has left the function falling through
+        // with anyFileFound=true. Preserve the same classification rather
+        // than silently bucketing into fileNotFound.
+        failureReason = 'noPackageDeclaration';
+    } else if (anyDirExisted) {
+        failureReason = 'fileNotFound';
+    } else {
+        failureReason = 'sourceDirMissing';
+    }
+
+    return {
+        className: null,
+        failureReason,
+        strategy: defaultStrategy,
+    };
 }
 
 /**
@@ -942,6 +1151,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(options: { input: SetBreakpointInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
             const breakpointKind = classifyBreakpoint(options.input);
+            const attempt = nextAttempt(TOOL_NAMES.SET_JAVA_BREAKPOINT);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
 
@@ -984,7 +1196,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     errorCategory,
                     breakpointKind,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.SET_JAVA_BREAKPOINT, outcome);
             }
         }
     };
@@ -995,6 +1212,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(options: { input: StepOperationInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
             const stepKind = classifyStep(options.input.operation);
+            const attempt = nextAttempt(TOOL_NAMES.DEBUG_STEP_OPERATION);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
 
@@ -1052,7 +1272,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     errorCategory,
                     stepKind,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.DEBUG_STEP_OPERATION, outcome);
             }
         }
     };
@@ -1064,6 +1289,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
             const startedAt = Date.now();
             const scopeTypeEnum = classifyScopeType(options.input.scopeType);
             const hasFilter = !!options.input.filter;
+            const attempt = nextAttempt(TOOL_NAMES.GET_DEBUG_VARIABLES);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
 
@@ -1163,7 +1391,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     scopeType: scopeTypeEnum,
                     hasFilter,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.GET_DEBUG_VARIABLES, outcome);
             }
         }
     };
@@ -1173,6 +1406,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     const getStackTraceTool: LanguageModelTool<GetStackTraceInput> = {
         async invoke(options: { input: GetStackTraceInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
+            const attempt = nextAttempt(TOOL_NAMES.GET_DEBUG_STACK_TRACE);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
             let frameCount = 0;
@@ -1230,7 +1466,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     errorCategory,
                     frameCount,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.GET_DEBUG_STACK_TRACE, outcome);
             }
         }
     };
@@ -1241,6 +1482,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(options: { input: EvaluateExpressionInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
             const evalContext = classifyEvalContext(options.input.context);
+            const attempt = nextAttempt(TOOL_NAMES.EVALUATE_DEBUG_EXPRESSION);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
 
@@ -1325,7 +1569,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     errorCategory,
                     evalContext,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.EVALUATE_DEBUG_EXPRESSION, outcome);
             }
         }
     };
@@ -1335,6 +1584,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     const getThreadsTool: LanguageModelTool<{}> = {
         async invoke(_options: { input: {} }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
+            const attempt = nextAttempt(TOOL_NAMES.GET_DEBUG_THREADS);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
             let threadCount = 0;
@@ -1417,7 +1669,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     threadCount,
                     suspendedCount,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.GET_DEBUG_THREADS, outcome);
             }
         }
     };
@@ -1428,6 +1685,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
         async invoke(options: { input: RemoveBreakpointsInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
             const removeScope = classifyRemoveScope(options.input);
+            const attempt = nextAttempt(TOOL_NAMES.REMOVE_JAVA_BREAKPOINTS);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
             let removedCount = 0;
@@ -1485,7 +1745,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     removeScope,
                     removedCount,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.REMOVE_JAVA_BREAKPOINTS, outcome);
             }
         }
     };
@@ -1495,6 +1760,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     const stopDebugSessionTool: LanguageModelTool<StopDebugSessionInput> = {
         async invoke(_options: { input: StopDebugSessionInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
+            const attempt = nextAttempt(TOOL_NAMES.STOP_DEBUG_SESSION);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
 
@@ -1532,7 +1800,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     outcome,
                     errorCategory,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.STOP_DEBUG_SESSION, outcome);
             }
         }
     };
@@ -1542,6 +1815,9 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
     const getDebugSessionInfoTool: LanguageModelTool<GetDebugSessionInfoInput> = {
         async invoke(_options: { input: GetDebugSessionInfoInput }, _token: vscode.CancellationToken): Promise<any> {
             const startedAt = Date.now();
+            const attempt = nextAttempt(TOOL_NAMES.GET_DEBUG_SESSION_INFO);
+            const os = getOs();
+            const javaMajorVersion = getJavaMajorVersion();
             let outcome: ToolOutcome = 'success';
             let errorCategory: ErrorCategory | undefined;
             let isPausedFlag = false;
@@ -1743,7 +2019,12 @@ export function registerDebugSessionTools(_context: vscode.ExtensionContext): vs
                     errorCategory,
                     isPaused: isPausedFlag,
                     durationMs: Date.now() - startedAt,
+                    os,
+                    javaMajorVersion,
+                    retryCount: attempt.retryCount,
+                    previousOutcome: attempt.previousOutcome,
                 });
+                completeAttempt(TOOL_NAMES.GET_DEBUG_SESSION_INFO, outcome);
             }
         }
     };
