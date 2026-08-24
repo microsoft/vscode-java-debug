@@ -490,17 +490,18 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         const excludes: Map<string, boolean> = new Map<string, boolean>();
         for (const p of paths) {
             if (p.startsWith("!")) {
-                let exclude = p.substr(1);
+                let exclude = p.slice(1);
                 let isDirect: boolean;
-                if (!path.isAbsolute(exclude)) {
-                    exclude = path.join(folder?.uri.fsPath || "", exclude);
-                }
 
-                if (exclude.endsWith(process.platform === 'win32' ? '\\' : '/')) {
-                    exclude = exclude.substr(0, exclude.length - 1);
+                if (/[\\/]$/.test(exclude)) {
+                    exclude = exclude.slice(0, -1);
                     isDirect = true;
                 } else {
                     isDirect = this.isFilePath(exclude);
+                }
+
+                if (!path.isAbsolute(exclude)) {
+                    exclude = path.join(folder?.uri.fsPath || "", exclude);
                 }
 
                 // use Uri to normalize the fs path
