@@ -65,6 +65,7 @@ suite("JavaDebugConfigurationProvider", () => {
         async function assertExactDirectoryExclusion(
             excludeSuffix: "\\" | "/",
             label: string,
+            includeSuffix: "" | "\\" | "/" = "",
         ): Promise<void> {
             const workspace = createTestWorkspace();
             workspaces.push(workspace);
@@ -73,7 +74,7 @@ suite("JavaDebugConfigurationProvider", () => {
             const jarFs = vscode.Uri.file(workspace.jarPath).fsPath;
             const filterExcluded = getFilterExcluded(new JavaDebugConfigurationProvider());
             const result = await filterExcluded(workspace.folder, [
-                libDirFs,
+                `${libDirFs}${includeSuffix}`,
                 jarFs,
                 `!${workspace.libDir}${excludeSuffix}`,
             ]);
@@ -91,6 +92,14 @@ suite("JavaDebugConfigurationProvider", () => {
 
         test("treats a trailing forward slash as an exact match (Linux-style paths)", async () => {
             await assertExactDirectoryExclusion("/", "Linux-style");
+        });
+
+        test("exact-matches when the included Windows-style path ends with a backslash", async () => {
+            await assertExactDirectoryExclusion("\\", "Windows-style included trailing separator", "\\");
+        });
+
+        test("exact-matches when the included Linux-style path ends with a forward slash", async () => {
+            await assertExactDirectoryExclusion("/", "Linux-style included trailing separator", "/");
         });
     });
 });

@@ -514,7 +514,7 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
 
         return result.filter((r) => {
             for (const [excludedPath, isDirect] of excludes.entries()) {
-                if (isDirect && r === excludedPath) {
+                if (isDirect && stripTrailingSeparators(r) === stripTrailingSeparators(excludedPath)) {
                     return false;
                 }
 
@@ -832,6 +832,22 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
             console.log("Cannot update debug settings.", err);
         }
     }
+}
+
+/**
+ * Removes trailing path separators for comparison, leaving filesystem roots
+ * such as "/", "\\", or "C:\\" unchanged (including Windows drive roots when
+ * running on POSIX).
+ */
+function stripTrailingSeparators(fsPath: string): string {
+    if (!fsPath || fsPath === "/" || fsPath === "\\" || fsPath === path.parse(fsPath).root) {
+        return fsPath;
+    }
+    // Windows drive root, recognized even when the host platform is POSIX.
+    if (/^[A-Za-z]:[\\/]$/.test(fsPath)) {
+        return fsPath;
+    }
+    return fsPath.replace(/[\\/]+$/, "");
 }
 
 function needsBuildWorkspace(): boolean {
