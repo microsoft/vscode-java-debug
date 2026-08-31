@@ -1388,7 +1388,7 @@
     "@types/lodash": "^4.17.13",
     "@types/mocha": "^10.0.9",
     "@types/node": "^14.18.63",
-    "@types/uuid": "^8.3.4",
+    "@types/uuid": "^11.0.0",
     "@types/vscode": "1.95.0",
     "@vscode/test-electron": "^3.1.0",
     "mocha": "^10.8.2",
