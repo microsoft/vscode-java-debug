@@ -14,6 +14,32 @@ import { applyAppendIfChanged, applyReplaceIfChanged } from "./envVarSync";
 const ENV_VAR_COLLECTION_DESCRIPTION = "Java No-Config Debug";
 
 /**
+ * Ensures the POSIX no-config debug wrapper can be invoked from a terminal.
+ *
+ * Official VSIX packages are built on Windows, where executable bits are not
+ * preserved. Repair the installed script when the extension activates on a
+ * POSIX platform, while preserving all existing permissions and avoiding an
+ * unnecessary chmod when the owner can already execute it.
+ *
+ * @param scriptPath - The installed debugjava wrapper path.
+ * @param platform - The current operating system platform.
+ */
+export async function ensureDebugJavaScriptExecutable(
+    scriptPath: string,
+    platform: NodeJS.Platform = process.platform,
+): Promise<void> {
+    if (platform === "win32") {
+        return;
+    }
+
+    const permissions = (await fs.promises.stat(scriptPath)).mode % 0o10000;
+    const ownerPermissions = Math.floor(permissions / 0o100);
+    if (ownerPermissions % 2 === 0) {
+        await fs.promises.chmod(scriptPath, permissions + 0o100);
+    }
+}
+
+/**
  * Registers the configuration-less debugging setup for the extension.
  *
  * This function sets up environment variables and a file system watcher to
@@ -104,6 +130,16 @@ export async function registerNoConfigDebug(
     }
 
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
+    const debugJavaScriptPath = path.join(noConfigScriptsDir, "debugjava");
+    try {
+        await ensureDebugJavaScriptExecutable(debugJavaScriptPath);
+    } catch (err) {
+        const error: Error = {
+            name: "NoConfigDebugError",
+            message: `[Java Debug] Failed to make debugjava executable: ${err}`,
+        };
+        sendError(error);
+    }
     applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
 
     // create file system watcher for the debuggerAdapterEndpointFolder for when the communication port is written
