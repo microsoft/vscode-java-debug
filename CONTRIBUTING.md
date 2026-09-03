@@ -27,7 +27,7 @@ javaDebugger/
 ### Prerequisites
 - [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html), (version 11 or later)
 - [VS Code](https://code.visualstudio.com/), (version 1.44.0 or later)
-- [Node.JS](https://nodejs.org/en/), (>= 12.8.1)
+- [Node.JS](https://nodejs.org/en/), (>= 14.17)
 - [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java), (version 0.60.0 or later)
 
 Install all the dependencies using `npm` (supposed to be installed together with [Node.JS](https://nodejs.org/en/)).
