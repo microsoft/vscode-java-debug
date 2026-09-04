@@ -13,7 +13,7 @@ Instead of manually setting breakpoints and inspecting variables, you can simply
 
 ## Requirements
 
-- VS Code 1.95.0 or later
+- VS Code 1.134.0 or later
 - [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java)
 - [Debugger for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-debug)
 - GitHub Copilot Chat extension
