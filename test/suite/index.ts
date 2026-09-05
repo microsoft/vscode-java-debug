@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import * as glob from "glob";
-import * as Mocha from "mocha";
+import glob = require("glob");
+import Mocha = require("mocha");
 import * as path from "path";
 
 export function run(): Promise<void> {
