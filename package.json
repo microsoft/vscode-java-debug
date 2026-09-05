@@ -1391,6 +1391,7 @@
     "@types/vscode": "1.95.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vscode/test-electron": "^3.1.0",
+    "glob": "^8.1.0",
     "mocha": "^10.8.2",
     "ts-loader": "^9.6.2",
     "tslint": "^6.1.3",

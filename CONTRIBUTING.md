@@ -37,6 +37,8 @@ npm install
 ```
 
 ### Build and Run
+The build uses the native TypeScript 7 compiler for type-checking. TSLint and `ts-loader` use the TypeScript 6 compatibility API until they support the native compiler API.
+
 #### Build the Debug Server
 For convenience, there is a build script `buildJdtlsExt.js` defined in `scripts/build`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
 ```bash
