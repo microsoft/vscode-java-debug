@@ -14,6 +14,9 @@
         "noImplicitReturns": true,
         "noUnusedParameters": true,
         "strictNullChecks": true,
+        "strictFunctionTypes": false,
+        "strictPropertyInitialization": false,
+        "useUnknownInCatchVariables": false,
         "alwaysStrict": true,
         "skipLibCheck": true
     },

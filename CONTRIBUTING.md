@@ -27,7 +27,7 @@ javaDebugger/
 ### Prerequisites
 - [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html), (version 11 or later)
 - [VS Code](https://code.visualstudio.com/), (version 1.44.0 or later)
-- [Node.JS](https://nodejs.org/en/), (>= 12.8.1)
+- [Node.JS](https://nodejs.org/en/), (>= 20)
 - [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java), (version 0.60.0 or later)
 
 Install all the dependencies using `npm` (supposed to be installed together with [Node.JS](https://nodejs.org/en/)).
@@ -37,6 +37,8 @@ npm install
 ```
 
 ### Build and Run
+The build uses the native TypeScript 7 compiler for type-checking. TSLint and `ts-loader` use the TypeScript 6 compatibility API until they support the native compiler API.
+
 #### Build the Debug Server
 For convenience, there is a build script `buildJdtlsExt.js` defined in `scripts/build`. It builds the Java Debug Server and then copies the .jar file into folder `vscode-java-debug/server`.
 ```bash
