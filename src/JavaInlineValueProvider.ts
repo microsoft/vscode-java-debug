@@ -4,12 +4,19 @@
 import { debug, InlineValue, InlineValueContext, InlineValueEvaluatableExpression, InlineValuesProvider, InlineValueText, InlineValueVariableLookup,
     Range, TextDocument } from "vscode";
 import { instrumentOperation, instrumentOperationStep, sendInfo } from "vscode-extension-telemetry-wrapper";
-import * as CodeConverter from "vscode-languageclient/lib/codeConverter";
-import * as ProtocolConverter from "vscode-languageclient/lib/protocolConverter";
+import { Range as ProtocolRange } from "vscode-languageserver-types";
 import { InlineKind, InlineVariable, resolveInlineVariables } from "./languageServerPlugin";
 
-const protoConverter: ProtocolConverter.Converter = ProtocolConverter.createConverter();
-const codeConverter: CodeConverter.Converter = CodeConverter.createConverter();
+export function toProtocolRange(range: Range): ProtocolRange {
+    return {
+        start: { line: range.start.line, character: range.start.character },
+        end: { line: range.end.line, character: range.end.character },
+    };
+}
+
+export function toCodeRange(range: ProtocolRange): Range {
+    return new Range(range.start.line, range.start.character, range.end.line, range.end.character);
+}
 
 export class JavaInlineValuesProvider implements InlineValuesProvider {
 
@@ -18,8 +25,8 @@ export class JavaInlineValuesProvider implements InlineValuesProvider {
             const resolveInlineVariablesStep = instrumentOperationStep(operationId, "resolveInlineVariables", async () => {
                 return <InlineVariable[]> (await resolveInlineVariables({
                     uri: document.uri.toString(),
-                    viewPort: codeConverter.asRange(viewPort),
-                    stoppedLocation: codeConverter.asRange(context.stoppedLocation),
+                    viewPort: toProtocolRange(viewPort),
+                    stoppedLocation: toProtocolRange(context.stoppedLocation),
                 }));
             });
             const variables: InlineVariable[] = await resolveInlineVariablesStep();
@@ -57,16 +64,16 @@ export class JavaInlineValuesProvider implements InlineValuesProvider {
                 let next = 0;
                 for (const variable of variables) {
                     if (variable.kind === InlineKind.VariableLookup) {
-                        result.push(new InlineValueVariableLookup(protoConverter.asRange(variable.range), variable.name, true));
+                        result.push(new InlineValueVariableLookup(toCodeRange(variable.range), variable.name, true));
                     } else if (resolvedVariables && resolvedVariables.length > next) {
                         const resolvedValue = resolvedVariables[next++];
                         if (resolvedValue) {
-                            result.push(new InlineValueText(protoConverter.asRange(variable.range), `${variable.name} = ${resolvedValue.value}`));
+                            result.push(new InlineValueText(toCodeRange(variable.range), `${variable.name} = ${resolvedValue.value}`));
                         } else {
-                            result.push(new InlineValueEvaluatableExpression(protoConverter.asRange(variable.range), variable.name));
+                            result.push(new InlineValueEvaluatableExpression(toCodeRange(variable.range), variable.name));
                         }
                     } else {
-                        result.push(new InlineValueEvaluatableExpression(protoConverter.asRange(variable.range), variable.name));
+                        result.push(new InlineValueEvaluatableExpression(toCodeRange(variable.range), variable.name));
                     }
                 }
 
