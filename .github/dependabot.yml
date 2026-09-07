@@ -15,6 +15,9 @@ updates:
         update-types:
           - "version-update:semver-minor"
           - "version-update:semver-patch"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
     # CI restores packages from the Central Feed Service, which withholds
     # upstream versions until they are roughly a week old (measured at ~6.8
     # days; both the packument entry and the tarball return 404 before then).
