@@ -3,7 +3,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 
 import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
@@ -12,6 +11,17 @@ import { buildNoConfigPathAppendValue } from "./pathUtil";
 import { applyAppendIfChanged, applyReplaceIfChanged } from "./envVarSync";
 
 const ENV_VAR_COLLECTION_DESCRIPTION = "Java No-Config Debug";
+
+function clearNoConfigDebugEnvironment(collection: vscode.EnvironmentVariableCollection): void {
+    for (const variable of ["VSCODE_JDWP_ADAPTER_ENDPOINTS", "VSCODE_JAVA_EXEC", "PATH"]) {
+        if (collection.get(variable)) {
+            collection.delete(variable);
+        }
+    }
+    if (collection.description !== undefined) {
+        collection.description = undefined;
+    }
+}
 
 /**
  * Ensures the POSIX no-config debug wrapper can be invoked from a terminal.
@@ -47,6 +57,8 @@ export async function ensureDebugJavaScriptExecutable(
  *
  * @param envVarCollection - The collection of environment variables to be modified.
  * @param extPath - The path to the extension directory.
+ * @param storageUri - The workspace-specific storage directory provided by VS Code.
+ * @returns The registration, or undefined when no-config debugging is unavailable.
  *
  * Environment Variables:
  * - `VSCODE_JDWP_ADAPTER_ENDPOINTS`: Path to the file containing the debugger adapter endpoint.
@@ -56,46 +68,49 @@ export async function ensureDebugJavaScriptExecutable(
 export async function registerNoConfigDebug(
     envVarCollection: vscode.EnvironmentVariableCollection,
     extPath: string,
-): Promise<vscode.Disposable> {
+    storageUri: vscode.Uri | undefined,
+): Promise<vscode.Disposable | undefined> {
     const collection = envVarCollection;
 
-    // create a temp directory for the noConfigDebugAdapterEndpoints
-    // file path format: extPath/.noConfigDebugAdapterEndpoints/endpoint-stableWorkspaceHash.txt
-    let workspaceString = vscode.workspace.workspaceFile?.fsPath;
-    if (!workspaceString) {
-        workspaceString = vscode.workspace.workspaceFolders?.map((e) => e.uri.fsPath).join(';');
-    }
-    if (!workspaceString) {
+    if (!storageUri) {
+        clearNoConfigDebugEnvironment(collection);
         const error: Error = {
             name: "NoConfigDebugError",
             message: '[Java Debug] No workspace folder found',
         };
         sendError(error);
-        return Promise.resolve(new vscode.Disposable(() => { }));
+        return undefined;
     }
 
-    // create a stable hash for the workspace folder, reduce terminal variable churn
-    const hash = crypto.createHash('sha256');
-    hash.update(workspaceString.toString());
-    const stableWorkspaceHash = hash.digest('hex').slice(0, 16);
+    // Workspace storage is stable across reloads and does not require a writable
+    // extension installation directory (for example, the Nix store).
+    const tempDirPath = path.join(storageUri.fsPath, '.noConfigDebugAdapterEndpoints');
+    const tempFilePath = path.join(tempDirPath, 'endpoint.txt');
+    let fileSystemWatcher: vscode.FileSystemWatcher;
 
-    const tempDirPath = path.join(extPath, '.noConfigDebugAdapterEndpoints');
-    const tempFilePath = path.join(tempDirPath, `endpoint-${stableWorkspaceHash}.txt`);
-
-    // create the temp directory if it doesn't exist
-    if (!fs.existsSync(tempDirPath)) {
-        fs.mkdirSync(tempDirPath, { recursive: true });
-    } else {
-        // remove endpoint file in the temp directory if it exists (async to avoid blocking)
-        if (fs.existsSync(tempFilePath)) {
-            fs.promises.unlink(tempFilePath).catch((err) => {
-                const error: Error = {
-                    name: "NoConfigDebugError",
-                    message: `[Java Debug] Failed to cleanup old endpoint file: ${err}`,
-                };
-                sendError(error);
-            });
-        }
+    try {
+        await fs.promises.mkdir(tempDirPath, { recursive: true, mode: 0o700 });
+        // Finish removing stale data before watching or publishing the endpoint.
+        await fs.promises.unlink(tempFilePath).catch((error: NodeJS.ErrnoException) => {
+            if (error.code !== "ENOENT") {
+                throw error;
+            }
+        });
+        fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
+            new vscode.RelativePattern(tempDirPath, path.basename(tempFilePath)),
+        );
+    } catch (error: unknown) {
+        clearNoConfigDebugEnvironment(collection);
+        // Filesystem error messages can contain user paths; report only the error code.
+        const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "unknown";
+        sendError({
+            name: "NoConfigDebugError",
+            message: `[Java Debug] No-config debug initialization failed (${code}).`,
+        });
+        vscode.window.showWarningMessage(
+            "Java No-Config Debug could not be initialized. Standard Java debugging is still available.",
+        );
+        return undefined;
     }
 
     // Surface a description in VS Code's environment variable UI so users can
@@ -141,11 +156,6 @@ export async function registerNoConfigDebug(
         sendError(error);
     }
     applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
-
-    // create file system watcher for the debuggerAdapterEndpointFolder for when the communication port is written
-    const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
-        new vscode.RelativePattern(tempDirPath, '**/*.txt')
-    );
 
     // Track active debug sessions to prevent duplicates
     const activeDebugSessions = new Set<number>();

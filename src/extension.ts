@@ -40,9 +40,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
     // Register No-Config Debug functionality
     const noConfigDisposable = await registerNoConfigDebug(
         context.environmentVariableCollection,
-        context.extensionPath
+        context.extensionPath,
+        context.storageUri,
     );
-    context.subscriptions.push(noConfigDisposable);
+    if (noConfigDisposable) {
+        context.subscriptions.push(noConfigDisposable);
+    }
 
     // Register Language Model Tools after Java Language Server is ready
     registerLanguageModelToolsWhenReady(context);

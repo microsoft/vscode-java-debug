@@ -72,7 +72,15 @@ debugjava -jar myapp.jar --spring.profiles.active=dev
 6. The port is written to a communication file
 7. VS Code's file watcher detects the file and automatically starts an attach debug session
 
+The communication file is stored in the extension's workspace-specific VS Code storage directory, not its installation directory. It contains only the local debug host and port, is deleted after a successful attach, and any stale file is removed before the next registration. Its path remains stable across window reloads.
+
 ## Troubleshooting
+
+### No-Config Debug Could Not Be Initialized
+
+If the workspace storage directory or its file watcher cannot be initialized, the extension displays a warning and leaves standard Java launch/attach debugging available. No-Config Debug requires an open workspace and writable VS Code workspace storage.
+
+After upgrading from a version that stored the communication file in the extension directory, recreate existing terminals to pick up the new endpoint path.
 
 ### Port Already in Use
 

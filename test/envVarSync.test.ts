@@ -8,71 +8,7 @@ import {
     applyAppendIfChanged,
     applyReplaceIfChanged,
 } from "../src/envVarSync";
-
-interface FakeMutator {
-    type: vscode.EnvironmentVariableMutatorType;
-    value: string;
-    options: vscode.EnvironmentVariableMutatorOptions;
-}
-
-interface FakeCollection extends vscode.EnvironmentVariableCollection {
-    __calls: { replace: number; append: number; delete: number };
-}
-
-function createFakeCollection(): FakeCollection {
-    const store = new Map<string, FakeMutator>();
-    const calls = { replace: 0, append: 0, delete: 0 };
-
-    const collection = {
-        persistent: true,
-        description: undefined as string | vscode.MarkdownString | undefined,
-        get(name: string): FakeMutator | undefined {
-            return store.get(name);
-        },
-        replace(name: string, value: string, options?: vscode.EnvironmentVariableMutatorOptions): void {
-            calls.replace += 1;
-            store.set(name, {
-                type: vscode.EnvironmentVariableMutatorType.Replace,
-                value,
-                options: { applyAtProcessCreation: true, applyAtShellIntegration: false, ...options },
-            });
-        },
-        append(name: string, value: string, options?: vscode.EnvironmentVariableMutatorOptions): void {
-            calls.append += 1;
-            store.set(name, {
-                type: vscode.EnvironmentVariableMutatorType.Append,
-                value,
-                options: { applyAtProcessCreation: true, applyAtShellIntegration: false, ...options },
-            });
-        },
-        prepend(name: string, value: string, options?: vscode.EnvironmentVariableMutatorOptions): void {
-            store.set(name, {
-                type: vscode.EnvironmentVariableMutatorType.Prepend,
-                value,
-                options: { applyAtProcessCreation: true, applyAtShellIntegration: false, ...options },
-            });
-        },
-        delete(name: string): void {
-            calls.delete += 1;
-            store.delete(name);
-        },
-        clear(): void {
-            store.clear();
-        },
-        forEach(callback: (variable: string, mutator: FakeMutator, collection: any) => void): void {
-            store.forEach((mutator, variable) => callback(variable, mutator, collection));
-        },
-        getScoped(): vscode.EnvironmentVariableCollection {
-            return collection as unknown as vscode.EnvironmentVariableCollection;
-        },
-        *[Symbol.iterator](): IterableIterator<[string, FakeMutator]> {
-            yield* store.entries();
-        },
-        __calls: calls,
-    };
-
-    return collection as unknown as FakeCollection;
-}
+import { createFakeCollection } from "./helpers/environmentVariableCollection";
 
 suite("envVarSync", () => {
     suite("applyReplaceIfChanged", () => {
