@@ -21,7 +21,8 @@
     "debugger"
   ],
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.95.0",
+    "node": "20 || >=22"
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {
@@ -1384,12 +1385,12 @@
     "test": "npm run compile && node ./out/test/index.js"
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
     "@types/lodash": "^4.17.25",
     "@types/mocha": "^10.0.9",
     "@types/node": "^14.18.63",
     "@types/vscode": "1.95.0",
     "@vscode/test-electron": "^3.1.0",
+    "glob": "^13.0.6",
     "mocha": "^10.8.2",
     "ts-loader": "^9.6.2",
     "tslint": "^6.1.3",
