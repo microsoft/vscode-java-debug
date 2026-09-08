@@ -5,6 +5,7 @@ export const JAVA_LANGID: string = "java";
 export const TELEMETRY_EVENT = "telemetry";
 export const HCR_EVENT = "hotcodereplace";
 export const USER_NOTIFICATION_EVENT = "usernotification";
+export const ENABLE_NO_CONFIG_DEBUG = "java.debug.settings.enableNoConfigDebug";
 
 export enum ClasspathVariable {
     Auto = "$Auto",

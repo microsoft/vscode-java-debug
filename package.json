@@ -855,6 +855,12 @@
           "description": "%java.debugger.configuration.enableRunDebugCodeLens.description%",
           "default": true
         },
+        "java.debug.settings.enableNoConfigDebug": {
+          "type": "boolean",
+          "description": "%java.debugger.configuration.enableNoConfigDebug.description%",
+          "default": true,
+          "scope": "window"
+        },
         "java.debug.settings.forceBuildBeforeLaunch": {
           "type": "boolean",
           "description": "%java.debugger.configuration.forceBuildBeforeLaunch%",

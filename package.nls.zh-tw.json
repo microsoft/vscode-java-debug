@@ -60,6 +60,7 @@
     "java.debugger.configuration.maxStringLength.description": "設定「變數」或「偵錯主控台」視圖中顯示的字元串最大長度，長度超過部分將被剪掉。如果值為0，則不執行修剪。",
     "java.debugger.configuration.hotCodeReplace.description": "在偵錯期間重新載入已更改的 Java 類別。確保未停用 'java.autobuild.enabled'。",
     "java.debugger.configuration.enableRunDebugCodeLens.description": "在 main 方法上啟用 CodeLens 標記。",
+    "java.debugger.configuration.enableNoConfigDebug.description": "啟用透過終端機 debugjava 命令和 AI debug_java_application 工具自動附加偵錯器的功能。不影響標準 Java 啟動和附加偵錯。修改後需要重新載入 VS Code 並重新建立現有終端機。",
     "java.debugger.configuration.forceBuildBeforeLaunch": "在啟動 Java 程式之前強制編譯整個工作空間。",
     "java.debugger.configuration.console": "指定用於啟動 Java 程式的主控台。如果要為特定的偵錯會話自訂義主控台，請修改 launch.json 中的「console」設定。",
     "java.debugger.configuration.exceptionBreakpoint.skipClasses": "當發生異常時，跳過指定的類別。你可以使用內建變數，如 '$JDK' 和 '$Libraries' 來跳過一組類別，或者添加一個特定的類別名表達式，如 java.*，*.Foo。",

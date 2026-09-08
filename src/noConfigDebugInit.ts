@@ -3,7 +3,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import * as vscode from 'vscode';
 
 import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
@@ -12,6 +11,17 @@ import { buildNoConfigPathAppendValue } from "./pathUtil";
 import { applyAppendIfChanged, applyReplaceIfChanged } from "./envVarSync";
 
 const ENV_VAR_COLLECTION_DESCRIPTION = "Java No-Config Debug";
+
+function clearNoConfigDebugEnvironment(collection: vscode.EnvironmentVariableCollection): void {
+    for (const variable of ["VSCODE_JDWP_ADAPTER_ENDPOINTS", "VSCODE_JAVA_EXEC", "PATH"]) {
+        if (collection.get(variable)) {
+            collection.delete(variable);
+        }
+    }
+    if (collection.description !== undefined) {
+        collection.description = undefined;
+    }
+}
 
 /**
  * Ensures the POSIX no-config debug wrapper can be invoked from a terminal.
@@ -47,6 +57,9 @@ export async function ensureDebugJavaScriptExecutable(
  *
  * @param envVarCollection - The collection of environment variables to be modified.
  * @param extPath - The path to the extension directory.
+ * @param storageUri - The workspace-specific storage directory provided by VS Code.
+ * @param enabled - Whether no-config debugging is enabled for this activation.
+ * @returns The registration, or undefined when no-config debugging is unavailable.
  *
  * Environment Variables:
  * - `VSCODE_JDWP_ADAPTER_ENDPOINTS`: Path to the file containing the debugger adapter endpoint.
@@ -56,96 +69,56 @@ export async function ensureDebugJavaScriptExecutable(
 export async function registerNoConfigDebug(
     envVarCollection: vscode.EnvironmentVariableCollection,
     extPath: string,
-): Promise<vscode.Disposable> {
+    storageUri: vscode.Uri | undefined,
+    enabled: boolean = true,
+): Promise<vscode.Disposable | undefined> {
     const collection = envVarCollection;
 
-    // create a temp directory for the noConfigDebugAdapterEndpoints
-    // file path format: extPath/.noConfigDebugAdapterEndpoints/endpoint-stableWorkspaceHash.txt
-    let workspaceString = vscode.workspace.workspaceFile?.fsPath;
-    if (!workspaceString) {
-        workspaceString = vscode.workspace.workspaceFolders?.map((e) => e.uri.fsPath).join(';');
+    if (!enabled) {
+        clearNoConfigDebugEnvironment(collection);
+        return undefined;
     }
-    if (!workspaceString) {
+
+    if (!storageUri) {
+        clearNoConfigDebugEnvironment(collection);
         const error: Error = {
             name: "NoConfigDebugError",
             message: '[Java Debug] No workspace folder found',
         };
         sendError(error);
-        return Promise.resolve(new vscode.Disposable(() => { }));
+        return undefined;
     }
 
-    // create a stable hash for the workspace folder, reduce terminal variable churn
-    const hash = crypto.createHash('sha256');
-    hash.update(workspaceString.toString());
-    const stableWorkspaceHash = hash.digest('hex').slice(0, 16);
+    // Workspace storage is stable across reloads and does not require a writable
+    // extension installation directory (for example, the Nix store).
+    const tempDirPath = path.join(storageUri.fsPath, '.noConfigDebugAdapterEndpoints');
+    const tempFilePath = path.join(tempDirPath, 'endpoint.txt');
+    let fileSystemWatcher: vscode.FileSystemWatcher;
 
-    const tempDirPath = path.join(extPath, '.noConfigDebugAdapterEndpoints');
-    const tempFilePath = path.join(tempDirPath, `endpoint-${stableWorkspaceHash}.txt`);
-
-    // create the temp directory if it doesn't exist
-    if (!fs.existsSync(tempDirPath)) {
-        fs.mkdirSync(tempDirPath, { recursive: true });
-    } else {
-        // remove endpoint file in the temp directory if it exists (async to avoid blocking)
-        if (fs.existsSync(tempFilePath)) {
-            fs.promises.unlink(tempFilePath).catch((err) => {
-                const error: Error = {
-                    name: "NoConfigDebugError",
-                    message: `[Java Debug] Failed to cleanup old endpoint file: ${err}`,
-                };
-                sendError(error);
-            });
-        }
-    }
-
-    // Surface a description in VS Code's environment variable UI so users can
-    // see which extension is contributing these variables.
-    if (collection.description !== ENV_VAR_COLLECTION_DESCRIPTION) {
-        collection.description = ENV_VAR_COLLECTION_DESCRIPTION;
-    }
-
-    // Apply our managed variables using diff-aware helpers. On a typical
-    // window reload the values are unchanged and these calls are no-ops, so
-    // VS Code does not prompt the user to restart their existing terminals.
-    // See issue #1647.
-    //
-    // Note: We do NOT set JAVA_TOOL_OPTIONS globally to avoid affecting all Java processes
-    // (javac, maven, gradle, language server, etc.). Instead, JAVA_TOOL_OPTIONS is set
-    // only in the debugjava wrapper scripts (debugjava.ps1, debugjava.bat, debugjava)
-    applyReplaceIfChanged(collection, 'VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
-
-    // Try to get Java executable from Java Language Server
-    // This ensures we use the same Java version as the project is compiled with.
-    // If detection fails or returns nothing, we deliberately keep any previously
-    // set VSCODE_JAVA_EXEC to avoid churn from transient startup failures.
     try {
-        const javaHome = await getJavaHome();
-        if (javaHome) {
-            const javaExec = path.join(javaHome, 'bin', 'java');
-            applyReplaceIfChanged(collection, 'VSCODE_JAVA_EXEC', javaExec);
-        }
-    } catch (error) {
-        // If we can't get Java from Language Server, that's okay
-        // The wrapper script will fall back to JAVA_HOME or PATH
-    }
-
-    const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
-    const debugJavaScriptPath = path.join(noConfigScriptsDir, "debugjava");
-    try {
-        await ensureDebugJavaScriptExecutable(debugJavaScriptPath);
-    } catch (err) {
-        const error: Error = {
+        await fs.promises.mkdir(tempDirPath, { recursive: true, mode: 0o700 });
+        // Finish removing stale data before watching or publishing the endpoint.
+        await fs.promises.unlink(tempFilePath).catch((error: NodeJS.ErrnoException) => {
+            if (error.code !== "ENOENT") {
+                throw error;
+            }
+        });
+        fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
+            new vscode.RelativePattern(tempDirPath, path.basename(tempFilePath)),
+        );
+    } catch (error: unknown) {
+        clearNoConfigDebugEnvironment(collection);
+        // Filesystem error messages can contain user paths; report only the error code.
+        const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "unknown";
+        sendError({
             name: "NoConfigDebugError",
-            message: `[Java Debug] Failed to make debugjava executable: ${err}`,
-        };
-        sendError(error);
+            message: `[Java Debug] No-config debug initialization failed (${code}).`,
+        });
+        vscode.window.showWarningMessage(
+            "Java No-Config Debug could not be initialized. Standard Java debugging is still available.",
+        );
+        return undefined;
     }
-    applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
-
-    // create file system watcher for the debuggerAdapterEndpointFolder for when the communication port is written
-    const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
-        new vscode.RelativePattern(tempDirPath, '**/*.txt')
-    );
 
     // Track active debug sessions to prevent duplicates
     const activeDebugSessions = new Set<number>();
@@ -264,7 +237,8 @@ export async function registerNoConfigDebug(
         });
     };
 
-    // Listen for both file creation and modification events
+    // Listen before publishing the endpoint or awaiting Java/script setup.
+    // Terminals surviving a reload may already have the stable endpoint path.
     const fileCreationEvent = fileSystemWatcher.onDidCreate(handleEndpointFile);
     const fileChangeEvent = fileSystemWatcher.onDidChange(handleEndpointFile);
 
@@ -276,6 +250,50 @@ export async function registerNoConfigDebug(
             // Session end is normal operation, no telemetry needed
         }
     });
+
+    // Surface a description in VS Code's environment variable UI so users can
+    // see which extension is contributing these variables.
+    if (collection.description !== ENV_VAR_COLLECTION_DESCRIPTION) {
+        collection.description = ENV_VAR_COLLECTION_DESCRIPTION;
+    }
+
+    // Apply our managed variables using diff-aware helpers. On a typical
+    // window reload the values are unchanged and these calls are no-ops, so
+    // VS Code does not prompt the user to restart their existing terminals.
+    // See issue #1647.
+    //
+    // Note: We do NOT set JAVA_TOOL_OPTIONS globally to avoid affecting all Java processes
+    // (javac, maven, gradle, language server, etc.). Instead, JAVA_TOOL_OPTIONS is set
+    // only in the debugjava wrapper scripts (debugjava.ps1, debugjava.bat, debugjava)
+    applyReplaceIfChanged(collection, 'VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
+
+    // Try to get Java executable from Java Language Server
+    // This ensures we use the same Java version as the project is compiled with.
+    // If detection fails or returns nothing, we deliberately keep any previously
+    // set VSCODE_JAVA_EXEC to avoid churn from transient startup failures.
+    try {
+        const javaHome = await getJavaHome();
+        if (javaHome) {
+            const javaExec = path.join(javaHome, 'bin', 'java');
+            applyReplaceIfChanged(collection, 'VSCODE_JAVA_EXEC', javaExec);
+        }
+    } catch (error) {
+        // If we can't get Java from Language Server, that's okay
+        // The wrapper script will fall back to JAVA_HOME or PATH
+    }
+
+    const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
+    const debugJavaScriptPath = path.join(noConfigScriptsDir, "debugjava");
+    try {
+        await ensureDebugJavaScriptExecutable(debugJavaScriptPath);
+    } catch (err) {
+        const error: Error = {
+            name: "NoConfigDebugError",
+            message: `[Java Debug] Failed to make debugjava executable: ${err}`,
+        };
+        sendError(error);
+    }
+    applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
 
     return Promise.resolve(
         new vscode.Disposable(() => {

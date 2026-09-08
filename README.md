@@ -60,6 +60,8 @@ debugjava -cp bin com.example.Main arg1 arg2
 
 The debugger will automatically attach. See [No-Config Debug Documentation](bundled/scripts/noConfigScripts/README.md) for more details.
 
+No-Config Debug is enabled by default. To disable the terminal integration and the AI `debug_java_application` tool, set `"java.debug.settings.enableNoConfigDebug": false`, reload VS Code, and recreate existing terminals. Standard Java launch/attach debugging, including F5 and Run/Debug CodeLens, remains available.
+
 ## AI-Assisted Debugging
 
 When using GitHub Copilot Chat, you can now ask AI to help you debug Java applications! The extension provides a Language Model Tool that enables natural language debugging:
@@ -164,6 +166,7 @@ See [Language Model Tool Documentation](bundled/agents/README.md) for more detai
   - `auto` - Automatically apply the changes after compilation. This only works when `'java.autobuild.enabled'` is on.
   - `never` - Never apply the changes.
 - `java.debug.settings.enableRunDebugCodeLens`: enable the code lens provider for the run and debug buttons over main entry points, defaults to `true`.
+- `java.debug.settings.enableNoConfigDebug`: enable automatic attachment through `debugjava` and the AI `debug_java_application` tool, defaults to `true`. Can be set at user or workspace level. Changes require reloading VS Code and recreating existing terminals; standard Java launch/attach debugging is unaffected.
 - `java.debug.settings.forceBuildBeforeLaunch`: force building the workspace before launching java program, defaults to `true`.
 - `java.debug.settings.onBuildFailureProceed`: Force to proceed when build fails, defaults to false.
 - `java.debug.settings.console`: The specified console to launch Java program, defaults to `integratedTerminal`. If you want to customize the console for a specific debug session, please modify the 'console' config in launch.json.

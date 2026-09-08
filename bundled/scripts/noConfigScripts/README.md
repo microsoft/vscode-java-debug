@@ -11,6 +11,20 @@ When you open a terminal in VS Code with this extension installed, the following
 
 Note: `JAVA_TOOL_OPTIONS` is NOT set globally to avoid affecting other Java tools (javac, maven, gradle). Instead, it's set only when you run the `debugjava` command.
 
+## Disabling No-Config Debug
+
+No-Config Debug is enabled by default. To opt out for all workspaces or just the current workspace, add this to the corresponding VS Code settings:
+
+```json
+"java.debug.settings.enableNoConfigDebug": false
+```
+
+Reload VS Code and recreate existing terminals after changing this setting. The value is read once during extension activation; there is no live enable/disable switch. Existing terminal processes retain their old environment until they are recreated.
+
+When disabled, the extension skips endpoint storage, file watching, Java executable detection, and wrapper permission setup, and removes this feature's cached terminal environment contributions. It does not clear the user's PATH or delete endpoint files as part of opting out. Standard Java launch/attach debugging, F5, and Run/Debug CodeLens are unaffected.
+
+The AI `debug_java_application` tool requires this integration. When disabled, it returns instructions to enable the setting instead of building, launching a terminal, or stopping an existing debug session. Other AI tools for existing debug sessions remain available.
+
 ## Usage
 
 ### Basic Usage
@@ -72,7 +86,15 @@ debugjava -jar myapp.jar --spring.profiles.active=dev
 6. The port is written to a communication file
 7. VS Code's file watcher detects the file and automatically starts an attach debug session
 
+The communication file is stored in the extension's workspace-specific VS Code storage directory, not its installation directory. It contains only the local debug host and port, is deleted after a successful attach, and any stale file is removed before the next registration. Its path remains stable across window reloads.
+
 ## Troubleshooting
+
+### No-Config Debug Could Not Be Initialized
+
+If the workspace storage directory or its file watcher cannot be initialized, the extension displays a warning and leaves standard Java launch/attach debugging available. No-Config Debug requires an open workspace and writable VS Code workspace storage.
+
+After upgrading from a version that stored the communication file in the extension directory, recreate existing terminals to pick up the new endpoint path.
 
 ### Port Already in Use
 
