@@ -52,6 +52,7 @@
     "java.debugger.configuration.numericPrecision.description": "La precisión en el formato de números reales en la vista \"Variables\" o \"Consola de Depuración\".",
     "java.debugger.configuration.hotCodeReplace.description": "Recargar las clases de Java modificadas durante la depuración. Asegúrate de que 'java.autobuild.enabled' no esté desactivado.",
     "java.debugger.configuration.enableRunDebugCodeLens.description": "Habilitar proveedores de CodeLens para la ejecución y depuración sobre los métodos principales.",
+    "java.debugger.configuration.enableNoConfigDebug.description": "Habilitar la conexión automática del depurador mediante el comando de terminal debugjava y la herramienta de IA debug_java_application. La depuración estándar de Java no se ve afectada. Los cambios requieren recargar VS Code y volver a crear los terminales existentes.",
     "java.debugger.configuration.forceBuildBeforeLaunch": "Forzar la compilación del área de trabajo antes de lanzar el programa Java.",
     "java.debugger.configuration.onBuildFailureProceed": "Forzar continuar cuando falla la compilación.",
     "java.debugger.configuration.console": "La consola establecida para lanzar el programa Java. Si quieres personalizar la consola para una sesión de depuración específica, por favor modifica la configuración de la 'console' en launch.json.",

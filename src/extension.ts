@@ -9,7 +9,7 @@ import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentO
     instrumentOperationAsVsCodeCommand, sendInfo, setUserError } from "vscode-extension-telemetry-wrapper";
 import * as commands from "./commands";
 import { JavaDebugConfigurationProvider, lastUsedLaunchConfig } from "./configurationProvider";
-import { HCR_EVENT, JAVA_LANGID, TELEMETRY_EVENT, USER_NOTIFICATION_EVENT } from "./constants";
+import { ENABLE_NO_CONFIG_DEBUG, HCR_EVENT, JAVA_LANGID, TELEMETRY_EVENT, USER_NOTIFICATION_EVENT } from "./constants";
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { initExpService } from "./experimentationService";
@@ -37,18 +37,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
     await initExpService(context);
 
-    // Register No-Config Debug functionality
+    // Capture once so terminal integration and the AI launch tool both require a reload to change.
+    const noConfigDebugEnabled = vscode.workspace.getConfiguration().get<boolean>(ENABLE_NO_CONFIG_DEBUG, true);
     const noConfigDisposable = await registerNoConfigDebug(
         context.environmentVariableCollection,
         context.extensionPath,
         context.storageUri,
+        noConfigDebugEnabled,
     );
     if (noConfigDisposable) {
         context.subscriptions.push(noConfigDisposable);
     }
 
     // Register Language Model Tools after Java Language Server is ready
-    registerLanguageModelToolsWhenReady(context);
+    registerLanguageModelToolsWhenReady(context, noConfigDebugEnabled);
 
     return instrumentOperation("activation", initializeExtension)(context);
 }
@@ -115,7 +117,7 @@ const delay = promisify(setTimeout);
  * The debug tools depend on JDT.LS for compilation, classpath resolution,
  * and executing debug server commands.
  */
-async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionContext): Promise<void> {
+async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionContext, noConfigDebugEnabled: boolean): Promise<void> {
     // Check if Language Model API is available
     if (!vscode.lm || typeof vscode.lm.registerTool !== 'function') {
         return;
@@ -127,7 +129,7 @@ async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionCont
     }
 
     // Register Language Model Tools for AI-assisted debugging
-    registerLanguageModelTool(context);
+    registerLanguageModelTool(context, noConfigDebugEnabled);
     const debugToolsDisposables = registerDebugSessionTools(context);
     context.subscriptions.push(...debugToolsDisposables);
 

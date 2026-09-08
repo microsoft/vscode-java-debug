@@ -4,6 +4,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { ENABLE_NO_CONFIG_DEBUG } from "./constants";
 import {
     beginDebugSessionInvocation,
     classifyBreakpoint,
@@ -112,7 +113,10 @@ interface LanguageModelTool<T = any> {
  * Registers the Language Model Tool for debugging Java applications.
  * This allows AI assistants to help users debug Java code by invoking the debugjava command.
  */
-export function registerLanguageModelTool(context: vscode.ExtensionContext): vscode.Disposable | undefined {
+export function registerLanguageModelTool(
+    context: Pick<vscode.ExtensionContext, "subscriptions">,
+    noConfigDebugEnabled: boolean = true,
+): vscode.Disposable | undefined {
     // Check if the Language Model API is available
     const lmApi = (vscode as any).lm;
     if (!lmApi || typeof lmApi.registerTool !== 'function') {
@@ -122,6 +126,16 @@ export function registerLanguageModelTool(context: vscode.ExtensionContext): vsc
 
     const tool: LanguageModelTool<DebugJavaApplicationInput> = {
         async invoke(options: { input: DebugJavaApplicationInput }, token: vscode.CancellationToken): Promise<any> {
+            if (!noConfigDebugEnabled) {
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(
+                        `Java No-Config Debug is disabled by ${ENABLE_NO_CONFIG_DEBUG}. `
+                        + "To use this tool, enable that setting, reload VS Code, and recreate existing terminals. "
+                        + "Standard Java launch/attach debugging remains available.",
+                    ),
+                ]);
+            }
+
             const startedAt = Date.now();
             const targetType = classifyTarget(options.input.target);
             const attempt = nextAttempt(TOOL_NAMES.DEBUG_JAVA_APPLICATION);

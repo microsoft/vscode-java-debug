@@ -165,6 +165,8 @@ Make sure the Java project is properly loaded. Check that:
 
 ### Debug Session Won't Start
 
+The `debug_java_application` tool requires `java.debug.settings.enableNoConfigDebug` (enabled by default). If you disable this setting, reload VS Code and recreate existing terminals. The launch tool then returns an explanatory message without running `debugjava`; tools that inspect or control existing debug sessions remain available.
+
 Ensure:
 - Your project compiles successfully
 - No other debug session is running

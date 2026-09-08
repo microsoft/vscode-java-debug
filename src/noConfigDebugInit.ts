@@ -58,6 +58,7 @@ export async function ensureDebugJavaScriptExecutable(
  * @param envVarCollection - The collection of environment variables to be modified.
  * @param extPath - The path to the extension directory.
  * @param storageUri - The workspace-specific storage directory provided by VS Code.
+ * @param enabled - Whether no-config debugging is enabled for this activation.
  * @returns The registration, or undefined when no-config debugging is unavailable.
  *
  * Environment Variables:
@@ -69,8 +70,14 @@ export async function registerNoConfigDebug(
     envVarCollection: vscode.EnvironmentVariableCollection,
     extPath: string,
     storageUri: vscode.Uri | undefined,
+    enabled: boolean = true,
 ): Promise<vscode.Disposable | undefined> {
     const collection = envVarCollection;
+
+    if (!enabled) {
+        clearNoConfigDebugEnvironment(collection);
+        return undefined;
+    }
 
     if (!storageUri) {
         clearNoConfigDebugEnvironment(collection);

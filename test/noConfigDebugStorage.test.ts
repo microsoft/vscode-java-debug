@@ -33,8 +33,8 @@ suite("No-Config Debug workspace storage", () => {
         cleanups.push(() => Object.defineProperty(target, key, descriptor));
     }
 
-    async function register(storage: vscode.Uri | undefined = storageUri): Promise<vscode.Disposable | undefined> {
-        const disposable = await registerNoConfigDebug(collection, extPath, storage);
+    async function register(storage: vscode.Uri | undefined = storageUri, enabled: boolean = true): Promise<vscode.Disposable | undefined> {
+        const disposable = await registerNoConfigDebug(collection, extPath, storage, enabled);
         if (disposable) {
             cleanups.push(() => disposable.dispose());
         }
@@ -112,6 +112,71 @@ suite("No-Config Debug workspace storage", () => {
             cleanup();
         }
         await fs.promises.rm(tempDir, { recursive: true, force: true });
+    });
+
+    test("skips all no-config setup and clears cached contributions when disabled", async () => {
+        seedCachedEnvironment();
+        let setupCalls = 0;
+        const unexpectedSetup = (): never => {
+            setupCalls += 1;
+            throw new Error("No-config setup must not run when disabled");
+        };
+        replaceProperty(fs.promises, "mkdir", async () => unexpectedSetup());
+        replaceProperty(fs.promises, "unlink", async () => unexpectedSetup());
+        replaceProperty(fs.promises, "stat", async () => unexpectedSetup());
+        replaceProperty(fs.promises, "chmod", async () => unexpectedSetup());
+        replaceProperty(utility, "getJavaHome", async () => unexpectedSetup());
+        replaceProperty(vscode.workspace, "createFileSystemWatcher", unexpectedSetup);
+        replaceProperty(vscode.debug, "onDidTerminateDebugSession", unexpectedSetup);
+
+        assert.strictEqual(await register(storageUri, false), undefined);
+        assert.strictEqual(setupCalls, 0);
+        assert.strictEqual(fs.existsSync(storageUri.fsPath), false);
+        assert.strictEqual(collection.get("VSCODE_JDWP_ADAPTER_ENDPOINTS"), undefined);
+        assert.strictEqual(collection.get("VSCODE_JAVA_EXEC"), undefined);
+        assert.strictEqual(collection.get("PATH"), undefined);
+        assert.strictEqual(collection.get("UNRELATED")?.value, "keep");
+        assert.strictEqual(collection.description, undefined);
+        assert.strictEqual(collection.__calls.delete, 3);
+        assert.strictEqual(errors.length, 0);
+        assert.strictEqual(warnings.length, 0);
+
+        const callsAfterDisable = { ...collection.__calls };
+        assert.strictEqual(await register(storageUri, false), undefined);
+        assert.deepStrictEqual(collection.__calls, callsAfterDisable);
+    });
+
+    test("does not report a missing workspace when explicitly disabled", async () => {
+        assert.strictEqual(await registerNoConfigDebug(collection, extPath, undefined, false), undefined);
+        assert.strictEqual(errors.length, 0);
+        assert.strictEqual(warnings.length, 0);
+        assert.strictEqual(patterns.length, 0);
+    });
+
+    test("does not remove existing endpoint files when disabled", async () => {
+        const endpoint = path.join(storageUri.fsPath, ".noConfigDebugAdapterEndpoints", "endpoint.txt");
+        const data = JSON.stringify({ client: { port: 12345 } });
+        await fs.promises.mkdir(path.dirname(endpoint), { recursive: true });
+        await fs.promises.writeFile(endpoint, data);
+
+        assert.strictEqual(await register(storageUri, false), undefined);
+        assert.strictEqual(await fs.promises.readFile(endpoint, "utf8"), data);
+        assert.strictEqual(patterns.length, 0);
+    });
+
+    test("restores terminal integration when re-enabled on a later activation", async () => {
+        const first = await register();
+        assert.ok(first);
+        first.dispose();
+        assert.strictEqual(await register(storageUri, false), undefined);
+
+        assert.ok(await register(storageUri, true));
+        assert.strictEqual(endpointPath(), path.join(storageUri.fsPath, ".noConfigDebugAdapterEndpoints", "endpoint.txt"));
+        assert.strictEqual(collection.description, "Java No-Config Debug");
+        assert.ok(collection.get("VSCODE_JAVA_EXEC"));
+        assert.ok(collection.get("PATH"));
+        assert.strictEqual(patterns.length, 2);
+        assert.strictEqual(errors.length, 0);
     });
 
     test("creates private workspace storage and keeps bundled scripts in the installation directory", async () => {

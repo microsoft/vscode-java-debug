@@ -62,6 +62,7 @@
     "java.debugger.configuration.numericPrecision.description": "The precision when formatting doubles in \"Variables\" or \"Debug Console\" viewlet.",
     "java.debugger.configuration.hotCodeReplace.description": "Reload the changed Java classes during debugging.",
     "java.debugger.configuration.enableRunDebugCodeLens.description": "Enable the run and debug code lens providers over main methods.",
+    "java.debugger.configuration.enableNoConfigDebug.description": "Enable automatic attachment through the debugjava terminal command and the AI debug_java_application tool. Standard Java launch/attach debugging is unaffected. Changes require reloading VS Code and recreating existing terminals.",
     "java.debugger.configuration.forceBuildBeforeLaunch": "Force building the workspace before launching java program.",
     "java.debugger.configuration.onBuildFailureProceed": "Force to proceed when build fails",
     "java.debugger.configuration.console": "The specified console to launch Java program. If you want to customize the console for a specific debug session, please modify the 'console' config in launch.json.",
