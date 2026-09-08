@@ -246,6 +246,69 @@ suite("No-Config Debug workspace storage", () => {
         assert.strictEqual(warnings.length, 0);
     });
 
+    for (const eventType of ["create", "change"]) {
+        test(`handles endpoint ${eventType} events while Java-home resolution is pending`, async function() {
+            this.timeout(5000);
+            const endpoint = path.join(storageUri.fsPath, ".noConfigDebugAdapterEndpoints", "endpoint.txt");
+            if (eventType === "change") {
+                seedCachedEnvironment();
+                collection.replace("VSCODE_JDWP_ADAPTER_ENDPOINTS", endpoint);
+            }
+
+            let releaseJavaHome: (javaHome: string) => void = () => { };
+            const pendingJavaHome = new Promise<string>((resolve) => { releaseJavaHome = resolve; });
+            let notifyJavaHomeRequested: () => void = () => { };
+            const javaHomeRequested = new Promise<void>((resolve) => { notifyJavaHomeRequested = resolve; });
+            replaceProperty(utility, "getJavaHome", () => {
+                notifyJavaHomeRequested();
+                return pendingJavaHome;
+            });
+
+            let registrationFinished = false;
+            const registration = register().then((disposable) => {
+                registrationFinished = true;
+                return disposable;
+            });
+            let timeout: NodeJS.Timeout | undefined;
+            try {
+                await javaHomeRequested;
+                assert.strictEqual(endpointPath(), endpoint);
+                const attached = new Promise<vscode.DebugConfiguration | string>((resolve, reject) => {
+                    replaceProperty(vscode.debug, "startDebugging", async (_folder, debugConfiguration) => {
+                        resolve(debugConfiguration);
+                        return true;
+                    });
+                    timeout = setTimeout(() => reject(new Error(`Endpoint ${eventType} event was lost during initialization`)), 1500);
+                });
+                const originalUnlink = fs.promises.unlink;
+                let finishCleanup: () => void = () => { };
+                const cleanedUp = new Promise<void>((resolve) => { finishCleanup = resolve; });
+                replaceProperty(fs.promises, "unlink", async (file) => {
+                    await originalUnlink(file);
+                    finishCleanup();
+                });
+
+                await fs.promises.writeFile(endpoint, JSON.stringify({ client: { host: "localhost", port: 54321 } }));
+                const emitter = eventType === "create" ? created : changed;
+                emitter.fire(vscode.Uri.file(endpoint));
+                const configuration = await attached;
+                assert.ok(typeof configuration !== "string");
+                assert.strictEqual(configuration.request, "attach");
+                assert.strictEqual(configuration.port, 54321);
+                assert.strictEqual(registrationFinished, false);
+                await cleanedUp;
+                assert.strictEqual(fs.existsSync(endpoint), false);
+                assert.strictEqual(errors.length, 0);
+            } finally {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                releaseJavaHome(path.join(tempDir, "jdk"));
+                await registration;
+            }
+        });
+    }
+
     test("reads the port from workspace storage, attaches, and removes the endpoint", async () => {
         assert.ok(await register());
         const endpoint = endpointPath();
