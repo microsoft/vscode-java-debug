@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ENABLE_NO_CONFIG_DEBUG } from "./constants";
+import { NoConfigDebugRegistration } from "./noConfigDebugInit";
 import {
     beginDebugSessionInvocation,
     classifyBreakpoint,
@@ -115,7 +116,7 @@ interface LanguageModelTool<T = any> {
  */
 export function registerLanguageModelTool(
     context: Pick<vscode.ExtensionContext, "subscriptions">,
-    noConfigDebugEnabled: boolean = true,
+    noConfigDebug: Pick<NoConfigDebugRegistration, "waitUntilReady">,
 ): vscode.Disposable | undefined {
     // Check if the Language Model API is available
     const lmApi = (vscode as any).lm;
@@ -126,12 +127,32 @@ export function registerLanguageModelTool(
 
     const tool: LanguageModelTool<DebugJavaApplicationInput> = {
         async invoke(options: { input: DebugJavaApplicationInput }, token: vscode.CancellationToken): Promise<any> {
-            if (!noConfigDebugEnabled) {
+            const readiness = await noConfigDebug.waitUntilReady(token);
+            if (readiness.status !== "ready") {
+                let message: string;
+                switch (readiness.status) {
+                    case "disabled":
+                        message = `Java No-Config Debug is disabled by ${ENABLE_NO_CONFIG_DEBUG}. `
+                            + "To use this tool, enable that setting, reload VS Code, and recreate existing terminals.";
+                        break;
+                    case "failed":
+                        message = `${readiness.message} This tool cannot launch until initialization succeeds. `
+                            + "Resolve the initialization problem and reload VS Code before retrying.";
+                        break;
+                    case "cancelled":
+                        message = "Operation cancelled by user while waiting for Java No-Config Debug initialization.";
+                        break;
+                    case "timeout":
+                        message = "Timed out waiting for Java No-Config Debug initialization. "
+                            + "Initialization is still running; you can retry this tool later.";
+                        break;
+                    case "disposed":
+                        message = "Java No-Config Debug has been disposed. Reload VS Code before retrying this tool.";
+                        break;
+                }
                 return new vscode.LanguageModelToolResult([
                     new vscode.LanguageModelTextPart(
-                        `Java No-Config Debug is disabled by ${ENABLE_NO_CONFIG_DEBUG}. `
-                        + "To use this tool, enable that setting, reload VS Code, and recreate existing terminals. "
-                        + "Standard Java launch/attach debugging remains available.",
+                        `${message} Standard Java launch/attach debugging remains available.`,
                     ),
                 ]);
             }

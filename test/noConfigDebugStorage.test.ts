@@ -12,6 +12,7 @@ import { registerNoConfigDebug } from "../src/noConfigDebugInit";
 import { buildNoConfigPathAppendValue } from "../src/pathUtil";
 import * as utility from "../src/utility";
 import { createFakeCollection, FakeCollection } from "./helpers/environmentVariableCollection";
+import { deferred } from "./helpers/deferred";
 
 suite("No-Config Debug workspace storage", () => {
     let tempDir: string;
@@ -33,12 +34,15 @@ suite("No-Config Debug workspace storage", () => {
         cleanups.push(() => Object.defineProperty(target, key, descriptor));
     }
 
+    function startRegistration(storage: vscode.Uri | undefined = storageUri, enabled: boolean = true) {
+        const registration = registerNoConfigDebug(collection, extPath, storage, enabled);
+        cleanups.push(() => registration.dispose());
+        return registration;
+    }
+
     async function register(storage: vscode.Uri | undefined = storageUri, enabled: boolean = true): Promise<vscode.Disposable | undefined> {
-        const disposable = await registerNoConfigDebug(collection, extPath, storage, enabled);
-        if (disposable) {
-            cleanups.push(() => disposable.dispose());
-        }
-        return disposable;
+        const registration = startRegistration(storage, enabled);
+        return (await registration.ready).status === "ready" ? registration : undefined;
     }
 
     function endpointPath(): string {
@@ -147,7 +151,9 @@ suite("No-Config Debug workspace storage", () => {
     });
 
     test("does not report a missing workspace when explicitly disabled", async () => {
-        assert.strictEqual(await registerNoConfigDebug(collection, extPath, undefined, false), undefined);
+        const registration = registerNoConfigDebug(collection, extPath, undefined, false);
+        cleanups.push(() => registration.dispose());
+        assert.deepStrictEqual(await registration.ready, { status: "disabled" });
         assert.strictEqual(errors.length, 0);
         assert.strictEqual(warnings.length, 0);
         assert.strictEqual(patterns.length, 0);
@@ -299,8 +305,11 @@ suite("No-Config Debug workspace storage", () => {
 
     test("skips an empty window without falling back to the installation directory", async () => {
         seedCachedEnvironment();
-        const disposable = await registerNoConfigDebug(collection, extPath, undefined);
-        assert.strictEqual(disposable, undefined);
+        const registration = registerNoConfigDebug(collection, extPath, undefined);
+        cleanups.push(() => registration.dispose());
+        assert.deepStrictEqual(await registration.ready, {
+            status: "failed", message: "No workspace folder found for Java No-Config Debug.",
+        });
         assert.strictEqual(collection.get("VSCODE_JDWP_ADAPTER_ENDPOINTS"), undefined);
         assert.strictEqual(collection.get("VSCODE_JAVA_EXEC"), undefined);
         assert.strictEqual(collection.get("PATH"), undefined);
@@ -309,6 +318,197 @@ suite("No-Config Debug workspace storage", () => {
         assert.strictEqual(fs.existsSync(storageUri.fsPath), false);
         assert.strictEqual(errors.length, 1);
         assert.strictEqual(warnings.length, 0);
+    });
+
+    test("shares readiness and lets one caller cancel without cancelling initialization", async () => {
+        const javaHome = deferred<string>();
+        const requested = deferred<void>();
+        replaceProperty(utility, "getJavaHome", () => {
+            requested.resolve();
+            return javaHome.promise;
+        });
+        const registration = startRegistration();
+        const first = new vscode.CancellationTokenSource();
+        const second = new vscode.CancellationTokenSource();
+        cleanups.push(() => first.dispose(), () => second.dispose());
+        try {
+            await requested.promise;
+            let ready = false;
+            const pending = registration.waitUntilReady(second.token).then((result) => {
+                ready = true;
+                return result;
+            });
+            const cancelled = registration.waitUntilReady(first.token);
+            first.cancel();
+            assert.deepStrictEqual(await cancelled, { status: "cancelled" });
+            assert.strictEqual(ready, false);
+            assert.strictEqual(watcherDisposed, false);
+            assert.strictEqual(collection.get("PATH"), undefined);
+
+            javaHome.resolve(path.join(tempDir, "jdk"));
+            assert.deepStrictEqual(await pending, { status: "ready" });
+            assert.deepStrictEqual(await registration.ready, { status: "ready" });
+            assert.ok(collection.get("PATH"));
+            assert.strictEqual(patterns.length, 1);
+        } finally {
+            javaHome.resolve("");
+            await registration.ready;
+        }
+    });
+
+    test("bounds each wait and allows retrying the same initialization after timeout", async () => {
+        const javaHome = deferred<string>();
+        replaceProperty(utility, "getJavaHome", () => javaHome.promise);
+        const registration = startRegistration();
+        const caller = new vscode.CancellationTokenSource();
+        cleanups.push(() => caller.dispose());
+        try {
+            assert.deepStrictEqual(await registration.waitUntilReady(caller.token, 10), { status: "timeout" });
+            javaHome.resolve(path.join(tempDir, "jdk"));
+            assert.deepStrictEqual(await registration.waitUntilReady(caller.token), { status: "ready" });
+            assert.strictEqual(patterns.length, 1);
+        } finally {
+            javaHome.resolve("");
+            await registration.ready;
+        }
+    });
+
+    test("returns immediately for an already cancelled caller", async () => {
+        const directory = deferred<undefined>();
+        replaceProperty(fs.promises, "mkdir", () => directory.promise);
+        const registration = startRegistration();
+        const caller = new vscode.CancellationTokenSource();
+        cleanups.push(() => caller.dispose());
+        caller.cancel();
+        assert.deepStrictEqual(await registration.waitUntilReady(caller.token), { status: "cancelled" });
+        registration.dispose();
+        directory.resolve(undefined);
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.strictEqual(patterns.length, 0);
+    });
+
+    for (const stage of ["mkdir", "unlink"] as const) {
+        test(`does not continue setup when disposed during ${stage}`, async () => {
+            const pending = deferred<undefined>();
+            const requested = deferred<void>();
+            replaceProperty(fs.promises, stage, () => {
+                requested.resolve();
+                return pending.promise;
+            });
+            const registration = startRegistration();
+            await requested.promise;
+            registration.dispose();
+            assert.deepStrictEqual(await registration.ready, { status: "disposed" });
+            pending.resolve(undefined);
+            await new Promise((resolve) => setImmediate(resolve));
+            assert.strictEqual(patterns.length, 0);
+            assert.strictEqual(collection.__calls.replace, 0);
+            assert.strictEqual(collection.__calls.append, 0);
+            assert.strictEqual(errors.length, 0);
+        });
+    }
+
+    for (const rejectJavaHome of [false, true]) {
+        test(`disposes partial listeners and ignores late Java ${rejectJavaHome ? "failure" : "resolution"}`, async () => {
+            const javaHome = deferred<string>();
+            const requested = deferred<void>();
+            let sessionListenerDisposed = false;
+            replaceProperty(utility, "getJavaHome", () => {
+                requested.resolve();
+                return javaHome.promise;
+            });
+            replaceProperty(vscode.debug, "onDidTerminateDebugSession",
+                () => new vscode.Disposable(() => { sessionListenerDisposed = true; }));
+            const registration = startRegistration();
+            const caller = new vscode.CancellationTokenSource();
+            cleanups.push(() => caller.dispose());
+            const waiting = registration.waitUntilReady(caller.token);
+            await requested.promise;
+            registration.dispose();
+            assert.strictEqual(watcherDisposed, true);
+            assert.strictEqual(sessionListenerDisposed, true);
+            assert.deepStrictEqual(await waiting, { status: "disposed" });
+            const calls = { ...collection.__calls };
+            if (rejectJavaHome) {
+                javaHome.reject(new Error("Java became unavailable"));
+            } else {
+                javaHome.resolve(path.join(tempDir, "jdk"));
+            }
+            await new Promise((resolve) => setImmediate(resolve));
+            assert.deepStrictEqual(collection.__calls, calls);
+            assert.strictEqual(collection.get("PATH"), undefined);
+            assert.strictEqual(errors.length, 0);
+            assert.strictEqual(warnings.length, 0);
+        });
+    }
+
+    test("disposes partial resources and reports unexpected initialization failures without rejecting readiness", async () => {
+        seedCachedEnvironment();
+        replaceProperty(vscode.debug, "onDidTerminateDebugSession", () => {
+            throw Object.assign(new Error(`Cannot subscribe in ${tempDir}`), { code: "EACCES" });
+        });
+        const registration = startRegistration();
+        const result = await registration.ready;
+        assert.strictEqual(result.status, "failed");
+        assert.ok(result.status === "failed");
+        assert.ok(result.message.includes("EACCES"));
+        assert.strictEqual(result.message.includes(tempDir), false);
+        assertUnavailable(undefined, "EACCES");
+        assert.strictEqual(watcherDisposed, true);
+    });
+
+    test("ignores an in-flight directory failure after disposal", async () => {
+        const directory = deferred<undefined>();
+        replaceProperty(fs.promises, "mkdir", () => directory.promise);
+        const registration = startRegistration();
+        registration.dispose();
+        directory.reject(Object.assign(new Error("Storage is no longer available"), { code: "EACCES" }));
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.deepStrictEqual(await registration.ready, { status: "disposed" });
+        assert.strictEqual(errors.length, 0);
+        assert.strictEqual(warnings.length, 0);
+        assert.strictEqual(patterns.length, 0);
+    });
+
+    test("does not clean up endpoint data after an in-flight attach completes following disposal", async () => {
+        const registration = startRegistration();
+        await registration.ready;
+        const endpoint = endpointPath();
+        const attached = deferred<boolean>();
+        const requested = deferred<void>();
+        replaceProperty(vscode.debug, "startDebugging", () => {
+            requested.resolve();
+            return attached.promise;
+        });
+        await fs.promises.writeFile(endpoint, JSON.stringify({ client: { port: 54321 } }));
+        created.fire(vscode.Uri.file(endpoint));
+        await requested.promise;
+        registration.dispose();
+        attached.resolve(true);
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.strictEqual(fs.existsSync(endpoint), true);
+        assert.strictEqual(errors.length, 0);
+    });
+
+    test("does not attach an endpoint event queued before disposal", async () => {
+        const registration = startRegistration();
+        await registration.ready;
+        const endpoint = endpointPath();
+        let attachCalls = 0;
+        replaceProperty(vscode.debug, "startDebugging", async () => {
+            attachCalls += 1;
+            return true;
+        });
+        await fs.promises.writeFile(endpoint, JSON.stringify({ client: { port: 54321 } }));
+        created.fire(vscode.Uri.file(endpoint));
+        registration.dispose();
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        assert.strictEqual(attachCalls, 0);
+        assert.strictEqual(fs.existsSync(endpoint), true);
+        assert.strictEqual(errors.length, 0);
+        const caller = new vscode.CancellationTokenSource();
+        cleanups.push(() => caller.dispose());
+        assert.deepStrictEqual(await registration.waitUntilReady(caller.token), { status: "disposed" });
     });
 
     for (const eventType of ["create", "change"]) {

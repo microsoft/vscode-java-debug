@@ -4,12 +4,22 @@ This feature enables configuration-less debugging for Java applications, similar
 
 ## How It Works
 
-When you open a terminal in VS Code with this extension installed, the following environment variables are automatically set:
+Once No-Config Debug initialization finishes, newly opened VS Code terminals receive the following environment contributions:
 
 - `VSCODE_JDWP_ADAPTER_ENDPOINTS`: Path to a communication file for port exchange
 - `PATH`: Includes the `debugjava` command wrapper
 
 Note: `JAVA_TOOL_OPTIONS` is NOT set globally to avoid affecting other Java tools (javac, maven, gradle). Instead, it's set only when you run the `debugjava` command.
+
+### Startup readiness
+
+The extension registers core Java Run/Debug support first, then starts No-Config Debug initialization in the background. Ordinary launch/attach registration and extension activation do not wait for endpoint storage, Java executable discovery, or wrapper permission preparation.
+
+The AI `debug_java_application` tool waits for the shared initialization task before inspecting the launch input, building, creating a terminal, or stopping an existing debug session. Each wait is cancellable and limited to 60 seconds. Cancelling or timing out one invocation does not cancel initialization or another invocation's wait; a later invocation can retry. Initialization failure or extension disposal returns an explanatory result rather than attempting a launch.
+
+This is not lazy terminal setup: preparation still starts during activation. However, activation completing does not guarantee that `debugjava` is ready. Terminals opened before preparation finishes may lack the environment contributions and must be recreated afterward. Existing terminals are not automatically closed or repaired.
+
+On disposal, listeners are released immediately even if initialization is still pending. Already-started filesystem operations or Java extension activation are not forcibly cancelled, but their late completion cannot publish environment updates or register new listeners.
 
 ## Disabling No-Config Debug
 
@@ -104,7 +114,7 @@ If you see "Address already in use", another Java debug session is running. Term
 
 1. Ensure you're running with `debugjava` command (not plain `java`)
 2. Check that the `debugjava` command is available: `which debugjava` (Unix) or `Get-Command debugjava` (PowerShell)
-3. Verify the terminal was opened AFTER the extension activated
+3. Verify the terminal was opened after No-Config Debug initialization finished; recreate an early terminal if its environment is missing the contributions
 4. Check the Debug Console for error messages
 
 ### Node.js Not Found
