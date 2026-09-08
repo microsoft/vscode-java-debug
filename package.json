@@ -1409,7 +1409,7 @@
     "dotenv": "^17.4.2",
     "lodash": "^4.18.0",
     "vscode-extension-telemetry-wrapper": "^0.15.3",
-    "vscode-languageserver-types": "3.18.0",
+    "vscode-languageserver-types": "3.18.3",
     "vscode-tas-client": "^0.1.84"
   },
   "overrides": {
