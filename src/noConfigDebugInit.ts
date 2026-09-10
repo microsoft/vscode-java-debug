@@ -12,6 +12,22 @@ import { applyAppendIfChanged, applyReplaceIfChanged } from "./envVarSync";
 
 const ENV_VAR_COLLECTION_DESCRIPTION = "Java No-Config Debug";
 
+export type NoConfigDebugResult =
+    | { status: "ready" | "disabled" | "disposed" }
+    | { status: "failed"; message: string };
+
+export type NoConfigDebugWaitResult = NoConfigDebugResult | { status: "cancelled" | "timeout" };
+
+export interface NoConfigDebugRegistration extends vscode.Disposable {
+    readonly ready: Promise<NoConfigDebugResult>;
+    waitUntilReady(token: vscode.CancellationToken, timeoutMs?: number): Promise<NoConfigDebugWaitResult>;
+}
+
+interface InitializationLifetime {
+    token: vscode.CancellationToken;
+    disposables: vscode.Disposable[];
+}
+
 function clearNoConfigDebugEnvironment(collection: vscode.EnvironmentVariableCollection): void {
     for (const variable of ["VSCODE_JDWP_ADAPTER_ENDPOINTS", "VSCODE_JAVA_EXEC", "PATH"]) {
         if (collection.get(variable)) {
@@ -33,18 +49,20 @@ function clearNoConfigDebugEnvironment(collection: vscode.EnvironmentVariableCol
  *
  * @param scriptPath - The installed debugjava wrapper path.
  * @param platform - The current operating system platform.
+ * @param token - Stops further permission work when initialization is disposed.
  */
 export async function ensureDebugJavaScriptExecutable(
     scriptPath: string,
     platform: NodeJS.Platform = process.platform,
+    token?: vscode.CancellationToken,
 ): Promise<void> {
-    if (platform === "win32") {
+    if (platform === "win32" || token?.isCancellationRequested) {
         return;
     }
 
     const permissions = (await fs.promises.stat(scriptPath)).mode % 0o10000;
     const ownerPermissions = Math.floor(permissions / 0o100);
-    if (ownerPermissions % 2 === 0) {
+    if (ownerPermissions % 2 === 0 && !token?.isCancellationRequested) {
         await fs.promises.chmod(scriptPath, permissions + 0o100);
     }
 }
@@ -59,24 +77,110 @@ export async function ensureDebugJavaScriptExecutable(
  * @param extPath - The path to the extension directory.
  * @param storageUri - The workspace-specific storage directory provided by VS Code.
  * @param enabled - Whether no-config debugging is enabled for this activation.
- * @returns The registration, or undefined when no-config debugging is unavailable.
+ * @returns An immediately disposable registration with a shared initialization result.
  *
  * Environment Variables:
  * - `VSCODE_JDWP_ADAPTER_ENDPOINTS`: Path to the file containing the debugger adapter endpoint.
  * - `VSCODE_JAVA_EXEC`: Path to the java executable from the Java Language Server (when available).
  * - `PATH`: Appends the path to the noConfigScripts directory.
  */
-export async function registerNoConfigDebug(
+export function registerNoConfigDebug(
     envVarCollection: vscode.EnvironmentVariableCollection,
     extPath: string,
     storageUri: vscode.Uri | undefined,
     enabled: boolean = true,
-): Promise<vscode.Disposable | undefined> {
+): NoConfigDebugRegistration {
+    const cancellation = new vscode.CancellationTokenSource();
+    const lifetime: InitializationLifetime = { token: cancellation.token, disposables: [] };
+    let complete!: (result: NoConfigDebugResult) => void;
+    const ready = new Promise<NoConfigDebugResult>((resolve) => { complete = resolve; });
+    const releaseResources = () => {
+        for (const disposable of lifetime.disposables.splice(0).reverse()) {
+            disposable.dispose();
+        }
+    };
+
+    // Handle the background task here so activation and AI callers never inherit a rejection.
+    void initializeNoConfigDebug(envVarCollection, extPath, storageUri, enabled, lifetime).then(
+        (result) => {
+            if (!lifetime.token.isCancellationRequested) {
+                if (result.status !== "ready") {
+                    releaseResources();
+                }
+                complete(result);
+            }
+        },
+        (error: unknown) => {
+            if (lifetime.token.isCancellationRequested) {
+                return;
+            }
+            releaseResources();
+            clearNoConfigDebugEnvironment(envVarCollection);
+            complete(reportInitializationFailure(error));
+        },
+    );
+
+    return {
+        ready,
+        async waitUntilReady(token, timeoutMs = 60000): Promise<NoConfigDebugWaitResult> {
+            if (token.isCancellationRequested) {
+                return { status: "cancelled" };
+            }
+            let listener: vscode.Disposable | undefined;
+            let timeout: NodeJS.Timeout | undefined;
+            try {
+                const result = await Promise.race([
+                    ready,
+                    new Promise<NoConfigDebugWaitResult>((resolve) => {
+                        listener = token.onCancellationRequested(() => resolve({ status: "cancelled" }));
+                        timeout = setTimeout(() => resolve({ status: "timeout" }), timeoutMs);
+                    }),
+                ]);
+                if (token.isCancellationRequested) {
+                    return { status: "cancelled" };
+                }
+                return lifetime.token.isCancellationRequested ? { status: "disposed" } : result;
+            } finally {
+                listener?.dispose();
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+            }
+        },
+        dispose() {
+            if (lifetime.token.isCancellationRequested) {
+                return;
+            }
+            cancellation.cancel();
+            cancellation.dispose();
+            releaseResources();
+            complete({ status: "disposed" });
+        },
+    };
+}
+
+function reportInitializationFailure(error: unknown): NoConfigDebugResult {
+    // Filesystem error messages can contain user paths; report only the error code.
+    const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "unknown";
+    const message = `Java No-Config Debug initialization failed (${code}).`;
+    sendError({ name: "NoConfigDebugError", message: `[Java Debug] No-config debug initialization failed (${code}).` });
+    vscode.window.showWarningMessage(`${message} Standard Java debugging is still available.`);
+    return { status: "failed", message };
+}
+
+async function initializeNoConfigDebug(
+    envVarCollection: vscode.EnvironmentVariableCollection,
+    extPath: string,
+    storageUri: vscode.Uri | undefined,
+    enabled: boolean,
+    lifetime: InitializationLifetime,
+): Promise<NoConfigDebugResult> {
     const collection = envVarCollection;
+    const { token, disposables } = lifetime;
 
     if (!enabled) {
         clearNoConfigDebugEnvironment(collection);
-        return undefined;
+        return { status: "disabled" };
     }
 
     if (!storageUri) {
@@ -86,7 +190,7 @@ export async function registerNoConfigDebug(
             message: '[Java Debug] No workspace folder found',
         };
         sendError(error);
-        return undefined;
+        return { status: "failed", message: "No workspace folder found for Java No-Config Debug." };
     }
 
     // Workspace storage is stable across reloads and does not require a writable
@@ -97,31 +201,33 @@ export async function registerNoConfigDebug(
 
     try {
         await fs.promises.mkdir(tempDirPath, { recursive: true, mode: 0o700 });
+        if (token.isCancellationRequested) {
+            return { status: "disposed" };
+        }
         // Finish removing stale data before watching or publishing the endpoint.
         await fs.promises.unlink(tempFilePath).catch((error: NodeJS.ErrnoException) => {
             if (error.code !== "ENOENT") {
                 throw error;
             }
         });
+        if (token.isCancellationRequested) {
+            return { status: "disposed" };
+        }
         fileSystemWatcher = vscode.workspace.createFileSystemWatcher(
             new vscode.RelativePattern(tempDirPath, path.basename(tempFilePath)),
         );
+        disposables.push(fileSystemWatcher);
     } catch (error: unknown) {
+        if (token.isCancellationRequested) {
+            return { status: "disposed" };
+        }
         clearNoConfigDebugEnvironment(collection);
-        // Filesystem error messages can contain user paths; report only the error code.
-        const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "unknown";
-        sendError({
-            name: "NoConfigDebugError",
-            message: `[Java Debug] No-config debug initialization failed (${code}).`,
-        });
-        vscode.window.showWarningMessage(
-            "Java No-Config Debug could not be initialized. Standard Java debugging is still available.",
-        );
-        return undefined;
+        return reportInitializationFailure(error);
     }
 
     // Track active debug sessions to prevent duplicates
     const activeDebugSessions = new Set<number>();
+    disposables.push(new vscode.Disposable(() => activeDebugSessions.clear()));
 
     // Handle both file creation and modification to support multiple runs
     const handleEndpointFile = async (uri: vscode.Uri) => {
@@ -130,8 +236,14 @@ export async function registerNoConfigDebug(
         // Add a small delay to ensure file is fully written
         // File system events can fire before write is complete
         await new Promise(resolve => setTimeout(resolve, 100));
+        if (token.isCancellationRequested) {
+            return;
+        }
 
         fs.readFile(filePath, (err, data) => {
+            if (token.isCancellationRequested) {
+                return;
+            }
             if (err) {
                 const error: Error = {
                     name: "NoConfigDebugError",
@@ -193,12 +305,18 @@ export async function registerNoConfigDebug(
                     options,
                 ).then(
                     (started) => {
+                        if (token.isCancellationRequested) {
+                            return;
+                        }
                         if (started) {
                             // Send telemetry only on successful session start with port info
                             sendInfo('', { message: '[Java Debug] No-config debug session started', port: clientPort });
                             // Clean up the endpoint file after successful debug session start (async)
                             if (fs.existsSync(filePath)) {
                                 fs.promises.unlink(filePath).catch((cleanupErr) => {
+                                    if (token.isCancellationRequested) {
+                                        return;
+                                    }
                                     // Cleanup failure is non-critical, just log for debugging
                                     const error: Error = {
                                         name: "NoConfigDebugError",
@@ -218,6 +336,9 @@ export async function registerNoConfigDebug(
                         }
                     },
                     (error) => {
+                        if (token.isCancellationRequested) {
+                            return;
+                        }
                         const attachError: Error = {
                             name: "NoConfigDebugError",
                             message: `[Java Debug] No-config debug failed: attach_error - port ${clientPort} - ${error}`,
@@ -239,17 +360,17 @@ export async function registerNoConfigDebug(
 
     // Listen before publishing the endpoint or awaiting Java/script setup.
     // Terminals surviving a reload may already have the stable endpoint path.
-    const fileCreationEvent = fileSystemWatcher.onDidCreate(handleEndpointFile);
-    const fileChangeEvent = fileSystemWatcher.onDidChange(handleEndpointFile);
+    disposables.push(fileSystemWatcher.onDidCreate(handleEndpointFile));
+    disposables.push(fileSystemWatcher.onDidChange(handleEndpointFile));
 
     // Clean up active sessions when debug session ends
-    const debugSessionEndListener = vscode.debug.onDidTerminateDebugSession((session) => {
+    disposables.push(vscode.debug.onDidTerminateDebugSession((session) => {
         if (session.name === 'Attach to Java (No-Config)' && session.configuration.port) {
             const port = session.configuration.port;
             activeDebugSessions.delete(port);
             // Session end is normal operation, no telemetry needed
         }
-    });
+    }));
 
     // Surface a description in VS Code's environment variable UI so users can
     // see which extension is contributing these variables.
@@ -273,6 +394,9 @@ export async function registerNoConfigDebug(
     // set VSCODE_JAVA_EXEC to avoid churn from transient startup failures.
     try {
         const javaHome = await getJavaHome();
+        if (token.isCancellationRequested) {
+            return { status: "disposed" };
+        }
         if (javaHome) {
             const javaExec = path.join(javaHome, 'bin', 'java');
             applyReplaceIfChanged(collection, 'VSCODE_JAVA_EXEC', javaExec);
@@ -282,26 +406,27 @@ export async function registerNoConfigDebug(
         // The wrapper script will fall back to JAVA_HOME or PATH
     }
 
+    if (token.isCancellationRequested) {
+        return { status: "disposed" };
+    }
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
     const debugJavaScriptPath = path.join(noConfigScriptsDir, "debugjava");
     try {
-        await ensureDebugJavaScriptExecutable(debugJavaScriptPath);
+        await ensureDebugJavaScriptExecutable(debugJavaScriptPath, process.platform, token);
     } catch (err) {
+        if (token.isCancellationRequested) {
+            return { status: "disposed" };
+        }
         const error: Error = {
             name: "NoConfigDebugError",
             message: `[Java Debug] Failed to make debugjava executable: ${err}`,
         };
         sendError(error);
     }
+    if (token.isCancellationRequested) {
+        return { status: "disposed" };
+    }
     applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
 
-    return Promise.resolve(
-        new vscode.Disposable(() => {
-            fileSystemWatcher.dispose();
-            fileCreationEvent.dispose();
-            fileChangeEvent.dispose();
-            debugSessionEndListener.dispose();
-            activeDebugSessions.clear();
-        }),
-    );
+    return { status: "ready" };
 }

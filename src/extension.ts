@@ -13,7 +13,7 @@ import { ENABLE_NO_CONFIG_DEBUG, HCR_EVENT, JAVA_LANGID, TELEMETRY_EVENT, USER_N
 import { NotificationBar } from "./customWidget";
 import { initializeCodeLensProvider, startDebugging } from "./debugCodeLensProvider";
 import { initExpService } from "./experimentationService";
-import { registerNoConfigDebug } from "./noConfigDebugInit";
+import { NoConfigDebugRegistration, registerNoConfigDebug } from "./noConfigDebugInit";
 import { handleHotCodeReplaceCustomEvent, initializeHotCodeReplace, NO_BUTTON, YES_BUTTON } from "./hotCodeReplace";
 import { JavaDebugAdapterDescriptorFactory } from "./javaDebugAdapterDescriptorFactory";
 import { JavaInlineValuesProvider } from "./JavaInlineValueProvider";
@@ -39,20 +39,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<any> {
 
     // Capture once so terminal integration and the AI launch tool both require a reload to change.
     const noConfigDebugEnabled = vscode.workspace.getConfiguration().get<boolean>(ENABLE_NO_CONFIG_DEBUG, true);
-    const noConfigDisposable = await registerNoConfigDebug(
+    const api = await instrumentOperation("activation", initializeExtension)(context);
+    const noConfigDebug = registerNoConfigDebug(
         context.environmentVariableCollection,
         context.extensionPath,
         context.storageUri,
         noConfigDebugEnabled,
     );
-    if (noConfigDisposable) {
-        context.subscriptions.push(noConfigDisposable);
-    }
+    context.subscriptions.push(noConfigDebug);
 
-    // Register Language Model Tools after Java Language Server is ready
-    registerLanguageModelToolsWhenReady(context, noConfigDebugEnabled);
+    registerLanguageModelTools(context, noConfigDebug);
 
-    return instrumentOperation("activation", initializeExtension)(context);
+    return api;
 }
 
 function initializeExtension(_operationId: string, context: vscode.ExtensionContext): any {
@@ -113,11 +111,10 @@ export async function deactivate() {
 const delay = promisify(setTimeout);
 
 /**
- * Register Language Model Tools after Java Language Server is ready.
- * The debug tools depend on JDT.LS for compilation, classpath resolution,
- * and executing debug server commands.
+ * Register tools when the Java extension is installed. The launch tool waits
+ * for No-Config Debug readiness at invocation, not during core activation.
  */
-async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionContext, noConfigDebugEnabled: boolean): Promise<void> {
+function registerLanguageModelTools(context: vscode.ExtensionContext, noConfigDebug: NoConfigDebugRegistration): void {
     // Check if Language Model API is available
     if (!vscode.lm || typeof vscode.lm.registerTool !== 'function') {
         return;
@@ -129,7 +126,7 @@ async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionCont
     }
 
     // Register Language Model Tools for AI-assisted debugging
-    registerLanguageModelTool(context, noConfigDebugEnabled);
+    registerLanguageModelTool(context, noConfigDebug);
     const debugToolsDisposables = registerDebugSessionTools(context);
     context.subscriptions.push(...debugToolsDisposables);
 
