@@ -16,6 +16,17 @@ trigger:
   branches:
     include:
       - main
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - package.json
+      - package-lock.json
+      - .azure-pipelines/ci.yml
+      - .azure-pipelines/npm-cfs.yml
+      - .azure-pipelines/npm-cfs-variables.yml
 extends:
   template: v1/1ES.Unofficial.PipelineTemplate.yml@1esPipelines
   parameters:
@@ -33,8 +44,22 @@ extends:
     stages:
       - stage: Build
         jobs:
+          - job: CFSValidation
+            displayName: Validate dependencies from CFS
+            condition: eq(variables['Build.Reason'], 'PullRequest')
+            steps:
+              - checkout: self
+                fetchTags: false
+              - task: NodeTool@0
+                displayName: Use Node 20.x
+                inputs:
+                  versionSpec: 20.x
+              - template: /.azure-pipelines/npm-cfs.yml@self
+              - script: npm ci --ignore-scripts --prefer-online --cache "$(Agent.TempDirectory)/npm-cache"
+                displayName: Validate npm dependencies from CFS
           - job: Job_1
             displayName: VSCode-Java-Debug-CI
+            condition: ne(variables['Build.Reason'], 'PullRequest')
             templateContext:
               outputs:
                 - output: pipelineArtifact
