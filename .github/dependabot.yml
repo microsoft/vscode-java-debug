@@ -5,27 +5,6 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
-    schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: "production"
-      - dependency-type: "development"
-        update-types:
-          - "version-update:semver-minor"
-          - "version-update:semver-patch"
-    commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(dev-deps)"
-    # CI restores packages from the Central Feed Service, which withholds
-    # upstream versions until they are roughly a week old (measured at ~6.8
-    # days; both the packument entry and the tarball return 404 before then).
-    # Dependabot's built-in cooldown is only 3 days, so bumps otherwise land in
-    # a window where the feed 404s and the build fails. 10 days leaves margin
-    # in case the feed's ingestion lag drifts.
-    cooldown:
-      default-days: 10
   - package-ecosystem: "github-actions"
     directory: "/"
     groups:
