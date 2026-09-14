@@ -12,7 +12,7 @@ import { activate } from "../src/extension";
 import * as languageModelTools from "../src/languageModelTool";
 import * as chatTelemetry from "../src/lmToolTelemetry";
 import * as noConfigDebug from "../src/noConfigDebugInit";
-import { deferred } from "./helpers/deferred";
+import { deferred, withinDeadline } from "./helpers/deferred";
 import { createFakeCollection } from "./helpers/environmentVariableCollection";
 
 suite("No-Config Debug activation", () => {
@@ -56,8 +56,8 @@ suite("No-Config Debug activation", () => {
                     events.push(`no-config:${result.status}`);
                     return result;
                 }),
-                async waitUntilReady() {
-                    assert.fail("Activation must not wait for No-Config Debug readiness");
+                getState() {
+                    return { status: testCase.enabled ? "initializing" : "disabled" };
                 },
                 dispose() {
                     if (!disposed) {
@@ -185,22 +185,6 @@ suite("No-Config Debug activation", () => {
         });
     }
 });
-
-async function withinDeadline<T>(promise: Promise<T>, message: string): Promise<T> {
-    let timeout: NodeJS.Timeout | undefined;
-    try {
-        return await Promise.race([
-            promise,
-            new Promise<never>((_resolve, reject) => {
-                timeout = setTimeout(() => reject(new Error(message)), 500);
-            }),
-        ]);
-    } finally {
-        if (timeout) {
-            clearTimeout(timeout);
-        }
-    }
-}
 
 function createExtension(id: string, extensionPath: string): vscode.Extension<never> {
     return {

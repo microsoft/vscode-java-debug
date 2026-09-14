@@ -10,3 +10,19 @@ export function deferred<T>() {
     });
     return { promise, resolve, reject };
 }
+
+export async function withinDeadline<T>(promise: Promise<T>, message = "Operation did not settle", timeoutMs = 500): Promise<T> {
+    let timeout: NodeJS.Timeout | undefined;
+    try {
+        return await Promise.race([
+            promise,
+            new Promise<never>((_resolve, reject) => {
+                timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+    }
+}

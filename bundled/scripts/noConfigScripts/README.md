@@ -15,7 +15,11 @@ Note: `JAVA_TOOL_OPTIONS` is NOT set globally to avoid affecting other Java tool
 
 The extension registers core Java Run/Debug support first, then starts No-Config Debug initialization in the background. Ordinary launch/attach registration and extension activation do not wait for endpoint storage, Java executable discovery, or wrapper permission preparation.
 
-The AI `debug_java_application` tool waits for the shared initialization task before inspecting the launch input, building, creating a terminal, or stopping an existing debug session. Each wait is cancellable and limited to 60 seconds. Cancelling or timing out one invocation does not cancel initialization or another invocation's wait; a later invocation can retry. Initialization failure or extension disposal returns an explanatory result rather than attempting a launch.
+The AI `debug_java_application` entry is registered immediately. It observes the Java extension's `serverReady()` signal in the background, independently of terminal preparation. Invocation checks both states before inspecting launch inputs, probing Java, recording launch telemetry, building, creating a terminal, or stopping an existing debug session. It never waits for startup or queues a launch.
+
+If JDT LS is not ready, the tool immediately returns `JAVA_NOT_READY`. If Java is ready but terminal preparation is incomplete, it returns `NO_CONFIG_NOT_READY`. Wait for the reported prerequisite before a new invocation; do not retry in a loop or treat readiness as a project-code error. Becoming ready does not automatically launch a previously refused request. Known Java or No-Config initialization failures, disabled integration, cancellation, and disposal return distinct explanations.
+
+The existing `javaLSReady` tool visibility condition remains unchanged. Direct tool calls still receive explicit readiness feedback. Endpoint listeners remain eager rather than waiting for JDT LS, so surviving terminals can submit endpoints while Java starts. Directory preparation and startup cleanup run once per registration, not once per tool invocation.
 
 This is not lazy terminal setup: preparation still starts during activation. However, activation completing does not guarantee that `debugjava` is ready. Terminals opened before preparation finishes may lack the environment contributions and must be recreated afterward. Existing terminals are not automatically closed or repaired.
 

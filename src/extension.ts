@@ -111,8 +111,8 @@ export async function deactivate() {
 const delay = promisify(setTimeout);
 
 /**
- * Register tools when the Java extension is installed. The launch tool waits
- * for No-Config Debug readiness at invocation, not during core activation.
+ * Register tools when the Java extension is installed. The launch tool checks
+ * Java and No-Config readiness at invocation without waiting for initialization.
  */
 function registerLanguageModelTools(context: vscode.ExtensionContext, noConfigDebug: NoConfigDebugRegistration): void {
     // Check if Language Model API is available

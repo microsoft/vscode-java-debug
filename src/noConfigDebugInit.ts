@@ -16,11 +16,12 @@ export type NoConfigDebugResult =
     | { status: "ready" | "disabled" | "disposed" }
     | { status: "failed"; message: string };
 
-export type NoConfigDebugWaitResult = NoConfigDebugResult | { status: "cancelled" | "timeout" };
+export type NoConfigDebugState = NoConfigDebugResult | { status: "initializing" };
 
 export interface NoConfigDebugRegistration extends vscode.Disposable {
+    // Terminal preparation is independent of JDT LS server readiness.
     readonly ready: Promise<NoConfigDebugResult>;
-    waitUntilReady(token: vscode.CancellationToken, timeoutMs?: number): Promise<NoConfigDebugWaitResult>;
+    getState(): NoConfigDebugState;
 }
 
 interface InitializationLifetime {
@@ -92,8 +93,13 @@ export function registerNoConfigDebug(
 ): NoConfigDebugRegistration {
     const cancellation = new vscode.CancellationTokenSource();
     const lifetime: InitializationLifetime = { token: cancellation.token, disposables: [] };
-    let complete!: (result: NoConfigDebugResult) => void;
-    const ready = new Promise<NoConfigDebugResult>((resolve) => { complete = resolve; });
+    let state: NoConfigDebugState = { status: enabled ? "initializing" : "disabled" };
+    let resolveReady!: (result: NoConfigDebugResult) => void;
+    const ready = new Promise<NoConfigDebugResult>((resolve) => { resolveReady = resolve; });
+    const complete = (result: NoConfigDebugResult) => {
+        state = result;
+        resolveReady(result);
+    };
     const releaseResources = () => {
         for (const disposable of lifetime.disposables.splice(0).reverse()) {
             disposable.dispose();
@@ -122,31 +128,7 @@ export function registerNoConfigDebug(
 
     return {
         ready,
-        async waitUntilReady(token, timeoutMs = 60000): Promise<NoConfigDebugWaitResult> {
-            if (token.isCancellationRequested) {
-                return { status: "cancelled" };
-            }
-            let listener: vscode.Disposable | undefined;
-            let timeout: NodeJS.Timeout | undefined;
-            try {
-                const result = await Promise.race([
-                    ready,
-                    new Promise<NoConfigDebugWaitResult>((resolve) => {
-                        listener = token.onCancellationRequested(() => resolve({ status: "cancelled" }));
-                        timeout = setTimeout(() => resolve({ status: "timeout" }), timeoutMs);
-                    }),
-                ]);
-                if (token.isCancellationRequested) {
-                    return { status: "cancelled" };
-                }
-                return lifetime.token.isCancellationRequested ? { status: "disposed" } : result;
-            } finally {
-                listener?.dispose();
-                if (timeout) {
-                    clearTimeout(timeout);
-                }
-            }
-        },
+        getState: () => state,
         dispose() {
             if (lifetime.token.isCancellationRequested) {
                 return;

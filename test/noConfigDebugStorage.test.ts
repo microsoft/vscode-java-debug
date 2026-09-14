@@ -153,6 +153,7 @@ suite("No-Config Debug workspace storage", () => {
     test("does not report a missing workspace when explicitly disabled", async () => {
         const registration = registerNoConfigDebug(collection, extPath, undefined, false);
         cleanups.push(() => registration.dispose());
+        assert.deepStrictEqual(registration.getState(), { status: "disabled" });
         assert.deepStrictEqual(await registration.ready, { status: "disabled" });
         assert.strictEqual(errors.length, 0);
         assert.strictEqual(warnings.length, 0);
@@ -320,70 +321,47 @@ suite("No-Config Debug workspace storage", () => {
         assert.strictEqual(warnings.length, 0);
     });
 
-    test("shares readiness and lets one caller cancel without cancelling initialization", async () => {
+    test("exposes synchronous snapshots of one background initialization", async () => {
         const javaHome = deferred<string>();
         const requested = deferred<void>();
+        let javaRequests = 0;
         replaceProperty(utility, "getJavaHome", () => {
+            javaRequests += 1;
             requested.resolve();
             return javaHome.promise;
         });
         const registration = startRegistration();
-        const first = new vscode.CancellationTokenSource();
-        const second = new vscode.CancellationTokenSource();
-        cleanups.push(() => first.dispose(), () => second.dispose());
+        assert.deepStrictEqual(registration.getState(), { status: "initializing" });
         try {
             await requested.promise;
-            let ready = false;
-            const pending = registration.waitUntilReady(second.token).then((result) => {
-                ready = true;
-                return result;
-            });
-            const cancelled = registration.waitUntilReady(first.token);
-            first.cancel();
-            assert.deepStrictEqual(await cancelled, { status: "cancelled" });
-            assert.strictEqual(ready, false);
+            assert.deepStrictEqual(registration.getState(), { status: "initializing" });
+            assert.deepStrictEqual(registration.getState(), { status: "initializing" });
+            assert.strictEqual(javaRequests, 1);
             assert.strictEqual(watcherDisposed, false);
             assert.strictEqual(collection.get("PATH"), undefined);
 
             javaHome.resolve(path.join(tempDir, "jdk"));
-            assert.deepStrictEqual(await pending, { status: "ready" });
             assert.deepStrictEqual(await registration.ready, { status: "ready" });
+            assert.deepStrictEqual(registration.getState(), { status: "ready" });
             assert.ok(collection.get("PATH"));
             assert.strictEqual(patterns.length, 1);
+            assert.strictEqual(javaRequests, 1);
         } finally {
             javaHome.resolve("");
             await registration.ready;
         }
     });
 
-    test("bounds each wait and allows retrying the same initialization after timeout", async () => {
-        const javaHome = deferred<string>();
-        replaceProperty(utility, "getJavaHome", () => javaHome.promise);
-        const registration = startRegistration();
-        const caller = new vscode.CancellationTokenSource();
-        cleanups.push(() => caller.dispose());
-        try {
-            assert.deepStrictEqual(await registration.waitUntilReady(caller.token, 10), { status: "timeout" });
-            javaHome.resolve(path.join(tempDir, "jdk"));
-            assert.deepStrictEqual(await registration.waitUntilReady(caller.token), { status: "ready" });
-            assert.strictEqual(patterns.length, 1);
-        } finally {
-            javaHome.resolve("");
-            await registration.ready;
-        }
-    });
-
-    test("returns immediately for an already cancelled caller", async () => {
+    test("reports disposal immediately while directory setup remains pending", async () => {
         const directory = deferred<undefined>();
         replaceProperty(fs.promises, "mkdir", () => directory.promise);
         const registration = startRegistration();
-        const caller = new vscode.CancellationTokenSource();
-        cleanups.push(() => caller.dispose());
-        caller.cancel();
-        assert.deepStrictEqual(await registration.waitUntilReady(caller.token), { status: "cancelled" });
+        assert.deepStrictEqual(registration.getState(), { status: "initializing" });
         registration.dispose();
+        assert.deepStrictEqual(registration.getState(), { status: "disposed" });
         directory.resolve(undefined);
         await new Promise((resolve) => setImmediate(resolve));
+        assert.deepStrictEqual(registration.getState(), { status: "disposed" });
         assert.strictEqual(patterns.length, 0);
     });
 
@@ -399,6 +377,7 @@ suite("No-Config Debug workspace storage", () => {
             await requested.promise;
             registration.dispose();
             assert.deepStrictEqual(await registration.ready, { status: "disposed" });
+            assert.deepStrictEqual(registration.getState(), { status: "disposed" });
             pending.resolve(undefined);
             await new Promise((resolve) => setImmediate(resolve));
             assert.strictEqual(patterns.length, 0);
@@ -420,14 +399,12 @@ suite("No-Config Debug workspace storage", () => {
             replaceProperty(vscode.debug, "onDidTerminateDebugSession",
                 () => new vscode.Disposable(() => { sessionListenerDisposed = true; }));
             const registration = startRegistration();
-            const caller = new vscode.CancellationTokenSource();
-            cleanups.push(() => caller.dispose());
-            const waiting = registration.waitUntilReady(caller.token);
             await requested.promise;
             registration.dispose();
             assert.strictEqual(watcherDisposed, true);
             assert.strictEqual(sessionListenerDisposed, true);
-            assert.deepStrictEqual(await waiting, { status: "disposed" });
+            assert.deepStrictEqual(registration.getState(), { status: "disposed" });
+            assert.deepStrictEqual(await registration.ready, { status: "disposed" });
             const calls = { ...collection.__calls };
             if (rejectJavaHome) {
                 javaHome.reject(new Error("Java became unavailable"));
@@ -453,6 +430,7 @@ suite("No-Config Debug workspace storage", () => {
         assert.ok(result.status === "failed");
         assert.ok(result.message.includes("EACCES"));
         assert.strictEqual(result.message.includes(tempDir), false);
+        assert.deepStrictEqual(registration.getState(), result);
         assertUnavailable(undefined, "EACCES");
         assert.strictEqual(watcherDisposed, true);
     });
@@ -506,9 +484,8 @@ suite("No-Config Debug workspace storage", () => {
         assert.strictEqual(attachCalls, 0);
         assert.strictEqual(fs.existsSync(endpoint), true);
         assert.strictEqual(errors.length, 0);
-        const caller = new vscode.CancellationTokenSource();
-        cleanups.push(() => caller.dispose());
-        assert.deepStrictEqual(await registration.waitUntilReady(caller.token), { status: "disposed" });
+        assert.deepStrictEqual(registration.getState(), { status: "disposed" });
+        assert.deepStrictEqual(await registration.ready, { status: "ready" });
     });
 
     for (const eventType of ["create", "change"]) {

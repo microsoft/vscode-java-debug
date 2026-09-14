@@ -178,7 +178,7 @@ vscjava.vscode-java-debug/getDebugSessionInfo()  // Check again - should now be 
 
 ### 2.4 Automatic Cleanup on Restart
 
-**Good news:** The `debugJavaApplication` tool automatically cleans up before starting:
+**Good news:** Once Java and No-Config preparation are ready, the `debugJavaApplication` tool automatically cleans up before starting:
 - Stops any existing Java debug session (avoids JDWP port conflicts)
 - Closes existing "Java Debug" terminals (avoids confusion)
 
@@ -186,7 +186,11 @@ This means you can safely call `debugJavaApplication` again without manually sto
 
 ### 2.5 Fallback: When debugJavaApplication Fails or Times Out
 
-When `debugJavaApplication` returns timeout or failure, follow this recovery workflow:
+If `debugJavaApplication` returns `JAVA_NOT_READY` or `NO_CONFIG_NOT_READY`, no launch was attempted and existing sessions and terminals were left unchanged. Explain the prerequisite to the user or continue independent work, then retry only after readiness changes. Do not poll the launch tool, change project code, read an old terminal as evidence of a new launch failure, or bypass readiness with a terminal launch.
+
+For `JAVA_INIT_FAILED`, `NO_CONFIG_INIT_FAILED`, or `NO_CONFIG_DISABLED`, follow the returned initialization or setting guidance rather than the application-error workflow below.
+
+When `debugJavaApplication` returns an actual launch timeout or failure, follow this recovery workflow:
 
 **Step 1: Check terminal output for errors**
 ```
