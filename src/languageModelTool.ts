@@ -5,6 +5,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ENABLE_NO_CONFIG_DEBUG } from "./constants";
+import { JavaServerReadiness, JavaServerReadinessState, observeJavaServerReadiness } from "./javaServerReadiness";
+import { NoConfigDebugRegistration, NoConfigDebugState } from "./noConfigDebugInit";
 import {
     beginDebugSessionInvocation,
     classifyBreakpoint,
@@ -109,13 +111,48 @@ interface LanguageModelTool<T = any> {
     invoke(options: { input: T }, token: vscode.CancellationToken): Promise<any>;
 }
 
+function getLaunchReadinessMessage(
+    noConfig: NoConfigDebugState,
+    java: JavaServerReadinessState | undefined,
+): string | undefined {
+    switch (noConfig.status) {
+        case "disabled":
+            return `NO_CONFIG_DISABLED: Java No-Config Debug is disabled by ${ENABLE_NO_CONFIG_DEBUG}. `
+                + "To use this tool, enable that setting, reload VS Code, and recreate existing terminals. "
+                + "Standard Java launch/attach debugging remains available.";
+        case "failed":
+            return `NO_CONFIG_INIT_FAILED: ${noConfig.message} `
+                + "Resolve the initialization problem and reload VS Code before retrying. "
+                + "Standard Java launch/attach debugging remains available.";
+        case "disposed":
+            return "NO_CONFIG_DISPOSED: Java No-Config Debug has been disposed. Reload VS Code before retrying this tool.";
+    }
+
+    if (java?.status === "failed") {
+        return `JAVA_INIT_FAILED: ${java.message}`;
+    }
+    if (java?.status === "disposed") {
+        return "NO_CONFIG_DISPOSED: The Java debug launch tool has been disposed. Reload VS Code before retrying.";
+    }
+    if (java?.status !== "ready") {
+        return "JAVA_NOT_READY: JDT LS is not ready. Wait for Java initialization to complete before retrying. "
+            + "In Lightweight mode or with manual project import, switch to Standard mode or import the project first. "
+            + "Do not retry in a loop or change project code to resolve this readiness condition.";
+    }
+    if (noConfig.status === "initializing") {
+        return "NO_CONFIG_NOT_READY: Java No-Config Debug is still preparing its terminal environment. "
+            + "Retry after preparation completes; do not retry in a loop or change project code to resolve this readiness condition.";
+    }
+    return undefined;
+}
+
 /**
  * Registers the Language Model Tool for debugging Java applications.
  * This allows AI assistants to help users debug Java code by invoking the debugjava command.
  */
 export function registerLanguageModelTool(
     context: Pick<vscode.ExtensionContext, "subscriptions">,
-    noConfigDebugEnabled: boolean = true,
+    noConfigDebug: Pick<NoConfigDebugRegistration, "getState">,
 ): vscode.Disposable | undefined {
     // Check if the Language Model API is available
     const lmApi = (vscode as any).lm;
@@ -124,14 +161,22 @@ export function registerLanguageModelTool(
         return undefined;
     }
 
+    let javaReadiness: JavaServerReadiness | undefined;
+    let disposed = false;
     const tool: LanguageModelTool<DebugJavaApplicationInput> = {
         async invoke(options: { input: DebugJavaApplicationInput }, token: vscode.CancellationToken): Promise<any> {
-            if (!noConfigDebugEnabled) {
+            let readinessMessage: string | undefined;
+            if (token.isCancellationRequested) {
+                readinessMessage = "CANCELLED: Operation cancelled by user.";
+            } else if (disposed) {
+                readinessMessage = "NO_CONFIG_DISPOSED: The Java debug launch tool has been disposed. Reload VS Code before retrying.";
+            } else {
+                readinessMessage = getLaunchReadinessMessage(noConfigDebug.getState(), javaReadiness?.getState());
+            }
+            if (readinessMessage) {
                 return new vscode.LanguageModelToolResult([
                     new vscode.LanguageModelTextPart(
-                        `Java No-Config Debug is disabled by ${ENABLE_NO_CONFIG_DEBUG}. `
-                        + "To use this tool, enable that setting, reload VS Code, and recreate existing terminals. "
-                        + "Standard Java launch/attach debugging remains available.",
+                        `${readinessMessage} No build, terminal, or debug session changes were made.`,
                     ),
                 ]);
             }
@@ -209,7 +254,16 @@ export function registerLanguageModelTool(
         }
     };
 
-    const disposable = lmApi.registerTool('debug_java_application', tool);
+    const registration = lmApi.registerTool('debug_java_application', tool);
+    const noConfigState = noConfigDebug.getState();
+    if (noConfigState.status === "initializing" || noConfigState.status === "ready") {
+        javaReadiness = observeJavaServerReadiness();
+    }
+    const disposable = new vscode.Disposable(() => {
+        disposed = true;
+        javaReadiness?.dispose();
+        registration.dispose();
+    });
     context.subscriptions.push(disposable);
     return disposable;
 }

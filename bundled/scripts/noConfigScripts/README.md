@@ -4,12 +4,26 @@ This feature enables configuration-less debugging for Java applications, similar
 
 ## How It Works
 
-When you open a terminal in VS Code with this extension installed, the following environment variables are automatically set:
+Once No-Config Debug initialization finishes, newly opened VS Code terminals receive the following environment contributions:
 
 - `VSCODE_JDWP_ADAPTER_ENDPOINTS`: Path to a communication file for port exchange
 - `PATH`: Includes the `debugjava` command wrapper
 
 Note: `JAVA_TOOL_OPTIONS` is NOT set globally to avoid affecting other Java tools (javac, maven, gradle). Instead, it's set only when you run the `debugjava` command.
+
+### Startup readiness
+
+The extension registers core Java Run/Debug support first, then starts No-Config Debug initialization in the background. Ordinary launch/attach registration and extension activation do not wait for endpoint storage, Java executable discovery, or wrapper permission preparation.
+
+The AI `debug_java_application` entry is registered immediately. It observes the Java extension's `serverReady()` signal in the background, independently of terminal preparation. Invocation checks both states before inspecting launch inputs, probing Java, recording launch telemetry, building, creating a terminal, or stopping an existing debug session. It never waits for startup or queues a launch.
+
+If JDT LS is not ready, the tool immediately returns `JAVA_NOT_READY`. If Java is ready but terminal preparation is incomplete, it returns `NO_CONFIG_NOT_READY`. Wait for the reported prerequisite before a new invocation; do not retry in a loop or treat readiness as a project-code error. Becoming ready does not automatically launch a previously refused request. Known Java or No-Config initialization failures, disabled integration, cancellation, and disposal return distinct explanations.
+
+The existing `javaLSReady` tool visibility condition remains unchanged. Direct tool calls still receive explicit readiness feedback. Endpoint listeners remain eager rather than waiting for JDT LS, so surviving terminals can submit endpoints while Java starts. Directory preparation and startup cleanup run once per registration, not once per tool invocation.
+
+This is not lazy terminal setup: preparation still starts during activation. However, activation completing does not guarantee that `debugjava` is ready. Terminals opened before preparation finishes may lack the environment contributions and must be recreated afterward. Existing terminals are not automatically closed or repaired.
+
+On disposal, listeners are released immediately even if initialization is still pending. Already-started filesystem operations or Java extension activation are not forcibly cancelled, but their late completion cannot publish environment updates or register new listeners.
 
 ## Disabling No-Config Debug
 
@@ -104,7 +118,7 @@ If you see "Address already in use", another Java debug session is running. Term
 
 1. Ensure you're running with `debugjava` command (not plain `java`)
 2. Check that the `debugjava` command is available: `which debugjava` (Unix) or `Get-Command debugjava` (PowerShell)
-3. Verify the terminal was opened AFTER the extension activated
+3. Verify the terminal was opened after No-Config Debug initialization finished; recreate an early terminal if its environment is missing the contributions
 4. Check the Debug Console for error messages
 
 ### Node.js Not Found

@@ -177,13 +177,23 @@ export function getJavaExtensionAPI(progressReporter?: IProgressReporter): Thena
         throw new JavaExtensionNotEnabledError("VS Code Java Extension is not enabled.");
     }
 
-    return new Promise<any>(async (resolve) => {
-        progressReporter?.getCancellationToken().onCancellationRequested(() => {
-            resolve(undefined);
-        });
+    const token = progressReporter?.getCancellationToken();
+    if (token?.isCancellationRequested) {
+        return Promise.resolve(undefined);
+    }
 
-        resolve(await extension.activate());
-    });
+    const activation = extension.activate();
+    if (!token) {
+        return activation;
+    }
+
+    let listener: vscode.Disposable | undefined;
+    return Promise.race([
+        activation,
+        new Promise<undefined>((resolve) => {
+            listener = token.onCancellationRequested(() => resolve(undefined));
+        }),
+    ]).finally(() => listener?.dispose());
 }
 
 export function getJavaExtension(): vscode.Extension<any> | undefined {

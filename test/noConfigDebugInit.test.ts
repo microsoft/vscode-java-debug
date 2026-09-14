@@ -5,8 +5,10 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import * as vscode from "vscode";
 
 import { ensureDebugJavaScriptExecutable } from "../src/noConfigDebugInit";
+import { deferred } from "./helpers/deferred";
 
 suite("No-Config Debug scripts", () => {
     test("the bundled POSIX wrapper uses LF and is executable", async () => {
@@ -102,5 +104,29 @@ suite("No-Config Debug scripts", () => {
         );
 
         await ensureDebugJavaScriptExecutable(missingScriptPath, "win32");
+    });
+
+    test("does not chmod after disposal while stat is pending", async () => {
+        const originalStat = fs.promises.stat;
+        const statDescriptor = Object.getOwnPropertyDescriptor(fs.promises, "stat")!;
+        const originalChmod = fs.promises.chmod;
+        const cancelled = new vscode.CancellationTokenSource();
+        const permissions = deferred<fs.Stats>();
+        let chmodCalls = 0;
+        try {
+            Object.defineProperty(fs.promises, "stat", { ...statDescriptor, value: () => permissions.promise });
+            fs.promises.chmod = async () => { chmodCalls += 1; };
+            const pending = ensureDebugJavaScriptExecutable("debugjava", "linux", cancelled.token);
+            cancelled.cancel();
+            const stat = await originalStat(__filename);
+            stat.mode = 0o644;
+            permissions.resolve(stat);
+            await pending;
+            assert.strictEqual(chmodCalls, 0);
+        } finally {
+            Object.defineProperty(fs.promises, "stat", statDescriptor);
+            fs.promises.chmod = originalChmod;
+            cancelled.dispose();
+        }
     });
 });

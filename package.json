@@ -1017,7 +1017,7 @@
       {
         "name": "debug_java_application",
         "displayName": "Debug Java Application",
-        "modelDescription": "Launch or attach to a Java application in debug mode with automatic compilation and classpath resolution. The tool handles building the project, resolving dependencies, starting the JVM with JDWP enabled, and auto-attaching the VS Code debugger. Use this as the first step to establish a debug session. The debug process runs in the background until stopped. Example usage: Debug a main class ('com.example.Main'), a JAR file ('target/app.jar'), or with program arguments (['--port=8080']).",
+        "modelDescription": "Launch or attach to a Java application in debug mode with automatic compilation and classpath resolution. The tool handles building the project, resolving dependencies, starting the JVM with JDWP enabled, and auto-attaching the VS Code debugger. Use this as the first step to establish a debug session. Returns JAVA_NOT_READY or NO_CONFIG_NOT_READY immediately if startup is incomplete, without attempting or queuing a launch. Retry only after readiness changes; do not poll or change project code for a readiness result. The debug process runs in the background until stopped. Example usage: Debug a main class ('com.example.Main'), a JAR file ('target/app.jar'), or with program arguments (['--port=8080']).",
         "toolReferenceName": "debugJavaApplication",
         "tags": [
           "java",
