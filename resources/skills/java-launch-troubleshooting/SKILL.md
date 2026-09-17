@@ -27,13 +27,16 @@ These language model tools are contributed by the `Debugger for Java` extension 
 1. **Confirm intent.** Is the user trying to *run / start / launch / stop* a Java program (use this skill) or just edit code (do not load this skill)?
 2. **Check existing session.** Call `get_debug_session_info` first. If a session is already running for the target, do not launch a second one.
 3. **Launch.** Call `debug_java_application` with `target` = the fully qualified main class or JAR, and `workspacePath` = the project root containing `pom.xml`, `build.gradle`, or `.classpath`. Let `skipBuild` default to `false` so the tool handles compilation.
-4. **Read the error.** If `debug_java_application` fails, the error message is structured (mainClass missing, classpath unresolved, build failure with line number). Use it to suggest a fix — do not retry with `run_in_terminal`.
+4. **Read the result.** `JAVA_NOT_READY` and `NO_CONFIG_NOT_READY` are startup prerequisites, not project errors: no launch was attempted or queued. Report the prerequisite or continue independent work, and retry only after readiness changes. Do not poll, modify project code, or bypass readiness with `run_in_terminal`. For actual launch errors (mainClass missing, classpath unresolved, build failure with line number), use the reported details to suggest a fix.
 5. **Stop when done.** When the user says "stop", "kill it", or has the answer they need, call `stop_debug_session`.
 
 ## Common Failure Modes
 
 | Symptom from `debug_java_application` | Likely cause | Suggested fix |
 |---|---|---|
+| `JAVA_NOT_READY` | JDT LS has not reported ready, or Standard mode/project import has not started | Wait for Java initialization; in Lightweight/manual-import mode, switch to Standard mode or import the project before retrying |
+| `NO_CONFIG_NOT_READY` | Java is ready but the terminal integration is still being prepared | Retry after preparation completes; do not repeat the call in a loop |
+| `JAVA_INIT_FAILED` / `NO_CONFIG_INIT_FAILED` / `NO_CONFIG_DISABLED` | A startup prerequisite failed or the integration is disabled | Follow the returned initialization or setting guidance, not application-error recovery |
 | `mainClass is not configured` / `mainClass missing` | Project has no `launch.json`, and the file has no `public static void main` | Ask user which class to launch, or generate `launch.json` |
 | `Could not resolve classpath` | Maven/Gradle import has not completed, or `pom.xml` has unresolved dependencies | Wait for Java Language Server import, then ask user to run `Java: Clean Java Language Server Workspace` |
 | `Compilation failed` with file:line | Source code has a compile error | Fix the reported error in the source file, do not retry the launch |
@@ -47,4 +50,4 @@ These language model tools are contributed by the `Debugger for Java` extension 
 
 ## Fallback
 
-If `debug_java_application` returns `Java Language Server not ready` or repeats the same error twice, fall back to `run_in_terminal` with the appropriate `mvn` or `gradle` command and report the raw output to the user. Do not retry the debug tool more than twice.
+For an actual application launch error that repeats twice, fall back to `run_in_terminal` with the appropriate `mvn` or `gradle` command and report the raw output to the user. This fallback does not apply to readiness, initialization, disabled, cancelled, or disposed results. Do not retry the debug tool more than twice for the same application error.

@@ -13,4 +13,6 @@ For Java run/launch/debug/inspection requests, prefer the Java debug language mo
 
 If both apply (e.g. "launch and break on entry of `Main.foo`"), load `java-launch-troubleshooting` first, then `java-debug-inspection` after the session is active.
 
-Fall back to `run_in_terminal` only when `debug_java_application` returns "Java Language Server not ready" or "project not detected".
+If `debug_java_application` returns `JAVA_NOT_READY` or `NO_CONFIG_NOT_READY`, no launch was attempted. Report the startup prerequisite or continue independent work, then retry only after readiness changes. Do not poll, modify project code, or use a terminal launch to bypass readiness. Follow the returned recovery guidance for initialization failures or disabled integration.
+
+Fall back to `run_in_terminal` when `debug_java_application` returns "project not detected".

@@ -167,6 +167,10 @@ Make sure the Java project is properly loaded. Check that:
 
 The `debug_java_application` tool requires `java.debug.settings.enableNoConfigDebug` (enabled by default). If you disable this setting, reload VS Code and recreate existing terminals. The launch tool then returns an explanatory message without running `debugjava`; tools that inspect or control existing debug sessions remain available.
 
+The launch tool checks Java and No-Config readiness without waiting for initialization. `JAVA_NOT_READY` means JDT LS has not reported ready; `NO_CONFIG_NOT_READY` means Java is ready but terminal preparation is incomplete. No build, terminal, or debug session changes are made, and no launch is queued. Report the prerequisite to the user or continue independent work; invoke the tool again only after it becomes ready, rather than polling or changing project code.
+
+`JAVA_INIT_FAILED` and `NO_CONFIG_INIT_FAILED` identify initialization failures, not application failures. Follow their recovery guidance instead of diagnosing output from an older debug terminal or bypassing readiness with a terminal launch. Disabled integration, cancellation, and disposal are also reported explicitly.
+
 Ensure:
 - Your project compiles successfully
 - No other debug session is running
