@@ -1,0 +1,46 @@
+name: Update IssueLens Team Memory
+
+on:
+  pull_request_target:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: 'Merged pull request number to learn from'
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: issuelens-${{ github.repository }}-team-memory-${{ github.event.pull_request.number || inputs.pull_request_number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  team-memory:
+    if: >-
+      ${{ vars.ISSUELENS_TEAM_MEMORY_ENABLED == 'true' &&
+          ((github.event_name == 'workflow_dispatch' &&
+            github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
+           (github.event_name == 'pull_request_target' &&
+            github.event.pull_request.merged == true &&
+            github.event.pull_request.base.ref == github.event.repository.default_branch)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    steps:
+      - name: Maintain IssueLens team memory
+        uses: microsoft/IssueLens/.github/actions/issuelens@49df3d97547069f891a68248be6ed722c2aeca2f
+        with:
+          request-type: team-memory
+          pull-request-number: ${{ inputs.pull_request_number }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          agent-url: ${{ secrets.ISSUELENS_AGENT_URL }}
+          agent-scope: ${{ secrets.ISSUELENS_AGENT_SCOPE }}
+          output-mode: activity
+          summary-mode: status
