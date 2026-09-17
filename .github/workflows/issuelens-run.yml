@@ -1,0 +1,48 @@
+name: Run IssueLens Agent
+
+on:
+  issues:
+    types: [opened, reopened]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to triage'
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: issuelens-${{ github.repository }}-issue-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    if: >-
+      ${{ (github.event_name != 'issue_comment' ||
+           (github.event.issue.pull_request == null &&
+            github.event.sender.type == 'User' &&
+            github.event.comment.user.type == 'User')) &&
+          (github.event_name != 'workflow_dispatch' ||
+           github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: read
+      id-token: write
+    steps:
+      - name: Run IssueLens issue loop
+        uses: microsoft/IssueLens/.github/actions/issuelens@49df3d97547069f891a68248be6ed722c2aeca2f
+        with:
+          request-type: issue-loop
+          issue-number: ${{ inputs.issue_number }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          agent-url: ${{ secrets.ISSUELENS_AGENT_URL }}
+          agent-scope: ${{ secrets.ISSUELENS_AGENT_SCOPE }}
+          output-mode: activity
+          summary-mode: status

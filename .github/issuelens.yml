@@ -1,0 +1,11 @@
+version: 1
+instructions:
+  labeling:
+    path: .github/issuelens/labels.md
+  duplicate_detection:
+    path: .github/issuelens/duplicates.md
+  assignment:
+    path: .github/issuelens/assignment.md
+  team_memory:
+    path: .github/issuelens/team-memory.md
+    wiki_repository: microsoft/vscode-java-pack
