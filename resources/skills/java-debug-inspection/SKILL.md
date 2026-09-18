@@ -53,6 +53,8 @@ These language model tools are contributed by the `Debugger for Java` extension 
 - The program is a non-Java language → do not load this skill
 - The user is editing source code without an active debug session → do nothing
 
-## Fallback
+## Failure handling
 
-If a tool returns "Java Language Server not ready" or repeats the same error twice, report the raw error to the user and stop calling debug tools for the current turn. Do not retry more than twice.
+After the first failed inspection or control operation, report the error and diagnose its cause rather than automatically repeating the failed operation. Read-only diagnosis is allowed, but do not enter a polling loop.
+
+Do not relaunch the application or fall back to terminal launch commands to recover from an inspection error. For launch failures or timeouts, follow `java-launch-troubleshooting`: a new launch attempt requires an identified cause to be fixed or an explicit user retry request, with an existing-session check first.
