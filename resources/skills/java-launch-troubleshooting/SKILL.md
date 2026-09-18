@@ -27,7 +27,7 @@ These language model tools are contributed by the `Debugger for Java` extension 
 1. **Confirm intent.** Is the user trying to *run / start / launch / stop* a Java program (use this skill) or just edit code (do not load this skill)?
 2. **Check existing session.** Call `get_debug_session_info` first. If a session is already running for the target, do not launch a second one.
 3. **Launch.** Call `debug_java_application` with `target` = the fully qualified main class or JAR, and `workspacePath` = the project root containing `pom.xml`, `build.gradle`, or `.classpath`. Let `skipBuild` default to `false` so the tool handles compilation.
-4. **Read the error.** If `debug_java_application` fails, the error message is structured (mainClass missing, classpath unresolved, build failure with line number). Use it to suggest a fix — do not retry with `run_in_terminal`.
+4. **Stop on the first failure or timeout.** Report the returned result and diagnose the cause. Do not automatically retry `debug_java_application` or relaunch through `run_in_terminal`. A timeout means startup is unconfirmed, not necessarily failed; follow the failure-handling rules below.
 5. **Stop when done.** When the user says "stop", "kill it", or has the answer they need, call `stop_debug_session`.
 
 ## Common Failure Modes
@@ -36,7 +36,7 @@ These language model tools are contributed by the `Debugger for Java` extension 
 |---|---|---|
 | `mainClass is not configured` / `mainClass missing` | Project has no `launch.json`, and the file has no `public static void main` | Ask user which class to launch, or generate `launch.json` |
 | `Could not resolve classpath` | Maven/Gradle import has not completed, or `pom.xml` has unresolved dependencies | Wait for Java Language Server import, then ask user to run `Java: Clean Java Language Server Workspace` |
-| `Compilation failed` with file:line | Source code has a compile error | Fix the reported error in the source file, do not retry the launch |
+| `Compilation failed` with file:line | Source code has a compile error | Fix the reported compilation error before attempting another launch; follow the failure-handling rules below |
 | `Project not detected` | `workspacePath` does not contain a build file | Re-check `workspacePath`; for multi-module projects, use the module root, not the repo root |
 
 ## When NOT to Use This Skill
@@ -45,6 +45,10 @@ These language model tools are contributed by the `Debugger for Java` extension 
 - The user is already inside a live debug session and wants to inspect variables, evaluate expressions, walk the stack, step, or set / remove breakpoints → use `java-debug-inspection` instead, do not re-launch
 - The program is a non-Java language → do not load this skill
 
-## Fallback
+## Failure handling
 
-If `debug_java_application` returns `Java Language Server not ready` or repeats the same error twice, fall back to `run_in_terminal` with the appropriate `mvn` or `gradle` command and report the raw output to the user. Do not retry the debug tool more than twice.
+After the first launch failure or timeout, stop automatic launch attempts, including when Java Language Server is not ready or the project is not detected. Do not use `run_in_terminal`, `mvn`, `gradle`, or raw `java` commands to bypass this rule.
+
+You may inspect existing errors and terminal output. After a timeout, you may call `get_debug_session_info` once to check whether the original launch has become active. Do not enter a polling loop or terminate the original launch merely because the wait expired.
+
+A new launch attempt is allowed only after fixing an identified cause or when the user explicitly requests a retry. Before that attempt, check for an existing session; do not replace an active session without explicit restart intent.

@@ -58,6 +58,13 @@ const CONSTANTS = {
     MAX_FILE_SEARCH_DEPTH: 10
 };
 
+const LAUNCH_FAILURE_GUIDANCE = '\n\nDo not automatically retry debug_java_application or start the program again '
+    + 'through a terminal command. Report the result and diagnose the cause first. '
+    + 'After a timeout, you may check get_debug_session_info once and inspect existing terminal output; '
+    + 'do not enter a polling loop or stop the original launch just because the wait expired. '
+    + 'Only start a new attempt after fixing an identified cause or when the user explicitly requests a retry. '
+    + 'Before a new attempt, check whether the original launch has become active to avoid replacing it.';
+
 // ----------------------------------------------------------------------------
 // Process-wide context probed lazily on first use. The value is constant for
 // the VS Code session lifetime, so we cache it.
@@ -131,7 +138,8 @@ export function registerLanguageModelTool(
                     new vscode.LanguageModelTextPart(
                         `Java No-Config Debug is disabled by ${ENABLE_NO_CONFIG_DEBUG}. `
                         + "To use this tool, enable that setting, reload VS Code, and recreate existing terminals. "
-                        + "Standard Java launch/attach debugging remains available.",
+                        + "Standard Java launch/attach debugging remains available."
+                        + LAUNCH_FAILURE_GUIDANCE,
                     ),
                 ]);
             }
@@ -152,18 +160,18 @@ export function registerLanguageModelTool(
 
             try {
                 const result = await debugJavaApplication(options.input, token, guard);
-                if (!result.success) {
-                    outcome = result.status === 'timeout' ? 'timeout' : 'failure';
-                    errorCategory = result.success ? undefined : classifyError(result.message);
-                } else if (result.status === 'timeout') {
+                if (result.status === 'timeout') {
                     outcome = 'timeout';
                     errorCategory = 'timeout';
+                } else if (!result.success) {
+                    outcome = 'failure';
+                    errorCategory = classifyError(result.message);
                 }
 
                 // Format the message for AI - use simple text, not JSON
                 const message = result.success
                     ? `✓ ${result.message}`
-                    : `✗ ${result.message}`;
+                    : `✗ ${result.message}${LAUNCH_FAILURE_GUIDANCE}`;
 
                 // Return result in the expected format - simple text part
                 return new (vscode as any).LanguageModelToolResult([
@@ -177,7 +185,7 @@ export function registerLanguageModelTool(
                 const errorMessage = error instanceof Error ? error.message : String(error);
 
                 return new (vscode as any).LanguageModelToolResult([
-                    new (vscode as any).LanguageModelTextPart(`✗ Debug failed: ${errorMessage}`)
+                    new (vscode as any).LanguageModelTextPart(`✗ Debug failed: ${errorMessage}${LAUNCH_FAILURE_GUIDANCE}`)
                 ]);
             } finally {
                 recordToolInvocation({
@@ -417,18 +425,8 @@ async function debugJavaApplication(
                         status: 'timeout',
                         message: `⏳ Debug session not yet detected for ${targetInfo} after `
                                + `${CONSTANTS.SESSION_WAIT_TIMEOUT / 1000} seconds.\n\n`
-                               + `This is often transient — the JVM may still be starting up (large `
-                               + `projects, cold class-loading, or remote workspaces can need additional `
-                               + `time). Telemetry shows that retrying a timed-out launch succeeds for `
-                               + `the majority of cases.\n\n`
-                               + `Recommended next actions (in order):\n`
-                               + `1. Call debug_java_application again — most timeout cases recover on retry.\n`
-                               + `2. Call get_debug_session_info() to check whether the session has since `
-                               + `become active.\n`
-                               + `3. If retrying still times out, inspect terminal '${terminal.name}' for `
-                               + `compilation errors, ClassNotFoundException, NoClassDefFoundError, or `
-                               + `other startup failures.\n`
-                               + `4. Verify the target class name and classpath are correct, then retry.`
+                               + `Startup is unconfirmed, not necessarily failed. The original command may `
+                               + `still be running in terminal '${terminal.name}'.`
                                + `${warningNote}`,
                         terminalName: terminal.name
                     });
@@ -480,20 +478,12 @@ async function debugJavaApplication(
         guard?.markOutcomeRecorded();
 
         return {
-            success: true,
+            success: false,
             status: 'timeout',
             message: `⏳ Debug command sent for ${targetInfo}; session not yet detected within `
                    + `${CONSTANTS.SMART_POLLING_MAX_WAIT / 1000} seconds.\n\n`
-                   + `This is often transient — the application may still be starting in terminal `
-                   + `'${terminal.name}'. Telemetry shows that retrying or polling for status is more `
-                   + `likely to succeed than treating this as a permanent failure.\n\n`
-                   + `Recommended next actions (in order):\n`
-                   + `1. Call get_debug_session_info() to check whether the session has since become active.\n`
-                   + `2. Call debug_java_application again — most timeout cases recover on retry. `
-                   + `In the input arguments, set "waitForSession": true (JSON object syntax) to `
-                   + `extend the wait window for slow-starting apps.\n`
-                   + `3. If retrying still times out, inspect terminal '${terminal.name}' for compilation `
-                   + `errors or startup failures, then retry.${warningNote}`,
+                   + `Startup is unconfirmed, not necessarily failed. The original command may `
+                   + `still be running in terminal '${terminal.name}'.${warningNote}`,
             terminalName: terminal.name
         };
     }

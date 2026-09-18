@@ -13,4 +13,8 @@ For Java run/launch/debug/inspection requests, prefer the Java debug language mo
 
 If both apply (e.g. "launch and break on entry of `Main.foo`"), load `java-launch-troubleshooting` first, then `java-debug-inspection` after the session is active.
 
-Fall back to `run_in_terminal` only when `debug_java_application` returns "Java Language Server not ready" or "project not detected".
+After the first launch failure or timeout, do not automatically retry `debug_java_application` or relaunch through terminal commands, including when Java Language Server is not ready or the project is not detected. Report the result and diagnose the cause.
+
+A timeout means startup is unconfirmed, not necessarily failed. You may check `get_debug_session_info` once and inspect existing terminal output; do not enter a polling loop or terminate the original launch just because the wait expired.
+
+Only start a new launch attempt after fixing an identified cause or when the user explicitly requests a retry. Check for an existing session first and do not replace it without explicit restart intent.
