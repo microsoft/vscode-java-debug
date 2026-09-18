@@ -36,7 +36,7 @@ These language model tools are contributed by the `Debugger for Java` extension 
 |---|---|---|
 | `mainClass is not configured` / `mainClass missing` | Project has no `launch.json`, and the file has no `public static void main` | Ask user which class to launch, or generate `launch.json` |
 | `Could not resolve classpath` | Maven/Gradle import has not completed, or `pom.xml` has unresolved dependencies | Wait for Java Language Server import, then ask user to run `Java: Clean Java Language Server Workspace` |
-| `Compilation failed` with file:line | Source code has a compile error | Fix the reported error in the source file, do not retry the launch |
+| `Compilation failed` with file:line | Source code has a compile error | Fix the reported compilation error before attempting another launch; follow the failure-handling rules below |
 | `Project not detected` | `workspacePath` does not contain a build file | Re-check `workspacePath`; for multi-module projects, use the module root, not the repo root |
 
 ## When NOT to Use This Skill
