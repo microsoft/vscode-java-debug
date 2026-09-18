@@ -197,9 +197,13 @@ suite("Language Model Tool launch retry policy", () => {
         const manifest = JSON.parse(await fs.promises.readFile(path.join(repoRoot, "package.json"), "utf8"));
         const launchTool = manifest.contributes.languageModelTools.find((tool: { name: string }) =>
             tool.name === "debug_java_application");
-        assert.ok(launchTool.modelDescription.includes("After the first failure or timeout, do not automatically retry"));
-        assert.ok(launchTool.modelDescription.includes("or relaunch through terminal commands"));
-        assert.ok(launchTool.modelDescription.includes("explicit user retry request"));
+        const description: string = launchTool.modelDescription;
+        assert.ok(description.length <= 350, "Keep the tool description concise; details belong in skills and results");
+        assert.ok(description.includes("On failure/timeout, diagnose; no automatic retry or terminal relaunch"));
+        assert.ok(description.includes("Timeout is unconfirmed startup"));
+        assert.ok(description.includes("check status once, do not stop the launch"));
+        assert.ok(description.includes("Retry only after fixing the cause or explicit user request"));
+        assert.ok(description.includes("check existing sessions first"));
 
         for (const file of [
             path.join("resources", "instruments", "javaDebugContext.instructions.md"),

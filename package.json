@@ -1017,7 +1017,7 @@
       {
         "name": "debug_java_application",
         "displayName": "Debug Java Application",
-        "modelDescription": "Launch or attach to a Java application in debug mode with automatic compilation and classpath resolution. The tool handles building the project, resolving dependencies, starting the JVM with JDWP enabled, and auto-attaching the VS Code debugger. Use this as the first step to establish a debug session. The debug process runs in the background until stopped. After the first failure or timeout, do not automatically retry or relaunch through terminal commands. Diagnose and report the result. A timeout means startup is unconfirmed; check session status once if needed, without polling or stopping the original launch. A new attempt requires an identified cause to be fixed or an explicit user retry request; check for an existing session first. Example usage: Debug a main class ('com.example.Main'), a JAR file ('target/app.jar'), or with program arguments (['--port=8080']).",
+        "modelDescription": "Build and debug Java with automatic classpath resolution. On failure/timeout, diagnose; no automatic retry or terminal relaunch. Timeout is unconfirmed startup: check status once, do not stop the launch. Retry only after fixing the cause or explicit user request; check existing sessions first.",
         "toolReferenceName": "debugJavaApplication",
         "tags": [
           "java",
