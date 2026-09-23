@@ -1,8 +1,8 @@
 name: Update IssueLens Team Memory
 
 on:
-  pull_request_target:
-    types: [closed]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       pull_request_number:
@@ -13,27 +13,24 @@ on:
 permissions: {}
 
 concurrency:
-  group: issuelens-${{ github.repository }}-team-memory-${{ github.event.pull_request.number || inputs.pull_request_number || github.run_id }}
+  group: issuelens-${{ github.repository }}-team-memory-${{ github.event.after || inputs.pull_request_number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   team-memory:
     if: >-
       ${{ vars.ISSUELENS_TEAM_MEMORY_ENABLED == 'true' &&
-          ((github.event_name == 'workflow_dispatch' &&
-            github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
-           (github.event_name == 'pull_request_target' &&
-            github.event.pull_request.merged == true &&
-            github.event.pull_request.base.ref == github.event.repository.default_branch)) }}
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: read
       id-token: write
     steps:
       - name: Maintain IssueLens team memory
-        uses: microsoft/IssueLens/.github/actions/issuelens@49df3d97547069f891a68248be6ed722c2aeca2f
+        uses: microsoft/IssueLens/.github/actions/issuelens@2b5317815e15179899014a02c41678620ce2d390
         with:
           request-type: team-memory
           pull-request-number: ${{ inputs.pull_request_number }}
