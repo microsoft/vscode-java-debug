@@ -25,8 +25,11 @@ suite("No-Config Debug workspace storage", () => {
     let changed: vscode.EventEmitter<vscode.Uri>;
     let watcherDisposed: boolean;
     let cleanups: (() => void)[];
+    let javaActive: boolean;
+    let javaApi: { javaRequirement?: { java_home?: string } };
+    let javaLookups: number;
 
-    function replaceProperty<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
+    function replaceProperty(target: object, key: string, value: unknown): void {
         const descriptor = Object.getOwnPropertyDescriptor(target, key);
         assert.ok(descriptor);
         Object.defineProperty(target, key, { ...descriptor, value });
@@ -86,14 +89,36 @@ suite("No-Config Debug workspace storage", () => {
         watcherDisposed = false;
         cleanups.push(() => created.dispose(), () => changed.dispose());
 
-        replaceProperty(utility, "getJavaHome", async () => path.join(tempDir, "jdk"));
-        replaceProperty(telemetry, "sendError", (error) => { errors.push(error); });
+        javaActive = true;
+        javaApi = { javaRequirement: { java_home: path.join(tempDir, "jdk") } };
+        javaLookups = 0;
+        replaceProperty(vscode.extensions, "getExtension", (id: string) => {
+            assert.strictEqual(id, "redhat.java");
+            javaLookups += 1;
+            return {
+                id: "redhat.java",
+                extensionPath: extPath,
+                extensionUri: vscode.Uri.file(extPath),
+                packageJSON: {},
+                extensionKind: vscode.ExtensionKind.Workspace,
+                get isActive() { return javaActive; },
+                get exports() {
+                    assert.ok(javaActive, "Must not access exports before Java activates");
+                    return javaApi;
+                },
+                activate() {
+                    assert.fail("Terminal preparation must not activate Java");
+                },
+            };
+        });
+        replaceProperty(utility, "getJavaHome", async () => assert.fail("Terminal preparation must not request Java activation"));
+        replaceProperty(telemetry, "sendError", (error: Error) => { errors.push(error); });
         replaceProperty(telemetry, "sendInfo", () => { });
         replaceProperty(vscode.window, "showWarningMessage", async (message: string) => {
             warnings.push(message);
             return undefined;
         });
-        replaceProperty(vscode.workspace, "createFileSystemWatcher", (pattern) => {
+        replaceProperty(vscode.workspace, "createFileSystemWatcher", (pattern: vscode.GlobPattern) => {
             patterns.push(pattern);
             return {
                 ignoreCreateEvents: false,
@@ -126,6 +151,7 @@ suite("No-Config Debug workspace storage", () => {
         replaceProperty(fs.promises, "stat", async () => unexpectedSetup());
         replaceProperty(fs.promises, "chmod", async () => unexpectedSetup());
         replaceProperty(utility, "getJavaHome", async () => unexpectedSetup());
+        replaceProperty(vscode.extensions, "getExtension", unexpectedSetup);
         replaceProperty(vscode.workspace, "createFileSystemWatcher", unexpectedSetup);
         replaceProperty(vscode.debug, "onDidTerminateDebugSession", unexpectedSetup);
 
@@ -235,6 +261,75 @@ suite("No-Config Debug workspace storage", () => {
         assert.deepStrictEqual(collection.__calls, initialCalls);
     });
 
+    test("prepares terminals without Java activation and discovers a later activation without reinitializing storage", async function() {
+        this.timeout(5000);
+        javaActive = false;
+        assert.ok(await register());
+        assert.ok(collection.get("PATH"));
+        assert.ok(collection.get("VSCODE_JDWP_ADAPTER_ENDPOINTS"));
+        assert.strictEqual(collection.get("VSCODE_JAVA_EXEC"), undefined);
+        assert.strictEqual(errors.length, 0);
+        const initialCalls = { ...collection.__calls };
+
+        let executableUpdated: () => void = () => { };
+        const updated = new Promise<void>((resolve) => { executableUpdated = resolve; });
+        const originalReplace = collection.replace.bind(collection);
+        replaceProperty(collection, "replace", (
+            variable: string, value: string, options?: vscode.EnvironmentVariableMutatorOptions,
+        ) => {
+            originalReplace(variable, value, options);
+            if (variable === "VSCODE_JAVA_EXEC") {
+                executableUpdated();
+            }
+        });
+        javaActive = true;
+        await updated;
+        assert.strictEqual(collection.get("VSCODE_JAVA_EXEC")?.value, path.join(tempDir, "jdk", "bin", "java"));
+        assert.strictEqual(patterns.length, 1);
+        assert.strictEqual(collection.__calls.append, initialCalls.append);
+        assert.strictEqual(collection.__calls.replace, initialCalls.replace + 1);
+        const lookupsAfterActivation = javaLookups;
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+        assert.strictEqual(javaLookups, lookupsAfterActivation, "Stop observation after Java activates");
+    });
+
+    test("preserves the cached Java executable and stops observation on disposal", async function() {
+        this.timeout(5000);
+        seedCachedEnvironment();
+        javaActive = false;
+        const registration = await register();
+        assert.ok(registration);
+        assert.strictEqual(collection.get("VSCODE_JAVA_EXEC")?.value, "old-java");
+        registration.dispose();
+        const callsAfterDisposal = { ...collection.__calls };
+        const lookupsAfterDisposal = javaLookups;
+        javaActive = true;
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+        assert.strictEqual(javaLookups, lookupsAfterDisposal);
+        assert.deepStrictEqual(collection.__calls, callsAfterDisposal);
+    });
+
+    test("preserves fallback when active Java has no tooling home", async () => {
+        seedCachedEnvironment();
+        javaApi = {};
+        assert.ok(await register());
+        assert.strictEqual(collection.get("VSCODE_JAVA_EXEC")?.value, "old-java");
+        assert.ok(collection.get("PATH"));
+        assert.strictEqual(errors.length, 0);
+    });
+
+    test("reports Java API discovery errors without blocking terminal preparation or exposing paths", async () => {
+        seedCachedEnvironment();
+        replaceProperty(vscode.extensions, "getExtension", () => { throw new Error(`Private path: ${tempDir}`); });
+        assert.ok(await register());
+        assert.strictEqual(collection.get("VSCODE_JAVA_EXEC")?.value, "old-java");
+        assert.ok(collection.get("PATH"));
+        assert.strictEqual(errors.length, 1);
+        assert.ok(errors[0].message.includes("Could not initialize integration"));
+        assert.strictEqual(errors[0].message.includes(tempDir), false);
+        assert.strictEqual(warnings.length, 0);
+    });
+
     test("isolates endpoints between workspace storage directories", async () => {
         assert.ok(await register());
         const firstEndpoint = endpointPath();
@@ -261,7 +356,7 @@ suite("No-Config Debug workspace storage", () => {
         await fs.promises.mkdir(path.dirname(endpoint), { recursive: true });
         await fs.promises.writeFile(endpoint, JSON.stringify({ client: { port: 12345 } }));
         const originalCreateWatcher = vscode.workspace.createFileSystemWatcher;
-        replaceProperty(vscode.workspace, "createFileSystemWatcher", (pattern) => {
+        replaceProperty(vscode.workspace, "createFileSystemWatcher", (pattern: vscode.GlobPattern) => {
             assert.strictEqual(fs.existsSync(endpoint), false);
             return originalCreateWatcher(pattern);
         });
@@ -312,7 +407,7 @@ suite("No-Config Debug workspace storage", () => {
     });
 
     for (const eventType of ["create", "change"]) {
-        test(`handles endpoint ${eventType} events while Java-home resolution is pending`, async function() {
+        test(`handles endpoint ${eventType} events before Java activates`, async function() {
             this.timeout(5000);
             const endpoint = path.join(storageUri.fsPath, ".noConfigDebugAdapterEndpoints", "endpoint.txt");
             if (eventType === "change") {
@@ -320,26 +415,15 @@ suite("No-Config Debug workspace storage", () => {
                 collection.replace("VSCODE_JDWP_ADAPTER_ENDPOINTS", endpoint);
             }
 
-            let releaseJavaHome: (javaHome: string) => void = () => { };
-            const pendingJavaHome = new Promise<string>((resolve) => { releaseJavaHome = resolve; });
-            let notifyJavaHomeRequested: () => void = () => { };
-            const javaHomeRequested = new Promise<void>((resolve) => { notifyJavaHomeRequested = resolve; });
-            replaceProperty(utility, "getJavaHome", () => {
-                notifyJavaHomeRequested();
-                return pendingJavaHome;
-            });
-
-            let registrationFinished = false;
-            const registration = register().then((disposable) => {
-                registrationFinished = true;
-                return disposable;
-            });
+            javaActive = false;
+            assert.ok(await register());
             let timeout: NodeJS.Timeout | undefined;
             try {
-                await javaHomeRequested;
                 assert.strictEqual(endpointPath(), endpoint);
                 const attached = new Promise<vscode.DebugConfiguration | string>((resolve, reject) => {
-                    replaceProperty(vscode.debug, "startDebugging", async (_folder, debugConfiguration) => {
+                    replaceProperty(vscode.debug, "startDebugging", async (
+                        _folder: vscode.WorkspaceFolder | undefined, debugConfiguration: vscode.DebugConfiguration | string,
+                    ) => {
                         resolve(debugConfiguration);
                         return true;
                     });
@@ -348,7 +432,7 @@ suite("No-Config Debug workspace storage", () => {
                 const originalUnlink = fs.promises.unlink;
                 let finishCleanup: () => void = () => { };
                 const cleanedUp = new Promise<void>((resolve) => { finishCleanup = resolve; });
-                replaceProperty(fs.promises, "unlink", async (file) => {
+                replaceProperty(fs.promises, "unlink", async (file: fs.PathLike) => {
                     await originalUnlink(file);
                     finishCleanup();
                 });
@@ -360,7 +444,7 @@ suite("No-Config Debug workspace storage", () => {
                 assert.ok(typeof configuration !== "string");
                 assert.strictEqual(configuration.request, "attach");
                 assert.strictEqual(configuration.port, 54321);
-                assert.strictEqual(registrationFinished, false);
+                assert.strictEqual(javaActive, false);
                 await cleanedUp;
                 assert.strictEqual(fs.existsSync(endpoint), false);
                 assert.strictEqual(errors.length, 0);
@@ -368,8 +452,6 @@ suite("No-Config Debug workspace storage", () => {
                 if (timeout) {
                     clearTimeout(timeout);
                 }
-                releaseJavaHome(path.join(tempDir, "jdk"));
-                await registration;
             }
         });
     }
@@ -378,14 +460,16 @@ suite("No-Config Debug workspace storage", () => {
         assert.ok(await register());
         const endpoint = endpointPath();
         const configurations: (vscode.DebugConfiguration | string)[] = [];
-        replaceProperty(vscode.debug, "startDebugging", async (_folder, configuration) => {
+        replaceProperty(vscode.debug, "startDebugging", async (
+            _folder: vscode.WorkspaceFolder | undefined, configuration: vscode.DebugConfiguration | string,
+        ) => {
             configurations.push(configuration);
             return true;
         });
         const originalUnlink = fs.promises.unlink;
         let finishCleanup: () => void = () => { };
         const cleanedUp = new Promise<void>((resolve) => { finishCleanup = resolve; });
-        replaceProperty(fs.promises, "unlink", async (file) => {
+        replaceProperty(fs.promises, "unlink", async (file: fs.PathLike) => {
             await originalUnlink(file);
             finishCleanup();
         });
