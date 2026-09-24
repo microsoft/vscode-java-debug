@@ -11,6 +11,10 @@ When you open a terminal in VS Code with this extension installed, the following
 
 Note: `JAVA_TOOL_OPTIONS` is NOT set globally to avoid affecting other Java tools (javac, maven, gradle). Instead, it's set only when you run the `debugjava` command.
 
+Terminal setup does not activate or wait for Language Support for Java. Opening the debug configuration picker in a non-Java workspace therefore does not start Java just to discover its executable. If Java support is already active, its tooling JDK is contributed as `VSCODE_JAVA_EXEC`; otherwise, the integration observes activation in the background and adds it when available. Observation stops after activation or when the integration is disposed.
+
+The wrapper keeps its selection order: `JAVA_HOME`, then `VSCODE_JAVA_EXEC`, then `java` on `PATH`. An existing cached `VSCODE_JAVA_EXEC` is retained while Java support is unavailable. Terminals created before Java executable discovery must be recreated to receive the new value. Actual Java launch/attach still requires Java support and may activate it.
+
 ## Disabling No-Config Debug
 
 No-Config Debug is enabled by default. To opt out for all workspaces or just the current workspace, add this to the corresponding VS Code settings:

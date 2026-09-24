@@ -31,7 +31,6 @@ import { initializeThreadOperations } from "./threadOperations";
 import * as utility from "./utility";
 import { registerBreakpointCommands } from "./breakpointCommands";
 import { registerVariableMenuCommands } from "./variableMenu";
-import { promisify } from "util";
 
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
     await initializeFromJsonFile(context.asAbsolutePath("./package.json"));
@@ -97,7 +96,7 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
     initializeHotCodeReplace(context);
     initializeCodeLensProvider(context);
     initializeThreadOperations(context);
-    subscribeToJavaExtensionEvents();
+    subscribeToJavaExtensionEvents(context);
 
     context.subscriptions.push(vscode.languages.registerInlineValuesProvider("java", new JavaInlineValuesProvider()));
     return {
@@ -109,8 +108,6 @@ function initializeExtension(_operationId: string, context: vscode.ExtensionCont
 export async function deactivate() {
     await disposeTelemetryWrapper();
 }
-
-const delay = promisify(setTimeout);
 
 /**
  * Register Language Model Tools after Java Language Server is ready.
@@ -157,22 +154,11 @@ async function registerLanguageModelToolsWhenReady(context: vscode.ExtensionCont
     }
 }
 
-async function subscribeToJavaExtensionEvents(): Promise<void> {
-    const javaExt = vscode.extensions.getExtension("redhat.java");
-    if (!javaExt) {
-       return;
-    }
-
-    // wait javaExt to activate
-    const timeout = 30 * 60 * 1000; // wait 30 min at most
-    let count = 0;
-    while (!javaExt.isActive && count < timeout) {
-       await delay(1000);
-       count += 1000;
-    }
-
-    if (javaExt.isActive) {
-        javaExt.exports?.onDidSourceInvalidate?.((event: any) => {
+function subscribeToJavaExtensionEvents(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(utility.onDidActivateJavaExtension((api: {
+        onDidSourceInvalidate?: vscode.Event<{ affectedRootPaths?: string[] }>;
+    } | undefined) => {
+        const subscription = api?.onDidSourceInvalidate?.((event) => {
             if (event?.affectedRootPaths?.length) {
                 const activeDebugSession = vscode.debug.activeDebugSession;
                 if (activeDebugSession?.type === "java") {
@@ -182,7 +168,10 @@ async function subscribeToJavaExtensionEvents(): Promise<void> {
                 }
             }
         });
-    }
+        if (subscription) {
+            context.subscriptions.push(subscription);
+        }
+    }));
 }
 
 function registerDebugEventListener(context: vscode.ExtensionContext) {

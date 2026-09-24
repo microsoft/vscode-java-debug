@@ -2,12 +2,12 @@
 // Licensed under the MIT license.
 
 import { CancellationToken, commands, DocumentLink, DocumentLinkProvider, DocumentSelector,
-    env, ExtensionContext, languages, Position, ProviderResult, Range, TextDocument, Uri,
+    env, Event, ExtensionContext, languages, Position, ProviderResult, Range, TextDocument, Uri,
     window, workspace } from "vscode";
 import { instrumentOperationAsVsCodeCommand, sendInfo } from "vscode-extension-telemetry-wrapper";
 import { resolveSourceUri } from "./languageServerPlugin";
 import { parseJavaStackFrame } from "./stackFrameParser";
-import { getJavaExtensionAPI, isJavaExtEnabled, ServerMode } from "./utility";
+import { onDidActivateJavaExtension, ServerMode } from "./utility";
 
 const ANALYZE_STACK_TRACE_COMMAND = "java.debug.analyzeStackTrace";
 const NAVIGATE_TO_STACK_FRAME_COMMAND = "_java.debug.navigateToStackFrame";
@@ -177,16 +177,14 @@ export function registerStackTraceLinkProvider(context: ExtensionContext): void 
 }
 
 function registerLinkProviderWhenReady(context: ExtensionContext): void {
-    // Without the Java language server, frames cannot be resolved to source - nothing to linkify.
-    if (!isJavaExtEnabled()) {
-        return;
-    }
-
     const doRegister = () => context.subscriptions.push(
         languages.registerDocumentLinkProvider(STACK_TRACE_DOCUMENT_SELECTOR, new JavaStackTraceLinkProvider()),
     );
 
-    getJavaExtensionAPI().then((api) => {
+    context.subscriptions.push(onDidActivateJavaExtension((api: {
+        serverMode: string;
+        onDidServerModeChange: Event<string>;
+    } | undefined) => {
         if (!api) {
             return;
         }
@@ -205,5 +203,5 @@ function registerLinkProviderWhenReady(context: ExtensionContext): void {
             // Already in Standard mode.
             doRegister();
         }
-    });
+    }));
 }

@@ -62,6 +62,8 @@ The debugger will automatically attach. See [No-Config Debug Documentation](bund
 
 No-Config Debug is enabled by default. To disable the terminal integration and the AI `debug_java_application` tool, set `"java.debug.settings.enableNoConfigDebug": false`, reload VS Code, and recreate existing terminals. Standard Java launch/attach debugging, including F5 and Run/Debug CodeLens, remains available.
 
+Preparing the terminal integration does not start or wait for the Java language extension. The wrapper uses `JAVA_HOME`, then `VSCODE_JAVA_EXEC` when available, then `java` on `PATH`. If Java support activates later, recreate an existing terminal to use the newly discovered Java executable.
+
 ## AI-Assisted Debugging
 
 When using GitHub Copilot Chat, you can now ask AI to help you debug Java applications! The extension provides a Language Model Tool that enables natural language debugging:

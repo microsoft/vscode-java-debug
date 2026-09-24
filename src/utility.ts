@@ -177,17 +177,67 @@ export function getJavaExtensionAPI(progressReporter?: IProgressReporter): Thena
         throw new JavaExtensionNotEnabledError("VS Code Java Extension is not enabled.");
     }
 
-    return new Promise<any>(async (resolve) => {
-        progressReporter?.getCancellationToken().onCancellationRequested(() => {
-            resolve(undefined);
-        });
+    const token = progressReporter?.getCancellationToken();
+    if (token?.isCancellationRequested) {
+        return Promise.resolve(undefined);
+    }
 
-        resolve(await extension.activate());
-    });
+    const activation = extension.activate();
+    if (!token) {
+        return activation;
+    }
+
+    let listener: vscode.Disposable | undefined;
+    return Promise.race([
+        activation,
+        new Promise<undefined>((resolve) => {
+            listener = token.onCancellationRequested(() => resolve(undefined));
+        }),
+    ]).finally(() => listener?.dispose());
 }
 
 export function getJavaExtension(): vscode.Extension<any> | undefined {
     return vscode.extensions.getExtension(JAVA_EXTENSION_ID);
+}
+
+export function onDidActivateJavaExtension<T>(listener: (api: T) => void): vscode.Disposable {
+    let disposed = false;
+    let timer: NodeJS.Timeout | undefined;
+    const update = (): boolean => {
+        if (disposed) {
+            return true;
+        }
+        try {
+            const extension = vscode.extensions.getExtension<T>(JAVA_EXTENSION_ID);
+            if (!extension?.isActive) {
+                return false;
+            }
+            listener(extension.exports);
+        } catch {
+            sendError({
+                name: "JavaExtensionError",
+                message: "Could not initialize integration with the active Java extension.",
+            });
+        }
+        return true;
+    };
+
+    // VS Code has no extension-activation event. Observe without activating Java,
+    // including when the first Java file is opened much later in this workspace.
+    if (!update()) {
+        timer = setInterval(() => {
+            if (update()) {
+                clearInterval(timer);
+            }
+        }, 1000);
+        timer.unref();
+    }
+    return new vscode.Disposable(() => {
+        disposed = true;
+        if (timer) {
+            clearInterval(timer);
+        }
+    });
 }
 
 export function isJavaExtEnabled(): boolean {

@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { sendInfo, sendError } from "vscode-extension-telemetry-wrapper";
-import { getJavaHome } from "./utility";
+import { onDidActivateJavaExtension } from "./utility";
 import { buildNoConfigPathAppendValue } from "./pathUtil";
 import { applyAppendIfChanged, applyReplaceIfChanged } from "./envVarSync";
 
@@ -237,7 +237,7 @@ export async function registerNoConfigDebug(
         });
     };
 
-    // Listen before publishing the endpoint or awaiting Java/script setup.
+    // Listen before publishing the endpoint or awaiting script setup.
     // Terminals surviving a reload may already have the stable endpoint path.
     const fileCreationEvent = fileSystemWatcher.onDidCreate(handleEndpointFile);
     const fileChangeEvent = fileSystemWatcher.onDidChange(handleEndpointFile);
@@ -267,21 +267,6 @@ export async function registerNoConfigDebug(
     // only in the debugjava wrapper scripts (debugjava.ps1, debugjava.bat, debugjava)
     applyReplaceIfChanged(collection, 'VSCODE_JDWP_ADAPTER_ENDPOINTS', tempFilePath);
 
-    // Try to get Java executable from Java Language Server
-    // This ensures we use the same Java version as the project is compiled with.
-    // If detection fails or returns nothing, we deliberately keep any previously
-    // set VSCODE_JAVA_EXEC to avoid churn from transient startup failures.
-    try {
-        const javaHome = await getJavaHome();
-        if (javaHome) {
-            const javaExec = path.join(javaHome, 'bin', 'java');
-            applyReplaceIfChanged(collection, 'VSCODE_JAVA_EXEC', javaExec);
-        }
-    } catch (error) {
-        // If we can't get Java from Language Server, that's okay
-        // The wrapper script will fall back to JAVA_HOME or PATH
-    }
-
     const noConfigScriptsDir = path.join(extPath, 'bundled', 'scripts', 'noConfigScripts');
     const debugJavaScriptPath = path.join(noConfigScriptsDir, "debugjava");
     try {
@@ -294,9 +279,16 @@ export async function registerNoConfigDebug(
         sendError(error);
     }
     applyAppendIfChanged(collection, 'PATH', buildNoConfigPathAppendValue(noConfigScriptsDir));
+    const javaExecutableSync = onDidActivateJavaExtension((api: { javaRequirement?: { java_home?: string } } | undefined) => {
+        const javaHome = api?.javaRequirement?.java_home;
+        if (javaHome) {
+            applyReplaceIfChanged(collection, "VSCODE_JAVA_EXEC", path.join(javaHome, "bin", "java"));
+        }
+    });
 
     return Promise.resolve(
         new vscode.Disposable(() => {
+            javaExecutableSync.dispose();
             fileSystemWatcher.dispose();
             fileCreationEvent.dispose();
             fileChangeEvent.dispose();
