@@ -58,6 +58,26 @@ const CONSTANTS = {
     MAX_FILE_SEARCH_DEPTH: 10
 };
 
+const SEARCH_SKIPPED_DIRECTORIES = new Set([
+    '.git',
+    '.gradle',
+    '.idea',
+    '.vscode',
+    'bin',
+    'build',
+    'classes',
+    'dist',
+    'generated',
+    'generated-sources',
+    'node_modules',
+    'out',
+    'target',
+]);
+
+function shouldSkipSearchDirectory(name: string): boolean {
+    return SEARCH_SKIPPED_DIRECTORIES.has(name);
+}
+
 const LAUNCH_FAILURE_GUIDANCE = '\n\nDo not automatically retry debug_java_application or start the program again '
     + 'through a terminal command. Report the result and diagnose the cause first. '
     + 'After a timeout, you may check get_debug_session_info once and inspect existing terminal output; '
@@ -923,14 +943,14 @@ function findJavaFile(dir: string, className: string, depth: number = 0): string
         const files = fs.readdirSync(dir);
 
         for (const file of files) {
+            if (shouldSkipSearchDirectory(file)) {
+                continue;
+            }
+
             const filePath = path.join(dir, file);
             const stat = fs.statSync(filePath);
 
             if (stat.isDirectory()) {
-                // Skip common non-source directories
-                if (file === 'node_modules' || file === '.git' || file === 'target' || file === 'build') {
-                    continue;
-                }
                 const found = findJavaFile(filePath, className, depth + 1);
                 if (found) {
                     return found;
@@ -972,6 +992,10 @@ function hasClassFiles(dir: string, depth: number = 0): boolean {
     try {
         const files = fs.readdirSync(dir);
         for (const file of files) {
+            if (shouldSkipSearchDirectory(file)) {
+                continue;
+            }
+
             const filePath = path.join(dir, file);
             const stat = fs.statSync(filePath);
 
