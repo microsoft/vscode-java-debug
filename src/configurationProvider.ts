@@ -490,12 +490,22 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         const excludes: Map<string, boolean> = new Map<string, boolean>();
         for (const p of paths) {
             if (p.startsWith("!")) {
-                let exclude = p.substr(1);
+                let exclude = p.slice(1);
+                let isDirect: boolean;
+
+                if (/[\\/]$/.test(exclude)) {
+                    exclude = exclude.slice(0, -1);
+                    isDirect = true;
+                } else {
+                    isDirect = this.isFilePath(exclude);
+                }
+
                 if (!path.isAbsolute(exclude)) {
                     exclude = path.join(folder?.uri.fsPath || "", exclude);
                 }
+
                 // use Uri to normalize the fs path
-                excludes.set(vscode.Uri.file(exclude).fsPath, this.isFilePath(exclude));
+                excludes.set(vscode.Uri.file(exclude).fsPath, isDirect);
                 continue;
             }
 
@@ -503,12 +513,12 @@ export class JavaDebugConfigurationProvider implements vscode.DebugConfiguration
         }
 
         return result.filter((r) => {
-            for (const [excludedPath, isFile] of excludes.entries()) {
-                if (isFile && r === excludedPath) {
+            for (const [excludedPath, isDirect] of excludes.entries()) {
+                if (isDirect && stripTrailingSeparators(r) === stripTrailingSeparators(excludedPath)) {
                     return false;
                 }
 
-                if (!isFile && r.startsWith(excludedPath)) {
+                if (!isDirect && r.startsWith(excludedPath)) {
                     return false;
                 }
             }
@@ -822,6 +832,22 @@ async function updateDebugSettings(event?: vscode.ConfigurationChangeEvent) {
             console.log("Cannot update debug settings.", err);
         }
     }
+}
+
+/**
+ * Removes trailing path separators for comparison, leaving filesystem roots
+ * such as "/", "\\", or "C:\\" unchanged (including Windows drive roots when
+ * running on POSIX).
+ */
+function stripTrailingSeparators(fsPath: string): string {
+    if (!fsPath || fsPath === "/" || fsPath === "\\" || fsPath === path.parse(fsPath).root) {
+        return fsPath;
+    }
+    // Windows drive root, recognized even when the host platform is POSIX.
+    if (/^[A-Za-z]:[\\/]$/.test(fsPath)) {
+        return fsPath;
+    }
+    return fsPath.replace(/[\\/]+$/, "");
 }
 
 function needsBuildWorkspace(): boolean {
