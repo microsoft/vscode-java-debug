@@ -62,3 +62,51 @@ Since we have checked in a valid [launch.json](https://github.com/Microsoft/java
 ## Pull Requests
 Before we can accept a pull request from you, you'll need to sign a [Contributor License Agreement (CLA)](https://github.com/Microsoft/vscode/wiki/Contributor-License-Agreement). It is an automated process and you only need to do it once.
 To enable us to quickly review and accept your pull requests, always create one pull request per issue and [link the issue in the pull request](https://github.com/blog/957-introducing-issue-mentions).
+
+## Team-memory workflow setup
+
+`.github/workflows/team-memory-post-merge.yml` queues requests to
+[`team-memory-coordinator.yml` in Java Pack](https://github.com/microsoft/vscode-java-pack/actions/workflows/team-memory-coordinator.yml)
+on its `main` branch. The coordinator serializes shared-wiki maintenance and owns
+agent invocation, source validation, and final receipt validation. This source
+workflow does not invoke the agent or write the wiki.
+
+Automatic requests retain the existing source variable
+`ISSUELENS_TEAM_MEMORY_ENABLED == 'true'`. Only ordinary pushes to this
+repository's default branch (`main`) qualify: the workflow revision must match
+the pushed commit, and branch creation, deletion, and forced pushes are excluded.
+Keep the source workflow path unchanged because coordinator validation checks it.
+
+Before merging this migration with the existing opt-in enabled, configure these
+new caller credentials in `microsoft/vscode-java-debug`:
+
+| Setting | Purpose |
+| --- | --- |
+| Variable `ISSUELENS_DISPATCH_APP_CLIENT_ID` | Client ID of a dedicated dispatch GitHub App. |
+| Secret `ISSUELENS_DISPATCH_APP_PRIVATE_KEY` | Private key of that dispatch App. |
+
+Install the dispatch App only on `microsoft/vscode-java-pack`, with **Contents:
+read** and **Actions: write**. The workflow requests an installation token scoped
+to that repository and those permissions; token revocation remains enabled.
+The source `GITHUB_TOKEN` cannot dispatch across repositories. Do not reuse the
+hosted IssueLens App key or the coordinator's separate source-read credentials.
+Merging switches enabled source runs to queue dispatch, so missing caller
+credentials fail the run rather than falling back to direct invocation.
+
+External maintenance also requires Java Pack's existing coordinator opt-in and
+its separate `ISSUELENS_SOURCE_READ_APP_CLIENT_ID` and
+`ISSUELENS_SOURCE_READ_APP_PRIVATE_KEY` secrets. That App must have **Actions:
+read**, **Contents: read**, and **Pull requests: read** access to this allowlisted
+source. A successful Java Pack own-repository run does not verify external-source
+authentication. These are rollout prerequisites; this change does not configure
+Apps, credentials, or live variables.
+
+The request contains five string fields: `source_repository`, `source_run_id`,
+`source_run_attempt`, `push_before`, and `push_after`. The coordinator verifies the
+source run and head SHA; `push_before` is an authorized reconciliation ancestor,
+not attested original-event provenance. Dispatch acceptance confirms neither
+coordinator completion nor a wiki update. Inspect coordinator runs before
+retrying a failed or uncertain dispatch; the dispatcher does not retry.
+For manual merged-PR maintenance, use **Run workflow** in the central coordinator
+with `source_repository=microsoft/vscode-java-debug` and `pull_request_number`.
+There is no local manual path that bypasses the queue.
