@@ -1,43 +1,46 @@
-name: Update IssueLens Team Memory
+name: Queue IssueLens Team Memory
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      pull_request_number:
-        description: 'Merged pull request number to learn from'
-        required: true
-        type: string
 
 permissions: {}
-
-concurrency:
-  group: issuelens-${{ github.repository }}-team-memory-${{ github.event.after || inputs.pull_request_number || github.run_id }}
-  cancel-in-progress: false
 
 jobs:
   team-memory:
     if: >-
-      ${{ vars.ISSUELENS_TEAM_MEMORY_ENABLED == 'true' &&
-          github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
-          (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+      vars.ISSUELENS_TEAM_MEMORY_ENABLED == 'true' &&
+      github.repository == 'microsoft/vscode-java-debug' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      github.event_name == 'push' &&
+      github.workflow_sha == github.sha &&
+      github.event.created == false &&
+      github.event.deleted == false &&
+      github.event.forced == false
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      pull-requests: read
-      id-token: write
+    timeout-minutes: 10
     steps:
-      - name: Maintain IssueLens team memory
-        uses: microsoft/IssueLens/.github/actions/issuelens@2b5317815e15179899014a02c41678620ce2d390
+      - name: Get coordinator dispatch token
+        id: dispatch-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          request-type: team-memory
-          pull-request-number: ${{ inputs.pull_request_number }}
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          agent-url: ${{ secrets.ISSUELENS_AGENT_URL }}
-          agent-scope: ${{ secrets.ISSUELENS_AGENT_SCOPE }}
-          output-mode: activity
-          summary-mode: status
+          client-id: ${{ vars.ISSUELENS_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ISSUELENS_DISPATCH_APP_PRIVATE_KEY }}
+          owner: microsoft
+          repositories: vscode-java-pack
+          permission-contents: read
+          permission-actions: write
+
+      - name: Queue team-memory request
+        uses: microsoft/IssueLens/.github/actions/queue-team-memory@a81d2d96167fc0e69ac631c2edc85f858e693289
+        with:
+          dispatch-token: ${{ steps.dispatch-token.outputs.token }}
+          coordinator-repository: microsoft/vscode-java-pack
+          coordinator-workflow: team-memory-coordinator.yml
+          coordinator-ref: main
+          workflow-inputs: >-
+            {"source_repository":"${{ github.repository }}",
+             "source_run_id":"${{ github.run_id }}",
+             "source_run_attempt":"${{ github.run_attempt }}",
+             "push_before":"${{ github.event.before }}",
+             "push_after":"${{ github.sha }}"}
