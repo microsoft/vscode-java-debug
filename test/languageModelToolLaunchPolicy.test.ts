@@ -3,6 +3,7 @@
 
 import * as assert from "assert";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import * as telemetry from "vscode-extension-telemetry-wrapper";
@@ -123,6 +124,33 @@ suite("Language Model Tool launch retry policy", () => {
         assert.strictEqual(text.includes("most timeout cases recover on retry"), false);
         assert.strictEqual(text.includes("Call debug_java_application again"), false);
     }
+
+    test("ignores generated build directories when resolving simple class names", async () => {
+        const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "java-debug-class-detection-"));
+        const sourceFile = path.join(tempRoot, "src", "main", "java", "com", "example", "App.java");
+        const generatedFile = path.join(tempRoot, "build", "generated", "App.java");
+
+        fs.mkdirSync(path.dirname(sourceFile), { recursive: true });
+        fs.mkdirSync(path.dirname(generatedFile), { recursive: true });
+
+        fs.writeFileSync(sourceFile, "package com.example;\npublic class App {}\n");
+        fs.writeFileSync(generatedFile, "public class App {}\n");
+
+        try {
+            const text = await invoke({
+                target: "App",
+                workspacePath: tempRoot,
+                skipBuild: true,
+                classpath: tempRoot,
+            });
+
+            assert.ok(text.includes("Debug session started") || text.includes("Startup is unconfirmed, not necessarily failed"));
+            assert.ok(!text.includes("Could not auto-detect package name"));
+            assert.strictEqual(commandsSent, 1);
+        } finally {
+            fs.rmSync(tempRoot, { recursive: true, force: true });
+        }
+    });
 
     for (const waitForSession of [false, true]) {
         test(`reports unconfirmed startup without relaunching (waitForSession=${waitForSession})`, async () => {
