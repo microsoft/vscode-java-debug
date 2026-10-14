@@ -6,20 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.60.0 - 2026-10-14
 ### Added
-- Linkify Java stack traces in untitled documents and `.log` files, and add an Analyze Stack Trace command. [#1657](https://github.com/microsoft/vscode-java-debug/pull/1657).
-- Add Copilot chat skills and instructions for Java debugging, and show language model tools only when the required Java and debug session context is available. [#1643](https://github.com/microsoft/vscode-java-debug/pull/1643).
 - Add `java.debug.settings.enableNoConfigDebug` to disable terminal integration and the AI launch tool without affecting standard Java launch/attach debugging. [#1690](https://github.com/microsoft/vscode-java-debug/pull/1690).
 
-### Changed
-- Diagnose AI launch failures and timeouts instead of recommending automatic retries or terminal relaunches. [#1701](https://github.com/microsoft/vscode-java-debug/pull/1701).
-- Update dependencies and declare the supported Node.js versions as `20 || >=22`.
-
 ### Fixed
-- Avoid activating the Java language extension during debug configuration discovery and terminal integration setup. [#1704](https://github.com/microsoft/vscode-java-debug/pull/1704).
-- Isolate No-Config Debug initialization failures from other debugger features. [#1690](https://github.com/microsoft/vscode-java-debug/pull/1690).
-- Fix PATH separators and unnecessary terminal restart prompts for No-Config Debug. [#1641](https://github.com/microsoft/vscode-java-debug/pull/1641), [#1648](https://github.com/microsoft/vscode-java-debug/pull/1648).
-- Preserve the executable permission of `debugjava` on POSIX systems. [#1663](https://github.com/microsoft/vscode-java-debug/pull/1663).
-- Harden language model tool telemetry against PII leaks and fix duplicate class name detection counts. [#1644](https://github.com/microsoft/vscode-java-debug/pull/1644), [#1651](https://github.com/microsoft/vscode-java-debug/pull/1651).
+- Prevent No-Config Debug initialization failures from disabling other debugger features. [#1690](https://github.com/microsoft/vscode-java-debug/pull/1690).
+- Fix incorrect PATH concatenation for the `debugjava` command and unnecessary terminal restart prompts after reloading VS Code. [#1641](https://github.com/microsoft/vscode-java-debug/pull/1641), [#1648](https://github.com/microsoft/vscode-java-debug/pull/1648).
+- Fix `debugjava` not being executable on POSIX systems. [#1663](https://github.com/microsoft/vscode-java-debug/pull/1663).
 
 ## 0.59.0 - 2026-04-09
 ### Added
@@ -708,4 +700,3 @@ Thank [Thad House](https://github.com/ThadHouse) and [Julien Russo](https://gith
 - Callstacks
 - Threads
 - Debug console
-
