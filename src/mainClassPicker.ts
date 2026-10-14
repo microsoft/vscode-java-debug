@@ -83,20 +83,21 @@ class MainClassPicker {
             return options[0];
         }
 
-        // Sort the Main Class options with the recently used timestamp.
-        options.sort((a: IMainClassOption, b: IMainClassOption) => {
+        // Sort the Main Class options with the recently used timestamp without mutating the caller's
+        // array, and cache the active editor path so large result sets avoid repeated filesystem work.
+        const sortedOptions = [...options].sort((a: IMainClassOption, b: IMainClassOption) => {
             return this.getMRUTimestamp(b) - this.getMRUTimestamp(a);
         });
 
-        const mostRecentlyUsedOption: IMainClassOption | undefined = (options.length && this.contains(options[0])) ? options[0] : undefined;
+        const activeEditor: TextEditor | undefined = window.activeTextEditor;
+        const currentActiveFile: string | undefined = _.get(activeEditor, "document.uri.fsPath");
+        const mostRecentlyUsedOption: IMainClassOption | undefined = (sortedOptions.length && this.contains(sortedOptions[0])) ? sortedOptions[0] : undefined;
         const isMostRecentlyUsed = (option: IMainClassOption): boolean => {
             return !!mostRecentlyUsedOption
                 && mostRecentlyUsedOption.mainClass === option.mainClass
                 && mostRecentlyUsedOption.projectName === option.projectName;
         };
         const isFromActiveEditor = (option: IMainClassOption): boolean => {
-            const activeEditor: TextEditor | undefined = window.activeTextEditor;
-            const currentActiveFile: string | undefined = _.get(activeEditor, "document.uri.fsPath");
             if (option.filePath && currentActiveFile) {
                 return path.relative(option.filePath, currentActiveFile) === "";
             }
@@ -110,12 +111,12 @@ class MainClassPicker {
         // then the Main Class from Active Editor as second,
         // finally other Main Class.
         const adjustedOptions: IMainClassOption[] = [];
-        options.forEach((option: IMainClassOption) => {
+        sortedOptions.forEach((option: IMainClassOption) => {
             if (isPrivileged(option)) {
                 adjustedOptions.push(option);
             }
         });
-        options.forEach((option: IMainClassOption) => {
+        sortedOptions.forEach((option: IMainClassOption) => {
             if (!isPrivileged(option)) {
                 adjustedOptions.push(option);
             }
