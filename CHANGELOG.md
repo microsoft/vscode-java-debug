@@ -4,6 +4,15 @@ All notable changes to the "vscode-java-debugger" extension will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.60.0 - 2026-10-14
+### Added
+- Add `java.debug.settings.enableNoConfigDebug` to disable terminal integration and the AI launch tool without affecting standard Java launch/attach debugging. [#1690](https://github.com/microsoft/vscode-java-debug/pull/1690).
+
+### Fixed
+- Prevent No-Config Debug initialization failures from disabling other debugger features. [#1690](https://github.com/microsoft/vscode-java-debug/pull/1690).
+- Fix incorrect PATH concatenation for the `debugjava` command and unnecessary terminal restart prompts after reloading VS Code. [#1641](https://github.com/microsoft/vscode-java-debug/pull/1641), [#1648](https://github.com/microsoft/vscode-java-debug/pull/1648).
+- Fix `debugjava` not being executable on POSIX systems. [#1663](https://github.com/microsoft/vscode-java-debug/pull/1663).
+
 ## 0.59.0 - 2026-04-09
 ### Added
 - Support pause all threads when hit breakpoints. [#1603](https://github.com/microsoft/vscode-java-debug/pull/1603).
@@ -691,4 +700,3 @@ Thank [Thad House](https://github.com/ThadHouse) and [Julien Russo](https://gith
 - Callstacks
 - Threads
 - Debug console
-
