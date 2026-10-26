@@ -73,17 +73,17 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 		if (process.platform === 'win32') {
 
 			// attributes columns are in alphabetic order!
-			const CMD_PAT = /^(.*)\s+([0-9]+)\.[0-9]+[+-][0-9]+\s+([0-9]+)\s+([0-9]+)$/;
+			const CMD_PAT = /^(.*)\s+([0-9]+)\s+([0-9]+)$/;
 
-			const wmic = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'wbem', 'WMIC.exe');
-			proc = spawn(wmic, [ 'process', 'get', 'CommandLine,CreationDate,ParentProcessId,ProcessId' ]);
+			const command = 'Get-CimInstance Win32_Process | ForEach-Object { "$($_.CommandLine) $($_.ParentProcessId) $($_.ProcessId)" }';
+			const powershell = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+			proc = spawn(powershell, [ '-Command', command ]);
 			proc.stdout.setEncoding('utf8');
 			proc.stdout.on('data', lines(line => {
 				let matches = CMD_PAT.exec(line.trim());
-				if (matches && matches.length === 5) {
-					const pid = Number(matches[4]);
-					const ppid = Number(matches[3]);
-					const date = Number(matches[2]);
+				if (matches && matches.length === 4) {
+					const pid = Number(matches[3]);
+					const ppid = Number(matches[2]);
 					let args = matches[1].trim();
 					if (!isNaN(pid) && !isNaN(ppid) && args) {
 						let command = args;
@@ -102,7 +102,7 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 								args = '';
 							}
 						}
-						one(pid, ppid, command, args, date);
+						one(pid, ppid, command, args);
 					}
 				}
 			}));
