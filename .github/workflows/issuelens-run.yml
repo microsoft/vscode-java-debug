@@ -35,7 +35,7 @@ jobs:
       id-token: write
     steps:
       - name: Run IssueLens issue loop
-        uses: microsoft/IssueLens/.github/actions/issuelens@main
+        uses: microsoft/IssueLens/.github/actions/issuelens@c431d42dddf4e6bf20329b0ac96dbd8a4bf04006
         with:
           request-type: issue-loop
           issue-number: ${{ inputs.issue_number }}
