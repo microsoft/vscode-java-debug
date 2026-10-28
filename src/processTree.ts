@@ -69,43 +69,64 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 	return new Promise((resolve, reject) => {
 
 		let proc: ChildProcessWithoutNullStreams;
+		let onComplete: (() => void) | undefined;
 
 		if (process.platform === 'win32') {
 
-			// attributes columns are in alphabetic order!
-			const CMD_PAT = /^(.*)\s+([0-9]+)\.[0-9]+[+-][0-9]+\s+([0-9]+)\s+([0-9]+)$/;
-
-			const wmic = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'wbem', 'WMIC.exe');
-			proc = spawn(wmic, [ 'process', 'get', 'CommandLine,CreationDate,ParentProcessId,ProcessId' ]);
+			const powershell = join(process.env['WINDIR'] || 'C:\\Windows',
+				'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+			const script = [
+				"$ErrorActionPreference = 'Stop';",
+				"[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false);",
+				"$processes = @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine,",
+				"@{Name='CreationDate';Expression={if ($_.CreationDate) {",
+				"[long]$_.CreationDate.ToString('yyyyMMddHHmmss', [System.Globalization.CultureInfo]::InvariantCulture)",
+				"}}});",
+				"ConvertTo-Json -InputObject $processes -Compress"
+			].join(' ');
+			proc = spawn(powershell, [ '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', script ], { windowsHide: true });
+			let output = '';
 			proc.stdout.setEncoding('utf8');
-			proc.stdout.on('data', lines(line => {
-				let matches = CMD_PAT.exec(line.trim());
-				if (matches && matches.length === 5) {
-					const pid = Number(matches[4]);
-					const ppid = Number(matches[3]);
-					const date = Number(matches[2]);
-					let args = matches[1].trim();
-					if (!isNaN(pid) && !isNaN(ppid) && args) {
-						let command = args;
-						if (args[0] === '"') {
-							const end = args.indexOf('"', 1);
-							if (end > 0) {
-								command = args.substr(1, end-1);
-								args = args.substr(end + 2);
-							}
-						} else {
-							const end = args.indexOf(' ');
-							if (end > 0) {
-								command = args.substr(0, end);
-								args = args.substr(end + 1);
-							} else {
-								args = '';
-							}
-						}
-						one(pid, ppid, command, args, date);
-					}
+			proc.stdout.on('data', data => output += data);
+			onComplete = () => {
+				const processes: {
+					ProcessId: number;
+					ParentProcessId: number;
+					CommandLine: string | null;
+					CreationDate: number | null;
+				}[] = JSON.parse(output);
+				if (!Array.isArray(processes)) {
+					throw new Error('Invalid Windows process list.');
 				}
-			}));
+				for (const entry of processes) {
+					if (!entry || !Number.isInteger(entry.ProcessId) || !Number.isInteger(entry.ParentProcessId)
+						|| (entry.CommandLine !== null && typeof entry.CommandLine !== 'string')
+						|| (entry.CreationDate !== null && !Number.isFinite(entry.CreationDate))) {
+						throw new Error('Invalid Windows process information.');
+					}
+					if (!entry.CommandLine || !entry.CommandLine.trim()) {
+						continue;
+					}
+					let args = entry.CommandLine.trim();
+					let command = args;
+					if (args[0] === '"') {
+						const end = args.indexOf('"', 1);
+						if (end > 0) {
+							command = args.slice(1, end);
+							args = args.slice(end + 1).trimStart();
+						}
+					} else {
+						const end = args.search(/\s/);
+						if (end > 0) {
+							command = args.slice(0, end);
+							args = args.slice(end).trimStart();
+						} else {
+							args = '';
+						}
+					}
+					one(entry.ProcessId, entry.ParentProcessId, command, args, entry.CreationDate ?? undefined);
+				}
+			};
 
 		} else if (process.platform === 'darwin') {	// OS X
 
@@ -172,6 +193,12 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 
 		proc.on('close', (code, signal) => {
 			if (code === 0) {
+				try {
+					onComplete?.();
+				} catch (err) {
+					reject(err);
+					return;
+				}
 				resolve();
 			} else if (code !== null && code > 0) {
 				reject(new Error(`process terminated with exit code: ${code}`));
