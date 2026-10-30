@@ -35,6 +35,9 @@ extends:
       name: 1ES_JavaTooling_Pool
       image: 1ES_JavaTooling_Ubuntu-2004
     sdl:
+      # Keep Build's CFS registry override out of Guardian's feed-scoped authentication.
+      sourceAnalysisVariablesToReset:
+        - npm_config_registry
       sourceAnalysisPool:
         name: 1ES_JavaTooling_Pool
         image: 1ES_JavaTooling_Windows_2022
