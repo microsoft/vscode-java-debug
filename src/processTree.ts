@@ -56,9 +56,8 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 	function lines(callback: (a: string) => void) {
 		let unfinished = '';	// unfinished last line of chunk
 		return (data: string | Buffer) => {
-			const lines = data.toString().split(/\r?\n/);
+			const lines = (unfinished + data.toString()).split(/\r?\n/);
 			const finishedLines = lines.slice(0, lines.length - 1);
-			finishedLines[0] = unfinished + finishedLines[0]; // complete previous unfinished line
 			unfinished = lines[lines.length - 1]; // remember unfinished last line of this chunk for next round
 			for (const s of finishedLines) {
 				callback(s);
@@ -72,18 +71,26 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 
 		if (process.platform === 'win32') {
 
-			// attributes columns are in alphabetic order!
-			const CMD_PAT = /^(.*)\s+([0-9]+)\.[0-9]+[+-][0-9]+\s+([0-9]+)\s+([0-9]+)$/;
+			const CMD_PAT = /^(.*)\s+([0-9]+)\s+([0-9]+)$/;
 
-			const wmic = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'wbem', 'WMIC.exe');
-			proc = spawn(wmic, [ 'process', 'get', 'CommandLine,CreationDate,ParentProcessId,ProcessId' ]);
+			const command = [
+				"$ErrorActionPreference = 'Stop';",
+				'if ([Console]::OutputEncoding.CodePage -ne 65001) {',
+				"if ($ExecutionContext.SessionState.LanguageMode -ne 'FullLanguage') {",
+				"throw 'UTF-8 process discovery is restricted by policy. Attach using hostName and port instead.';",
+				'}',
+				'[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;',
+				'}',
+				'Get-CimInstance Win32_Process | ForEach-Object { "$($_.CommandLine) $($_.ParentProcessId) $($_.ProcessId)" }'
+			].join(' ');
+			const powershell = join(process.env['WINDIR'] || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+			proc = spawn(powershell, [ '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command ], { windowsHide: true });
 			proc.stdout.setEncoding('utf8');
 			proc.stdout.on('data', lines(line => {
 				let matches = CMD_PAT.exec(line.trim());
-				if (matches && matches.length === 5) {
-					const pid = Number(matches[4]);
-					const ppid = Number(matches[3]);
-					const date = Number(matches[2]);
+				if (matches && matches.length === 4) {
+					const pid = Number(matches[3]);
+					const ppid = Number(matches[2]);
 					let args = matches[1].trim();
 					if (!isNaN(pid) && !isNaN(ppid) && args) {
 						let command = args;
@@ -102,7 +109,7 @@ export function getProcesses(one: (pid: number, ppid: number, command: string, a
 								args = '';
 							}
 						}
-						one(pid, ppid, command, args, date);
+						one(pid, ppid, command, args);
 					}
 				}
 			}));
