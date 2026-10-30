@@ -25,6 +25,10 @@ extends:
   parameters:
     pool:
       name: VSEng-MicroBuildVSStable
+    sdl:
+      # Keep Build's CFS registry override out of Guardian's feed-scoped authentication.
+      sourceAnalysisVariablesToReset:
+        - npm_config_registry
     stages:
       - stage: Build
         jobs:
