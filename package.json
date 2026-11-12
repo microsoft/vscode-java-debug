@@ -1396,7 +1396,7 @@
     "@types/node": "^14.18.63",
     "@types/vscode": "1.95.0",
     "@vscode/test-electron": "^3.1.0",
-    "glob": "^13.0.6",
+    "glob": "^14.0.5",
     "mocha": "^10.8.2",
     "ts-loader": "^9.6.2",
     "tslint": "^6.1.3",
