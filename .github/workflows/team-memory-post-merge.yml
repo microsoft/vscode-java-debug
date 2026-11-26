@@ -12,6 +12,7 @@ jobs:
       vars.ISSUELENS_TEAM_MEMORY_ENABLED == 'true' &&
       github.repository == 'microsoft/vscode-java-debug' &&
       github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      github.ref_protected &&
       github.event_name == 'push' &&
       github.workflow_sha == github.sha &&
       github.event.created == false &&
@@ -32,7 +33,7 @@ jobs:
           permission-actions: write
 
       - name: Queue team-memory request
-        uses: microsoft/IssueLens/.github/actions/queue-team-memory@a81d2d96167fc0e69ac631c2edc85f858e693289
+        uses: microsoft/IssueLens/.github/actions/queue-team-memory@61a9e9a5ff2f9514a3bdd351a0721235cd0a2813
         with:
           dispatch-token: ${{ steps.dispatch-token.outputs.token }}
           coordinator-repository: microsoft/vscode-java-pack
