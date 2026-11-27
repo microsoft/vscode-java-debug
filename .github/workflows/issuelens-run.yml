@@ -21,28 +21,25 @@ concurrency:
 jobs:
   triage:
     if: >-
-      ${{ (github.event_name != 'issue_comment' ||
+      ${{ github.repository == 'microsoft/vscode-java-debug' &&
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+          github.ref_protected &&
+          (github.event_name != 'issue_comment' ||
            (github.event.issue.pull_request == null &&
             github.event.sender.type == 'User' &&
-            github.event.comment.user.type == 'User')) &&
-          (github.event_name != 'workflow_dispatch' ||
-           github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+            github.event.comment.user.type == 'User')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
-      contents: read
       issues: read
       id-token: write
     steps:
       - name: Run IssueLens issue loop
-        uses: microsoft/IssueLens/.github/actions/issuelens@c431d42dddf4e6bf20329b0ac96dbd8a4bf04006
+        uses: microsoft/IssueLens/.github/actions/issuelens@61a9e9a5ff2f9514a3bdd351a0721235cd0a2813
         with:
           request-type: issue-loop
-          issue-number: ${{ inputs.issue_number }}
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          agent-url: ${{ secrets.ISSUELENS_AGENT_URL }}
-          agent-scope: ${{ secrets.ISSUELENS_AGENT_SCOPE }}
+          transport: bridge
+          issue-number: ${{ inputs.issue_number || github.event.issue.number }}
+          bridge-url: ${{ secrets.ISSUELENS_BRIDGE_URL }}
           output-mode: activity
           summary-mode: status
