@@ -112,7 +112,11 @@ Cause of error is for now unknown, but something caused vscode java support and 
 
 ### Try:
 1. Restart VS Code and the issue should disappear 
-2. If it continues to error try restart again, and if still a problem open an issue at [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug)
+2. If it continues to error try restart again
+3. If the version of Java Debugger extension and RedHat Java extension are not the most recent version, referring [#1342](https://github.com/microsoft/vscode-java-debug/issues/1342), please update both of them to the most recent version, and reboot VS Code
+4. If the version of Java Debugger extension and RedHat Java extension are the most recent version or even the newest, and if using the Test Runner for Java extension, referring [#1308](https://github.com/microsoft/vscode-java-debug/issues/1308), please downgrade the version of Test Runner for Java extension, then
+restart VS Code
+5. If still a problem open an issue at [vscode-java-debug](https://github.com/Microsoft/vscode-java-debug)
 
 ## Failed to resolve classpath:
 ### Reason:
